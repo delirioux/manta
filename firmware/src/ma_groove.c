@@ -378,12 +378,12 @@ static void build_chord(ma_chord *c, const ma_settings *s, int deg, int flavour,
 /* the solo's one-bar rhythms, by speed: per step the length in sixteenths of the note starting there (0 none). The
  * fast ones syncopated round the clave, the slow ones sung */
 static const uint8_t SOLO_RHY[3][4][16] = {
-    /* (syncopated: FAST on the eighths' off-beats and anticipations (the fast styles count two bars to the clave, an
-     * eighth is their pulse), MID on the sixteenths' too, the tresillo; a Havana trumpet's line) */
-    [SR_FAST] = {{2, 0, 4, 0, 0, 0, 2, 0, 0, 0, 2, 0, 4, 0, 0, 0},
-                 {0, 0, 2, 0, 4, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0},
-                 {4, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0},
-                 {6, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 0, 4, 0, 0, 0}},
+    /* (FAST, the fast styles' (two bars to the clave, an eighth their pulse): broad, sung lines on the eighths, four or
+     * five notes a bar, held; MID syncopated on the sixteenths too, the tresillo; a Havana trumpet's line) */
+    [SR_FAST] = {{4, 0, 0, 0, 2, 0, 2, 0, 4, 0, 0, 0, 4, 0, 0, 0},
+                 {2, 0, 4, 0, 0, 0, 2, 0, 6, 0, 0, 0, 0, 0, 2, 0},
+                 {6, 0, 0, 0, 0, 0, 2, 0, 4, 0, 0, 0, 4, 0, 0, 0},
+                 {0, 0, 4, 0, 0, 0, 2, 0, 8, 0, 0, 0, 0, 0, 0, 0}},
     [SR_MID] = {{3, 0, 0, 3, 0, 0, 2, 0, 0, 2, 0, 1, 4, 0, 0, 0},
                 {0, 0, 2, 0, 1, 3, 0, 0, 2, 0, 0, 1, 4, 0, 0, 0},
                 {2, 0, 1, 2, 0, 1, 2, 0, 0, 0, 2, 0, 4, 0, 0, 0},
@@ -1714,7 +1714,7 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
     int vel = 100 + (i % 4 == 0 ? 8 : 0) + (i % 2 ? 4 : 0) + (int)(hum * 6.0f);   /* (the off-beats leaned on) */
     vel += rnd_n(&g->rnd, 21) - 12;
     uint32_t late = (uint32_t)((float)rnd_n(&g->rnd, 21) * g->sr * 0.001f);
-    float hold = len >= 4 ? 0.82f + 0.03f * (float)rnd_n(&g->rnd, 6) : 0.55f + 0.06f * (float)rnd_n(&g->rnd, 6);
+    float hold = len >= 4 ? 0.9f + 0.02f * (float)rnd_n(&g->rnd, 6) : 0.8f + 0.03f * (float)rnd_n(&g->rnd, 6);   /* (legato) */
     schedule(g, delay + late, MA_HORNS, n, clampi(vel, 1, 127), sf * (float)len * hold);
 }
 
