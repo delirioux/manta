@@ -46,6 +46,26 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | Groove | **ARP**: **SWING**, **PIANO** and **BASS** (pattern 1 to 4), **FILLS** |
 | The song's form | **ENV**: **ARC** (intro, tema, verso, corte, frase, piano, montuno, mambo, moña, cierre), **VERSO** and **MON** bars, **MAMBO** in the form |
 
+## The song's form: the letters at the bottom of PLAY
+
+The bottom of the PLAY screen (and the ARC page) shows the song's sections in order: the one playing lit, a line
+under it showing how far it has come, the ones played shaded. The header names the section playing in full.
+
+| Letters | Section | What happens |
+| --- | --- | --- |
+| **IN** | INTRO | The groove: piano (and guitar), percussion, bass; no horns |
+| **TE** | TEMA | The solo's theme over the groove, ending high with vibrato |
+| **VE** | VERSO | A solo where a singer would sing: the trumpet's or the piano's |
+| **CO** | CORTE | One bar: the band stops, the soloist alone |
+| **FR** | FRASE | A short improvised trumpet phrase |
+| **PI** | PIANO | The piano's montuno solo; the horns rest |
+| **MO** | MONTUNO | Call and response: the horns' coro, then the solo, four bars each |
+| **MB** | MAMBO | The horn section's riff |
+| **MN** | MOÑA | The riff with the solo over it, the hottest part |
+| **FI** | CIERRE | The band's hits, then round again from TE with a new melody |
+
+MB and MN are dimmed with MAMBO off (ENV). With ARC off only MO is lit (MB while SEQ's mambo plays).
+
 ## Keep and connect
 
 | What | How |
