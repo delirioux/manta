@@ -446,8 +446,9 @@ int main(void)
         ma_play(&g, true);
         run_bars(8);
         ma_play(&g, false);
-        CHECK(drum_on[MA_DR_WASH] + drum_on[MA_DR_WASH_TAP] == 0 && drum_on[MA_DR_GUIRO_SHORT] > 0,
-              "MERENGUE: the guira on the guiro");
+        CHECK(drum_on[MA_DR_WASH] + drum_on[MA_DR_WASH_TAP] == 0 && drum_on[MA_DR_GUIRO_LONG] > 0 &&
+              drum_on[MA_DR_GUIRO_LONG] + drum_on[MA_DR_GUIRO_SHORT] + drum_on[MA_DR_SHAKER_FWD] <= 2 * 8 + 1,
+              "MERENGUE: the guira's long scrapes, two a bar (%d)", drum_on[MA_DR_GUIRO_LONG]);
     }
 
     /* the sampled brass: the section's second horn is the trombone, an octave under the trumpet */

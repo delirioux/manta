@@ -634,7 +634,6 @@ static const lane_t L_GUIRO[2] = {L_GUIRO_0, L_GUIRO_1};
 static const lane_t L_SHAKER[2] = {L_SHAKER_0, L_SHAKER_1};
 #define L_CABASA_0 {MA_DR_CABASA, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}
 static const lane_t L_CABASA[1] = {L_CABASA_0};
-/* the washboard: a scrape on the beat, the thimbles tapping the sixteenths between (the guira's way) */
 /* the washboard: a colour, not a beat: one scrape a bar; now and then, hot, a tap of the thimbles on the half bar
  * ('h': only with HEAT high, one bar in four) */
 #define L_WASH_0 {MA_DR_WASH, G_EXTRA, "X...............X..............."}
@@ -655,11 +654,11 @@ static const perc_set_t PERC[MA_STYLES] = {
     [MA_ST_MAMBO] = {8, {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2, L_MARTILLO_0, L_MARTILLO_1, L_CASCARA_0,
                          {MA_DR_GUIRO_SHORT, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
                          {MA_DR_TIMBAL_LO, G_OTHER, "..............................x."}}},
-    [MA_ST_MERENGUE] = {7, {{MA_DR_TUMBA, G_CONGA, "X.......x.......X.......x......."},
+    [MA_ST_MERENGUE] = {6, {{MA_DR_TUMBA, G_CONGA, "X.......x.......X.......x......."},
                             {MA_DR_CONGA_MUTE, G_CONGA, "..o...o.o.o...o...o...o.o.o...o."},
                             {MA_DR_QUINTO, G_CONGA, "....x.......x.x.....x.......x.x."},
-                            {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},   /* the guira's */
-                            {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.oo....o.oo....o.oo....o.oo"},   /* way, on the guiro */
+                            {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},   /* the guira's long scrapes on
+                                                                                     * the guiro, two a bar */
                             {MA_DR_KICK, G_KICK, "x...x...x...x...x...x...x...x..."},
                             {MA_DR_BONGO_MUTE, G_BONGO, "......o.......o.......o.......o."}}},
     [MA_ST_CUMBIA] = {6, {{MA_DR_CONGA, G_CONGA, "....x.......x.......x.......x..."},
@@ -1119,9 +1118,10 @@ static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
     int st3 = s->snd[3];
     bool tx_style = st3 != MA_ST_TANGO && st3 != MA_ST_BOSSA && st3 != MA_ST_BOLERO && st3 != MA_ST_DANZON &&
                     st3 != MA_ST_SAMBA && st3 != MA_ST_SON;   /* (the son: its own maracas and claves, no more) */
+    bool own_shaker = st3 == MA_ST_GUARACHA || st3 == MA_ST_SON || st3 == MA_ST_MERENGUE;
     if (tx_sec && tx_style && heat >= 0.35f && s->extra == MA_EXTRA_AUTO && !intro_soft)
-        play_lanes(g, (st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? 1 : 0) + (fast(g) ? L_TX8 : L_TX), st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? 1 : 2,
-                   i, delay, hum, heat * 0.85f);   /* (the son's own maracas: the woodblock only) */
+        play_lanes(g, (own_shaker ? 1 : 0) + (fast(g) ? L_TX8 : L_TX), own_shaker ? 1 : 2, i, delay, hum,
+                   heat * 0.85f);   /* (the son's maracas, the merengue's guira: the woodblock only) */
     /* the cards' own patterns, and the montuno's bells */
     if (s->conga == MA_CONGA_TUMBAO) play_lanes(g, L_TUMBAO, 3, i, delay, hum, heat);
     if (s->conga == MA_CONGA_MARCHA) play_lanes(g, L_MARCHA, 3, i, delay, hum, heat);
