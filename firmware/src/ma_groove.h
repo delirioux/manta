@@ -231,6 +231,7 @@ void ma_loop_name(const ma_settings *s, int loop, char *out, int max);
 int ma_snap(const ma_settings *s, int note);       /* a note onto the scale (the nearest step, ties down) */
 bool ma_clave_hit(const ma_groove *g, int bar, int step);   /* the clave strikes there (the screen, the hits) */
 int ma_clave_side(const ma_groove *g, int bar);    /* 3 or 2: the side of the clave bar b plays */
+uint32_t ma_row_played(const ma_groove *g, int row);   /* PERC row 0..5: what sounded, a bit a step */
 uint32_t ma_lane_bits(const ma_groove *g, int lane, int bar);   /* the PERC panel: lane 0..5's steps in bar b */
 
 #endif

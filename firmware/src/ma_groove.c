@@ -714,6 +714,31 @@ static const perc_set_t PERC[MA_STYLES] = {
 };
 
 /* the lanes for the PERC panel: CONGA BONGO TIMBAL EXTRA CLAVE and the rest */
+/* what each PERC row played, a bit a sixteenth: this bar's so far, the bar before's after the step playing (the
+ * screen: everything that sounded, the cards', the bells', the fills', not only the style's lanes) */
+static int drum_row(int d)
+{
+    if (d <= MA_DR_TUMBA) return G_CONGA;
+    if (d <= MA_DR_BONGO_MUTE || d == MA_DR_BELL_BONGO) return G_BONGO;
+    if (d <= MA_DR_BELL_MUTE) return G_TIMBAL;
+    if (d == MA_DR_CLAVE) return G_CLAVE;
+    if ((d >= MA_DR_GUIRO_SHORT && d <= MA_DR_CABASA) || d == MA_DR_WASH || d == MA_DR_WASH_TAP) return G_EXTRA;
+    return G_OTHER;
+}
+uint32_t ma_row_played(const ma_groove *g, int row)
+{
+    int now = g->playing && g->step >= 0 ? g->step : -1;
+    uint32_t bits = 0;
+    for (int d = 0; d < MA_DR_COUNT; ++d) {
+        if (drum_row(d) != row)
+            continue;
+        uint32_t cur = g->dr_hits[d], last = g->dr_last[d];
+        uint32_t mask = now >= 0 ? (2u << now) - 1u : 0u;
+        bits |= (cur & mask) | (last & ~mask & 0xFFFFu);
+    }
+    return bits;
+}
+
 uint32_t ma_lane_bits(const ma_groove *g, int lane, int bar)
 {
     const perc_set_t *ps = &PERC[clampi(g->s.snd[3], 0, MA_STYLES - 1)];
@@ -829,10 +854,9 @@ static void note(ma_groove *g, int part, int n, int vel, float len_frames)
     emit(g, 1, part, n, vel);
     feed(g, part, n, vel);
     if (g->step >= 0) {
-        if (part == MA_PERC)
+        if (part == MA_PERC)                       /* (each drum's, the PERC page; and the part's, PLAY's meter) */
             g->dr_hits[clampi(n, 0, MA_DR_COUNT - 1)] |= (uint16_t)(1u << g->step);
-        else
-            g->hits[part] |= (uint16_t)(1u << g->step);
+        g->hits[part] |= (uint16_t)(1u << g->step);
     }
     if (part == MA_HORNS && g->soloing) {
         g->solo_on_clock = g->clock;
@@ -1075,6 +1099,11 @@ static void play_lanes(ma_groove *g, const lane_t *l, int n, int i, uint32_t del
         if (c == 'o' && heat < 0.25f && (i % 2))   /* cool: the soft sixteenths rest */
             continue;
         int v = c == 'X' ? 118 : c == 'x' ? 100 : c == 'h' ? 84 : 72;
+        /* the quiet styles' percussion brought forward, so it is heard under the band (their soft strokes most) */
+        static const int8_t LIFT[MA_STYLES] = {[MA_ST_SON] = 18, [MA_ST_BOLERO] = 18, [MA_ST_DANZON] = 18,
+                                               [MA_ST_TANGO] = 22, [MA_ST_CUMBIA] = 8};
+        int lift = LIFT[clampi(g->s.snd[3], 0, MA_STYLES - 1)];
+        v += c == 'o' ? lift + lift / 2 : lift;
         v = (int)((float)v * (0.82f + 0.18f * heat)) + (int)(hum * 10.0f);
         schedule(g, delay, MA_PERC, l[k].drum, clampi(v, 1, 127), 0);
     }

@@ -183,7 +183,10 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     const mas_sound *snd = part == MA_PERC ? 0 : mas_of(g, part);
     /* MIX: 100 is -2 dB (headroom: the master limiter stays out of it), each step down 0.3 dB, 0 off; then the
      * sound's trim (F_DB: half-dB steps) */
-    int lvl = 108 - (100 - s->lvl[part]) * 6 / 10 + (snd ? snd->trim : MAS_KIT_TRIM);
+    /* (the quiet styles' kits a little up: their percussion heard under the band; half-dB steps) */
+    static const int8_t KIT_UP[MA_STYLES] = {[MA_ST_SON] = 5, [MA_ST_BOLERO] = 5, [MA_ST_DANZON] = 4, [MA_ST_TANGO] = 6};
+    int kit_trim = MAS_KIT_TRIM + KIT_UP[(unsigned)s->snd[3] % MA_STYLES];
+    int lvl = 108 - (100 - s->lvl[part]) * 6 / 10 + (snd ? snd->trim : kit_trim);
     t->p[P_LEVEL] = mas_clamp(s->lvl[part] ? lvl : 0, 1, 127);
     /* the place: the piano a little left, the horns a little right (PAN 3D moves the solo), bass and percussion
      * centred, the percussion spread */

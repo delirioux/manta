@@ -607,7 +607,8 @@ static void mu_panel_pan3d(ma_ui *u)
     mu_label(150, 100, "HEADPHONES", T_DIM);
 }
 
-/* PERC: every lane over the bar as the style plays it, the step lit */
+/* PERC: every row over the bar: playing, what it played (all of it: the style's lanes, the cards', the bells, the
+ * fills), the step playing a column lit down all the rows; stopped, the style's own lanes */
 static void mu_panel_perc(ma_ui *u)
 {
     const ma_groove *g = u->g;
@@ -615,12 +616,14 @@ static void mu_panel_perc(ma_ui *u)
     int bar = g->bar < 0 ? 0 : g->bar;
     for (int r = 0; r < 6; ++r) {
         int32_t y = 5 + r * 19;
-        uint32_t bits = ma_lane_bits(g, r, bar);
+        uint32_t bits = g->playing ? ma_row_played(g, r) : ma_lane_bits(g, r, bar);
         mu_label(10, y + 2, nm[r], bits ? T_MID : T_DIM);
         for (int k = 0; k < 16; ++k) {
             int32_t x = 62 + k * 10;
             bool on = (bits >> k) & 1u, now = g->playing && g->step == k;
-            cv_rrect(x, y, 8, 13, 2, on ? (now ? T_ACCENT : r == 4 ? T_THEME : ux_mix(T_SURF, T_ACCENT, 70)) : mu_well(), T_SURF);
+            uint16_t c = on ? (now ? T_ACCENT : r == 4 ? T_THEME : ux_mix(T_SURF, T_ACCENT, 70))
+                            : now ? ux_mix(T_SURF, T_TEXT, 30) : mu_well();
+            cv_rrect(x, y, 8, 13, 2, c, T_SURF);
         }
     }
 }
