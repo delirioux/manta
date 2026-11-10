@@ -32,6 +32,8 @@ Claude pushes to the repository directly (the Claude GitHub App). Work goes to `
 package (Actions > the run > Artifacts > `manta-firmware`) and the test site under `dev/`, installed with the
 installer's "Install a test build". It goes to `main` once it has run on the FM-1. A push to `main` with a version
 (`ma_version.h`) not yet tagged tags it `vX.Y` and makes a GitHub release with the package and `docs/RELEASE.md`.
+The README links `dev`'s pages (`/manta/dev/try/`, `/manta/dev/`) until the first release; from then on `main`'s
+(`/manta/try/`, `/manta/`) first, `dev`'s test build under them.
 
 ## Where Manta lives
 

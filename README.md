@@ -22,16 +22,17 @@ take the solo trumpet on the keys. Built on [Sill](https://github.com/delirioux/
 
 ## Try it, install it
 
-**Try it in the browser** first: [delirioux.github.io/manta/try](https://delirioux.github.io/manta/try/) runs the
-same firmware, compiled to WebAssembly on Felucca's browser emulator (Chrome, Edge or Firefox; the computer keyboard
-plays the keys). The test build from `dev` plays at
-[delirioux.github.io/manta/dev/try](https://delirioux.github.io/manta/dev/try/).
+Manta is a test build on `dev` for now; its pages:
 
-**Install**: open [delirioux.github.io/manta](https://delirioux.github.io/manta/) in Chrome or Edge on a computer,
-connect the FM-1 with a USB data cable and press Install (allow MIDI when the browser asks). Manta keeps its settings
-and its eight sets in Felucca's first two song slots: back up anything you made in Felucca first. Test builds: the
-newest from `dev` installs from [delirioux.github.io/manta/dev](https://delirioux.github.io/manta/dev/); every run also
-leaves its package in the artifact `manta-firmware`. From a terminal: `python3 tools/fm1_install.py manta-X.Y.fwsc`.
+- **[Try it in the browser](https://delirioux.github.io/manta/dev/try/)**: the whole firmware, the FM-1's screen and
+  sound, compiled to WebAssembly on Felucca's browser emulator (Chrome, Edge or Firefox; the computer keyboard plays
+  the keys).
+- **[Install it on the FM-1](https://delirioux.github.io/manta/dev/)** from Chrome or Edge on a computer: connect
+  the FM-1 with a USB data cable, press Install and allow MIDI when the browser asks. Every run also leaves its
+  package in the artifact `manta-firmware`; from a terminal: `python3 tools/fm1_install.py manta-X.Y.fwsc`.
+
+Manta keeps its settings and its eight sets in Felucca's first two song slots: back up anything you made in Felucca
+first. Installing firmware is at your own risk.
 
 ## Ten things Manta does
 
