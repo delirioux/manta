@@ -21,5 +21,5 @@ for p in sorted(glob.glob(out + "/ppm/*.ppm")):
         Image.open(p).save(out + "/png/" + n + ".png")
 fr = [Image.open(p).convert("RGB") for p in sorted(glob.glob(out + "/ppm/anim_*.ppm"))]
 if fr:
-    fr[0].save(out + "/sill_play.gif", save_all=True, append_images=fr[1:], duration=48, loop=0)
+    fr[0].save(out + "/manta_play.gif", save_all=True, append_images=fr[1:], duration=48, loop=0)
 PY

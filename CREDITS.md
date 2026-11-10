@@ -1,13 +1,15 @@
 # Credits
 
-**Manta** is by delirioux and Claude: generative 90s eurodance for the FM-1.
+**Manta** is by delirioux and Claude: generative Latin grooves for the FM-1.
 
-- **The drum kit and the choir**: Manta's own, seven one-shots synthesized by `tools/ma_drums.py` and a sung OH
-  and AH by `tools/ma_choir.py`, CC0 1.0 ([attribution](assets/samples-cc0/ATTRIBUTION.txt))
-- **The piano**: six notes of the Kawai grand of the [Versilian Community Sample Library](https://github.com/sgossner/VCSL)
-  (Sam Gossner and contributors, CC0 1.0), made bright by `tools/ma_piano.py`
-- **[Daurade](https://github.com/delirioux/daurade)** (delirioux, GPL-3.0-only): the machine Manta runs on: the glue, the cards and pages, the matrix's
-  sweep and pump, the sets, the drum kit's one-shots and their generator, the OCTAVE bass
+- **The percussion**: twenty-six one-shots of the [Versilian Community Sample Library](https://github.com/sgossner/VCSL)
+  (Sam Gossner and contributors, CC0 1.0): congas, bongos, toms, cowbells, agogô, claves, woodblock, güiro, shakers,
+  cabasa and triangle, cut by `tools/ma_perc.py`; the timbales, the kick and the washboard Manta's own, made by the same
+  script, CC0 1.0 ([attribution](assets/samples-cc0/ATTRIBUTION.txt))
+- **The piano**: six notes of VCSL's Yamaha upright (CC0 1.0), made into a montuno upright by `tools/ma_piano.py`
+- **[Sill](https://github.com/delirioux/sill)** (delirioux, GPL-3.0-only): the machine Manta runs on: the groove's frame
+  (the clock, the notes held, the keys), the glue, the cards and pages, the sets, the browser build; after
+  [Daurade](https://github.com/delirioux/daurade)'s
 - **[Tuna](https://github.com/delirioux/tuna)** and [Flyfish](https://github.com/delirioux/flyfish) (delirioux, GPL-3.0-only): the frame Manta's screen is
   drawn in, the single-precision maths (`tuna_libm`), the FM6 patches SLAP, BRASS and FRETLESS and the SAW voicing
 - **Felucca** (below): the hardware layer, the engines, the effects, the drawing, the installer's package format

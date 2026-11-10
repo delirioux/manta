@@ -176,12 +176,12 @@ static void palette_set(uint32_t i)
 /* settings store a tagged id; ids below 20 are the palettes of earlier firmware */
 #if FELUCCA_MANTA
 /* Manta keeps a colour of its own: stored as MA_PAL_TAG + index, so Felucca's, Tuna's, Flyfish's or Daurade's choice
- * (UI_PAL_TAG, 256, 512 or 768 + index, or an old id) does not carry over: Manta starts in LASER until one is chosen in
+ * (UI_PAL_TAG, 256, 512 or 768 + index, or an old id) does not carry over: Manta starts in HAVANA until one is chosen in
  * Manta */
 #define MA_PAL_TAG 1024u
 static uint32_t palette_from_stored(uint32_t v)
 {
-    return v >= MA_PAL_TAG && v - MA_PAL_TAG < NPALETTES ? v - MA_PAL_TAG : UI_LASER_INDEX;
+    return v >= MA_PAL_TAG && v - MA_PAL_TAG < NPALETTES ? v - MA_PAL_TAG : UI_HAVANA_INDEX;
 }
 static uint32_t palette_to_stored(uint32_t i) { return MA_PAL_TAG + i % NPALETTES; }
 #else

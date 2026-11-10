@@ -1,115 +1,15 @@
-# Manta 1.0.4
-
-The keys play what you press: a note off the scale is yours to play. MENU's new SNAP (hold HOME, KNOB 3) snaps
-them to the scale as before; it is off by default, and kept with the settings.
-
-Each build now carries Manta's own identity for the FM-1 Firmware Hub.
-
-Runs on the FM-1. To go back: Felucca's or [Tuna](https://github.com/delirioux/tuna)'s installer, or the official V15.
-
-# Manta 1.0.3
-
-Every key plays one note. [Felucca](https://github.com/hugelton/Felucca)'s own keyboard was still on next to Manta's: each key also played its raw note on the
-first track and out on MIDI, so a key off the scale sounded a semitone clash. It now stays silent.
-
-Runs on the FM-1. To go back: Felucca's or [Tuna](https://github.com/delirioux/tuna)'s installer, or the official V15.
-
-# Manta 1.0.2
-
-The kick in tune.
-
-- On EURO the kick is tuned to each chord's root (the key up in it), the nearest way from its own pitch, so it walks
-  with the bass.
-- MENU shows the CPU, the audio's load, as Tuna's MENU > SYSTEM > INFO does.
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
-# Manta 1.0.1
-
-The flash of newer FM-1 units.
-
-- Newer FM-1 units carry a UC25HQ80 flash (JEDEC 0xB36014) that 1.0 did not recognise: Manta ran without saving
-  anything there, settings and sets lost at power-off. It recognises it now (Felucca's fix, its issue #320).
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
-# Manta 1.0
-
-It works, it plays: the first main version.
-
-- No brass section: KEYS (a soft keyboard chord) on STABS in place of HORNS. A light solo trumpet, CORNET, on HOOK in
-  place of ROBOT, picked by some SKANK and PARTY songs.
-- ORCH is an effect: no song picks it for its stabs any more; it stays on the card.
-- The footer shows the style and the song's number on every page.
-- Each new version on `main` is tagged and released on GitHub with its package.
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
-# Manta 0.4.1
-
-The choir.
-
-- VOX brings a choir instead of the crowd: the chord's third and fifth sung on OH or AH (CHOIR on the VOX page, or a
-  MIX) at the top of each bar of the chorus, in the verse too with VOX ALL. The shouts are gone.
-- No bells: STABS has EPIANO and HOOK has POP in their place. No brass: STABS has PWM, pulse-width strings.
-- The stabs sit 2 dB lower.
-- A hook's tuplet plays the chord playing, up or down, so it always fits.
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
-# Manta 0.4
-
-Variety.
-
-- Sixteen sounds a part. STABS: HOUSE, DEEP, HORNS, CHOIR, VIOLINS, TRANCE; BASS: ORGAN, SYNTH, SINE, TRANCE, DX,
-  GROWL; HOOK: REEDS, ANTHEM, CHOIR, WHISTLE, TRANCE, ROBOT. FRETLESS is called SLIDE.
-- Every style has four sounds a part: song 1 plays its own, every other song picks from the four, so a style's
-  songs do not all sound alike.
-- Tuplets: a song's hook may hold a triplet, a quadruplet, a quintuplet or a sextuplet; a fill may be a snare
-  triplet or a sextuplet roll.
-- Less drive: the mix has 2 dB of headroom against the limiter, the styles' DRIVE is lower and reaches half as
-  deep, and the hottest sounds carry less drive of their own.
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
-# Manta 0.3
-
-The fill.
-
-- HOOK SPEED PAD: no tune but a pad on the chords, held as long as each lasts, through the verse and the pre-chorus
-  too. A new HOOK sound, PAD, in place of CHIP. PIANOHOUSE starts with it, behind the piano.
-- The piano plays plain triads (root, third, fifth), over a loop of sevenths too and in its held chords; 2 dB
-  softer, level with the pad, under the bass.
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
-# Manta 0.2
-
-The piano.
-
-- PIANO is a real piano now: six notes of a Kawai grand (VCSL, CC0), bright and hard as the club pianos of the 90s,
-  with a high-pass at 180 Hz, a low-pass at about 5 kHz and a room of its own, sitting under the bass and the hook.
-  The FM house piano is gone.
-- PIANO on STABS plays the offbeat piano chords in any style: a chord on every "and", now and then the last one
-  early or a sixteenth after; through the verse too, softer. HEARTACHE and PIANOHOUSE start with it.
-- The site: each branch's pages keep their own try page; before a release the start page points to the test build.
-
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
-
 # Manta 0.1
 
-The first release.
+The first test build: a Latin band on the FM-1.
 
-- Ten styles on two sides: CLUB (EUROSTOMP, VIKING, BUBBLEGUM, HEARTACHE, RAVE) and RADIO (SKANK, PIANOHOUSE,
-  PARTY, BALLAD, ITALO); a song for every ALGORITHM number; style and song change on the bar line.
-- A song's form: intro, verse, pre-chorus, chorus, break, the last chorus a key up; round again with a new hook.
-- LIFT, PUMP, VOX and ENERGY on the four knobs; BREAK on REC (tapped or held), KEY UP on SEQ.
-- The keys play the hook, snapped to the scale; their LEDs show the chord.
-- Thirty sounds on Felucca's engines, levels evened out; a house piano and an orchestra hit of Manta's own on FM6, a
-  supersaw hook in unison, a sung OOH on the VOICE engine.
-- A drum kit of Manta's own (CC0) with a crowd that shouts HEY, HO and WHOA, and Felucca's DRUM engine kits.
-- Eight sets; settings saved while stopped; MIDI out on channels 1, 2, 3 and 10.
-- The LASER palette, by default.
-- In the browser: the same firmware on Felucca's emulator.
+- Ten styles on two sides: CALIENTE (SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA) and NOCHE (SON, CHA-CHA, BOLERO, BOSSA,
+  TANGO), every pattern on the clave, 3-2 or 2-3.
+- A sampled percussion section of thirty one-shots (congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
+  shakers, cabasa, triangle, toms, a kick, a washboard) and a sampled upright piano.
+- The song's form: intro, verso, montuno, mambo, montuno, moña, cierre.
+- REC is BAND HIT (held: a descarga), SEQ is MAMBO, the keys play the solo trumpet with its mutes, PAN 3D on
+  headphones.
 
-Runs on the FM-1. To go back: Felucca's or Tuna's installer, or the official V15.
+Not yet: the sampled trumpet and trombone, the traditional songs' phrases (TRAD), Sardine's full binaural PAN 3D.
+
+Runs on the FM-1. To go back: Felucca's or [Tuna](https://github.com/delirioux/tuna)'s installer, or the official V15.

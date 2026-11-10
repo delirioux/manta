@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* MANTA screen and controls (ma_ui.h): Manta's pages in Tuna's frame (Daurade's layout), drawn with Felucca's gfx.c.
+/* MANTA screen and controls (ma_ui.h): Manta's pages in Sill's frame (Tuna's, Daurade's layout), drawn with Felucca's gfx.c.
  * Included after gfx.c (the firmware's felucca.c unit through ma_fw.c, or tests/ma_ui_test.c). Needs ma_sounds.h
  * (the sounds' names) before it. */
 #include "ma_ui.h"
@@ -84,7 +84,7 @@ static int32_t mu_icon_mid(int32_t x, int32_t cy, uint32_t size, uint32_t id, ui
 }
 
 /* ---- the cards ------------------------------------------------------------------------------------------- */
-enum { SC_NUM, SC_LIST, SC_SND, SC_KEY, SC_SIGNED, SC_LOOP, SC_VALS, SC_PAL, SC_CRUSH, SC_SETSEL, SC_LOAD, SC_STORE,
+enum { SC_NUM, SC_LIST, SC_SND, SC_KEY, SC_SIGNED, SC_LOOP, SC_VALS, SC_PAL, SC_ANGLE, SC_SETSEL, SC_LOAD, SC_STORE,
        SC_CLEAR, SC_OFF };
 typedef struct {
     const char *label;
@@ -98,58 +98,71 @@ typedef struct {
 #define SS_(f) ((uint8_t)__builtin_offsetof(ma_settings, f))
 static const char *const SN_ONOFF[] = {"OFF", "ON"};
 static const char *const SN_LOOK[] = {"FLAT", "LINE"};
-static const char *const SN_HATS[] = {"8THS", "16THS", "OFFBEAT", "OPEN"};
+static const char *const SN_CLAVE[] = {"3-2", "2-3"};
+static const char *const SN_SOLO[] = {"OFF", "PHRASE", "KEYS"};
+static const char *const SN_HITS[] = {"OFF", "4 BARS", "8 BARS", "16 BARS"};
+static const char *const SN_MUTE[] = {"OPEN", "CONE", "CUP", "HARMON", "WAH"};   /* (CONE: the straight mute) */
+static const char *const SN_PHRASE[] = {"GEN", "TRAD", "MIX"};
+static const char *const SN_P3MODE[] = {"OFF", "FIXED", "ORBIT", "STEP"};
 static const char *const SN_FILLS[] = {"OFF", "8 BARS", "4 BARS", "2 BARS"};
-static const char *const SN_BASSLINE[] = {"OFFBEAT", "OCTAVE", "ROLLING", "REGGAE", "LONG", "BOUNCE"};
-static const char *const SN_KICK[] = {"PUNCH", "ROUND"};
-static const char *const SN_CLAP[] = {"CLAP", "SNARE", "BOTH"};
-static const char *const SN_CRASH[] = {"OFF", "SECTION", "8 BARS"};
-static const char *const SN_VOX[] = {"OFF", "CHORUS", "ALL"};
-static const char *const SN_KEYUP[] = {"OFF", "+1", "+2"};
-static const char *const SN_SPEED[] = {"SLOW", "MID", "FAST", "PAD"};
+static const char *const SN_PATTERN[] = {"1", "2", "3", "4"};
+static const char *const SN_CONGA[] = {"OFF", "AUTO", "TUMBAO", "MARCHA", "BOLERO"};
+static const char *const SN_BONGO[] = {"OFF", "AUTO", "MARTIL", "BELL"};   /* (the martillo) */
+static const char *const SN_TIMBAL[] = {"OFF", "AUTO", "SHELL", "BELL"};    /* (SHELL: the cascara) */
+static const char *const SN_EXTRA[] = {"OFF", "AUTO", "GUIRO", "SHAKER", "CABASA", "WASH"};   /* (the washboard) */
 static const char *const SN_SCALE[] = {"MIN", "MAJ", "DOR", "HARM"};
 static const char *const SN_SCALE_LONG[] = {"MINOR", "MAJOR", "DORIAN", "HARMONIC MINOR"};
-static const uint8_t SV_BARS[] = {1, 2, 4}, SV_SECTION[] = {8, 16}, SV_REPEAT[] = {1, 2, 4}, SV_RANGE[] = {1, 2};
+static const uint8_t SV_BARS[] = {1, 2, 4}, SV_SECTION[] = {8, 16};
 #define C_NUM(l, f) {l, SS_(f), SC_NUM, 0, 100, 5, 0, 0}
 #define C_LIST(l, f, n) {l, SS_(f), SC_LIST, 0, (int16_t)(sizeof n / sizeof n[0]) - 1, 1, n, 0}
 #define C_VALS(l, f, v) {l, SS_(f), SC_VALS, 0, (int16_t)(sizeof v / sizeof v[0]) - 1, 1, 0, v}
-#define C_SND(l, p) {l, (uint8_t)(SS_(snd) + (p)), SC_SND, 0, (p) == 3 ? MA_KIT_COUNT - 1 : MA_SOUNDS - 1, 1, 0, 0}
+#define C_SND(l, p) {l, (uint8_t)(SS_(snd) + (p)), SC_SND, 0, (p) == 3 ? MA_STYLES - 1 : MA_SOUNDS - 1, 1, 0, 0}
 #define C_OFF {"", 0, SC_OFF, 0, 0, 0, 0, 0}
 static const mu_cdef MU_CARDS[MU_PAGES][4] = {
-    [MU_PG_PLAY] = {C_NUM("LIFT", lift), C_NUM("PUMP", pump), C_LIST("VOX", vox, SN_VOX), C_NUM("ENERGY", energy)},
-    [MU_PG_SOUND] = {C_SND("STABS", 0), C_SND("BASS", 1), C_SND("HOOK", 2), C_SND("DRUMS", 3)},
-    [MU_PG_TONE] = {C_NUM("RESO", reso), C_NUM("DRIVE", drive), C_NUM("DETUNE", ensemble),
-                    {"CRUSH", SS_(crush), SC_CRUSH, 0, 100, 5, 0, 0}},
-    [MU_PG_VOX] = {{"VOWELS", SS_(vowels), SC_LIST, 0, MA_VOWELS_COUNT - 1, 1, MAS_VOWEL_NAMES, 0},
-                   {"SHIFT", SS_(shift), SC_SIGNED, -12, 12, 1, 0, 0},
-                   {"CHOIR", SS_(choir), SC_LIST, 0, MA_CHOIR_COUNT - 1, 1, MAS_CHOIR_NAMES, 0}, C_NUM("GLIDE", glide)},
+    [MU_PG_PLAY] = {C_NUM("HEAT", heat), C_LIST("CLAVE", clave, SN_CLAVE), C_LIST("SOLO", solo, SN_SOLO),
+                    C_LIST("HITS", hits, SN_HITS)},
+    [MU_PG_SOUND] = {C_SND("PIANO", 0), C_SND("BASS", 1), C_SND("HORNS", 2), C_SND("PERC", 3)},
+    [MU_PG_SOLO] = {C_SND("INSTR", 2), C_LIST("MUTE", mute, SN_MUTE), C_LIST("PHRASE", phrase, SN_PHRASE),
+                    C_NUM("BELL", bell)},
+    [MU_PG_PAN3D] = {C_LIST("MODE", p3mode, SN_P3MODE), {"ANGLE", SS_(p3angle), SC_ANGLE, 0, 35, 1, 0, 0},
+                     C_NUM("HEIGHT", p3height), C_NUM("DIST", p3dist)},
+    [MU_PG_PERC] = {C_LIST("CONGAS", conga, SN_CONGA), C_LIST("BONGO", bongo, SN_BONGO),
+                    C_LIST("TIMBAL", timbal, SN_TIMBAL), C_LIST("EXTRA", extra, SN_EXTRA)},
     [MU_PG_KEY] = {{"KEY", SS_(key), SC_KEY, 0, 11, 1, 0, 0}, C_LIST("SCALE", scale, SN_SCALE),
                    {"CHORDS", SS_(chords), SC_LOOP, 0, MA_LOOPS - 1, 1, 0, 0}, C_VALS("BARS", bars, SV_BARS)},
-    [MU_PG_GROOVE] = {{"SWING", SS_(swing), SC_NUM, 0, 60, 2, 0, 0}, C_LIST("HATS", hats, SN_HATS),
-                      C_LIST("BASS", bassline, SN_BASSLINE), C_LIST("FILLS", fills, SN_FILLS)},
-    [MU_PG_DRUMS] = {C_SND("KIT", 3), C_LIST("KICK", kick, SN_KICK), C_LIST("CLAP", clap, SN_CLAP),
-                     C_LIST("CRASH", crash, SN_CRASH)},
-    [MU_PG_MIX] = {C_NUM("STABS", lvl[0]), C_NUM("BASS", lvl[1]), C_NUM("HOOK", lvl[2]), C_NUM("DRUMS", lvl[3])},
-    [MU_PG_SPACE] = {C_NUM("REVERB", reverb), C_NUM("DELAY", delay),
-                     {"TIME", SS_(dtime), SC_LIST, 0, MA_DTIME_COUNT - 1, 1, MAS_DTIME_NAMES, 0}, C_NUM("WIDTH", width)},
-    [MU_PG_ARC] = {C_LIST("ARC", arc, SN_ONOFF), C_VALS("VERSE", verse, SV_SECTION), C_VALS("CHORUS", chorus, SV_SECTION),
-                   C_LIST("KEY UP", keyup, SN_KEYUP)},
-    [MU_PG_HOOK] = {C_LIST("SPEED", speed, SN_SPEED), C_VALS("RANGE", range, SV_RANGE),
-                    {"GATE", SS_(gate), SC_NUM, 10, 100, 5, 0, 0}, C_VALS("REPEAT", repeat, SV_REPEAT)},
+    [MU_PG_GROOVE] = {{"SWING", SS_(swing), SC_NUM, 0, 60, 2, 0, 0}, C_LIST("PIANO", montuno, SN_PATTERN),
+                      C_LIST("BASS", tumbao, SN_PATTERN), C_LIST("FILLS", fills, SN_FILLS)},
+    [MU_PG_MIX] = {C_NUM("PIANO", lvl[0]), C_NUM("BASS", lvl[1]), C_NUM("HORNS", lvl[2]), C_NUM("PERC", lvl[3])},
+    [MU_PG_SPACE] = {C_NUM("ROOM", room), C_NUM("PLATE", plate), C_NUM("WARMTH", warmth), C_NUM("WIDTH", width)},
+    [MU_PG_ARC] = {C_LIST("ARC", arc, SN_ONOFF), C_VALS("VERSO", verse, SV_SECTION), C_VALS("MON", mbars, SV_SECTION),
+                   C_LIST("MAMBO", mambo, SN_ONOFF)},
     [MU_PG_SETS] = {{"SET", 0, SC_SETSEL, 0, MA_SETS - 1, 1, 0, 0}, {"LOAD", 0, SC_LOAD, 0, 0, 1, 0, 0},
                     {"STORE", 0, SC_STORE, 0, 0, 1, 0, 0}, {"CLEAR", 0, SC_CLEAR, 0, 0, 1, 0, 0}},
-    [MU_PG_MENU] = {{"COLOR", SS_(palette), SC_PAL, 0, 10, 1, 0, 0}, C_LIST("LOOK", look, SN_LOOK), C_LIST("SNAP", keysnap, SN_ONOFF), C_OFF},
+    [MU_PG_MENU] = {{"COLOR", SS_(palette), SC_PAL, 0, 10, 1, 0, 0}, C_LIST("LOOK", look, SN_LOOK),
+                    C_LIST("SNAP", keysnap, SN_ONOFF), C_OFF},
 };
-static const char *const MU_PAGE_NAMES[MU_PAGES] = {"PLAY", "SOUND", "TONE", "VOX", "KEY", "GROOVE", "DRUMS", "MIX",
-                                                    "SPACE", "ARC", "HOOK", "SETS", "MENU"};
+static const char *const MU_PAGE_NAMES[MU_PAGES] = {"PLAY", "SOUND", "SOLO", "PAN 3D", "PERC", "KEY", "GROOVE", "MIX",
+                                                    "SPACE", "ARC", "SETS", "MENU"};
 const char *mu_page_name(int page) { return page >= 0 && page < MU_PAGES ? MU_PAGE_NAMES[page] : ""; }
+
+/* PAN 3D's angle as words: FRONT, R10 .. R170 (to the right), BACK, L170 .. L10 */
+static void mu_angle_name(int v, char *t, unsigned n)
+{
+    char a[8];
+    v = mu_wrap(v, 36);
+    if (v == 0) { mu_cpy(t, "FRONT", n); return; }
+    if (v == 18) { mu_cpy(t, "BACK", n); return; }
+    mu_cpy(t, v < 18 ? "R" : "L", n);
+    mu_fmt_int(a, (v < 18 ? v : 36 - v) * 10);
+    mu_cat(t, a, n);
+}
 
 static int mu_get(const ma_ui *u, const mu_cdef *c)
 {
     const uint8_t *b = (const uint8_t *)&u->g->s + c->off;
     if (c->kind == SC_SIGNED)
         return (int)*(const int8_t *)b;
-    if (c->kind == SC_VALS) {                      /* the index of the value it holds */
+    if (c->kind == SC_VALS) {
         for (int i = 0; i <= c->hi; ++i)
             if (c->vals[i] == *b) return i;
         return 0;
@@ -176,16 +189,14 @@ static void mu_card_value(const ma_ui *u, const mu_cdef *c, char *t, unsigned n)
     case SC_KEY: mu_cpy(t, ma_note_name(v), n); break;
     case SC_SIGNED: if (v > 0) { mu_cpy(t, "+", n); } mu_fmt_int(t + (v > 0), v); break;
     case SC_LOOP: ma_loop_name(&u->g->s, v, t, (int)n); break;
+    case SC_ANGLE: mu_angle_name(v, t, n); break;
     case SC_VALS: {
         int x = c->vals[mu_clampi(v, c->lo, c->hi)];
         mu_fmt_int(t, x);
-        if (c->off == SS_(verse) || c->off == SS_(chorus)) mu_cat(t, " BARS", n);
-        if (c->off == SS_(repeat)) mu_cat(t, x == 1 ? " BAR" : " BARS", n);
-        if (c->off == SS_(range)) mu_cat(t, " OCT", n);
+        if (c->off == SS_(verse) || c->off == SS_(mbars)) mu_cat(t, " BARS", n);
         break;
     }
     case SC_PAL: mu_cpy(t, UI_PALETTES[mu_wrap(v, (int)NPALETTES)].name, n); break;
-    case SC_CRUSH: if (v) mu_fmt_int(t, v); else mu_cpy(t, "OFF", n); break;
     case SC_SETSEL: mu_fmt_int(t, v + 1); break;
     case SC_LOAD: mu_cpy(t, (u->set_used >> u->set_sel) & 1u ? ">" : "EMPTY", n); break;
     case SC_STORE: mu_cpy(t, ">", n); break;
@@ -199,18 +210,27 @@ static void mu_card_value(const ma_ui *u, const mu_cdef *c, char *t, unsigned n)
     }
 }
 
+/* a card greyed: PAN 3D while the solo is off (the horns' section has no place to move) */
+static bool mu_card_grey(const ma_ui *u, const mu_cdef *c)
+{
+    const ma_settings *s = &u->g->s;
+    if (u->page == MU_PG_PAN3D && c->off != SS_(p3mode))
+        return s->p3mode == MA_P3_OFF;
+    return false;
+}
+
 static void mu_draw_card(ma_ui *u, int i, const mu_cdef *c)
 {
-    bool hot = u->hot == i && u->hot_ms > 0;
-    uint16_t lc = hot ? T_ACCENT : T_MID, vc = hot ? T_ACCENT : T_THEME;
+    bool hot = u->hot == i && u->hot_ms > 0, grey = mu_card_grey(u, c);
+    uint16_t lc = hot ? T_ACCENT : grey ? T_DIM : T_MID, vc = hot ? T_ACCENT : grey ? T_DIM : T_THEME;
     char val[24];
     mu_card_value(u, c, val, sizeof val);
     int ratio = -1;
-    if ((c->kind == SC_NUM || c->kind == SC_CRUSH || c->kind == SC_SIGNED || c->kind == SC_VALS || c->kind == SC_SETSEL ||
+    if ((c->kind == SC_NUM || c->kind == SC_SIGNED || c->kind == SC_VALS || c->kind == SC_SETSEL || c->kind == SC_ANGLE ||
          c->kind == SC_LOOP || c->kind == SC_KEY || c->kind == SC_SND) && c->hi > c->lo)
         ratio = (mu_get(u, c) - c->lo) * 1000 / (c->hi - c->lo);
-    uint32_t sig = mu_hash(2166136261u + (uint32_t)i * 7u + ux.gen * 131u + (uint32_t)hot * 3u + (uint32_t)u->page * 977u,
-                           c->label);
+    uint32_t sig = mu_hash(2166136261u + (uint32_t)i * 7u + ux.gen * 131u + (uint32_t)hot * 3u + (uint32_t)u->page * 977u +
+                           (uint32_t)grey * 5u, c->label);
     sig = mu_hash(sig, val) + (uint32_t)(ratio + 1) * 31u;
     if (!u->force && sig == u->sig_card[i])
         return;
@@ -220,26 +240,19 @@ static void mu_draw_card(ma_ui *u, int i, const mu_cdef *c)
     if (c->kind == SC_OFF) {
         cv_rect(MU_CARD_W / 2 - 6, MU_CARD_H / 2, 12, 1, T_DIM);
     } else {
-        cv_text_fit(5, 3, &AF_S, c->label, lc, T_SURF, MU_CARD_W - 8);
-        const aafont_t *vf = text_w(&AF_M, val) <= MU_CARD_W - 8 ? &AF_M : &AF_S;
-        cv_text_fit(5, vf == &AF_M ? 17 : 19, vf, val, vc, T_SURF, MU_CARD_W - 8);
+        cv_text_fit(5, 3, &AF_S, c->label, lc, T_SURF, MU_CARD_W - 6);
+        const aafont_t *vf = text_w(&AF_M, val) <= MU_CARD_W - 6 ? &AF_M : &AF_S;
+        cv_text_fit(5, vf == &AF_M ? 17 : 19, vf, val, vc, T_SURF, MU_CARD_W - 6);
         if (ratio >= 0) {
             int32_t w = MU_CARD_W - 10, x0 = 5, y = 37, r = mu_clampi(ratio, 0, 1000) * w / 1000;
             cv_rect(x0, y, w, 3, T_LINE);
-            if (c->kind == SC_SIGNED) {
-                int32_t mid = x0 + w / 2;
-                if (r >= w / 2) cv_rect(mid, y, r - w / 2 + 1, 3, vc);
-                else cv_rect(x0 + r, y, mid - x0 - r + 1, 3, vc);
-                cv_rect(mid, y - 2, 1, 7, hot ? T_ACCENT : T_MID);
-            } else {
-                cv_rect(x0, y, r > 0 ? r : 1, 3, vc);
-            }
+            cv_rect(x0, y, r > 0 ? r : 1, 3, vc);
         }
     }
     cv_blit((uint32_t)MU_CARD_X(i), MU_CARD_Y);
 }
 
-/* ---- the header: playing, the tempo, a word (the section, NEXT, BREAK), a badge (the key up, HELD), the battery -- */
+/* ---- the header: playing, the tempo, a word (the section, NEXT, BAND HIT), a badge (the clave's side, HELD) ----- */
 static void mu_head_msg(const ma_ui *u, char *t, unsigned n)
 {
     const ma_groove *g = u->g;
@@ -254,10 +267,10 @@ static void mu_head_msg(const ma_ui *u, char *t, unsigned n)
         mu_cpy(t, "NEXT SONG ", n);
         mu_fmt_int(a, g->next_song + 1);
         mu_cat(t, a, n);
-    } else if (g->playing && g->brk) {
-        mu_cpy(t, "BREAK", n);
+    } else if (g->playing && g->desc) {
+        mu_cpy(t, "DESCARGA", n);
     } else if (g->playing) {
-        mu_cpy(t, g->s.arc ? ma_sec_name(g->sec) : "CHORUS", n);
+        mu_cpy(t, g->s.arc ? ma_sec_name(g->sec) : g->mambo_live ? "MAMBO" : "MONTUNO", n);
     }
 }
 static void mu_head_badge(const ma_ui *u, char *t, unsigned n)
@@ -266,16 +279,11 @@ static void mu_head_badge(const ma_ui *u, char *t, unsigned n)
     t[0] = 0;
     if (!g->playing)
         return;
-    if (g->brk && g->brk_held) {
+    if (g->desc && g->desc_held)
         mu_cpy(t, "HELD", n);
-    } else if (g->tr > 0) {
-        char a[4];
-        mu_cpy(t, "+", n);
-        mu_fmt_int(a, g->tr);
-        mu_cat(t, a, n);
-    }
+    else
+        mu_cpy(t, ma_clave_side(g, g->bar) == 3 ? "3" : "2", n);   /* the clave's side this bar */
 }
-
 static void mu_draw_head(ma_ui *u)
 {
     const ma_groove *g = u->g;
@@ -323,7 +331,7 @@ static void mu_draw_foot(ma_ui *u)
     const ma_groove *g = u->g;
     int filled = 0;
     if (g->playing) {
-        if (g->s.arc && !g->brk) {
+        if (g->s.arc && !g->desc) {
             int len = ma_sec_len(g, g->sec);
             filled = g->sec_bar * 16 / (len > 0 ? len : 1);
         } else {
@@ -363,6 +371,28 @@ static int32_t mu_yb_s(int32_t y_m) { return y_m + AF_M_CAP_Y + AF_M_CAP_H - AF_
 static void mu_label(int32_t x, int32_t y, const char *s, uint16_t c) { cv_text_on(x, y, &AF_S, s, c, T_SURF); }
 static uint16_t mu_well(void) { return ux_mix(T_SURF, T_LINE, 100); }
 
+
+/* sin of x turns without libm (a parabola refined, as ma_groove.c's) */
+static float mu_sin(float x)
+{
+    x -= (float)(int)x;
+    if (x < 0.0f) x += 1.0f;
+    float y = x < 0.5f ? x * 2.0f : (x - 0.5f) * 2.0f, q = 4.0f * y * (1.0f - y);
+    q = q * (0.775f + 0.225f * q);
+    return x < 0.5f ? q : -q;
+}
+static void mu_circle(int32_t cx, int32_t cy, int32_t r, uint16_t c)
+{
+    int32_t px = cx, py = cy - r;
+    for (int k = 1; k <= 32; ++k) {
+        float t = (float)k / 32.0f;
+        int32_t x = cx + (int32_t)(mu_sin(t) * (float)r), y = cy - (int32_t)(mu_sin(t + 0.25f) * (float)r);
+        cv_line_t(px, py, x, y, c, 1);
+        px = x;
+        py = y;
+    }
+}
+
 /* the loop's chords, the one sounding filled */
 static void mu_chord_strip(const ma_groove *g, int32_t y, int now)
 {
@@ -371,80 +401,55 @@ static void mu_chord_strip(const ma_groove *g, int32_t y, int now)
     for (int i = 0; i < n; ++i) {
         int32_t x = 10 + i * (w + gap);
         if (i == now) {
-            cv_rrect(x, y, w, 20, 3, T_THEME, T_SURF);
-            cv_text_in(x, y + CAP_IN(S, 20), w, &AF_S, g->loop[i].name, T_INK, T_THEME);
+            cv_rrect(x, y, w, 18, 3, T_THEME, T_SURF);
+            cv_text_in(x, y + CAP_IN(S, 18), w, &AF_S, g->loop[i].name, T_INK, T_THEME);
         } else {
-            cv_rrect(x, y, w, 20, 3, mu_well(), T_SURF);
-            cv_rrect(x + 1, y + 1, w - 2, 18, 3, T_SURF, mu_well());
-            cv_text_in(x, y + CAP_IN(S, 20), w, &AF_S, g->loop[i].name, T_TEXT, T_SURF);
+            cv_rrect(x, y, w, 18, 3, mu_well(), T_SURF);
+            cv_rrect(x + 1, y + 1, w - 2, 16, 3, T_SURF, mu_well());
+            cv_text_in(x, y + CAP_IN(S, 18), w, &AF_S, g->loop[i].name, T_TEXT, T_SURF);
         }
     }
 }
 
-/* the form as a strip: its six sections, the one playing in the accent, the bars into it under it; the key up's
- * +1 or +2 over the last chorus */
+/* the form as a strip: its sections, the one playing in the accent, how far into it under it */
 static void mu_form_strip(const ma_groove *g, int32_t y)
 {
     for (int k = 0; k < MA_SECS; ++k) {
-        int32_t x = 10 + k * 37, w = 33;
-        bool now = g->playing && g->s.arc && !g->brk && g->sec == k;
-        bool past = g->playing && g->s.arc && !g->brk && k < g->sec;
+        int32_t x = 10 + k * 32, w = 28;
+        bool skip = g->s.arc && !g->s.mambo && (k == MA_SEC_MBO || k == MA_SEC_MON2 || k == MA_SEC_MONA);
+        bool now = g->playing && g->s.arc && !g->desc && g->sec == k;
+        bool past = g->playing && g->s.arc && !g->desc && k < g->sec;
         if (!g->s.arc)
-            now = k == MA_SEC_CHORUS;
-        uint16_t c = now ? T_ACCENT : past ? ux_mix(T_SURF, T_THEME, 55) : mu_well();
-        cv_rect(x, y, w, 4, c);
-        if (now && g->playing && g->s.arc) {       /* how far into it */
+            now = k == (g->mambo_live ? MA_SEC_MBO : MA_SEC_MON);
+        uint16_t c = now ? T_ACCENT : past ? ux_mix(T_SURF, T_THEME, 55) : skip ? T_LINE : mu_well();
+        cv_rect(x, y, w, 3, c);
+        if (now && g->playing && g->s.arc) {
             int len = ma_sec_len(g, k);
             int32_t p = (g->sec_bar * 16 + (g->step < 0 ? 0 : g->step)) * w / (len * 16 > 0 ? len * 16 : 1);
-            cv_rect(x, y + 5, p > 0 ? p : 1, 1, T_ACCENT);
+            cv_rect(x, y + 4, p > 0 ? p : 1, 1, T_ACCENT);
         }
-        cv_text_on(x, y + 9, &AF_S, ma_sec_short(k), now ? T_ACCENT : T_MID, T_SURF);
-        if (k == MA_SEC_CHORUS2 && g->s.arc && g->s.keyup) {   /* the key up: an arrow (one, or two for +2) */
-            for (int a = 0; a < g->s.keyup; ++a) {
-                int32_t ax = x + w - 3, ay = y + 10 + a * 5;
-                cv_line_t(ax - 3, ay + 3, ax, ay, T_THEME, 2);
-                cv_line_t(ax, ay, ax + 3, ay + 3, T_THEME, 2);
-            }
-        }
+        cv_text_on(x, y + 8, &AF_S, ma_sec_short(k), now ? T_ACCENT : skip ? T_DIM : T_MID, T_SURF);
     }
 }
 
-/* the bar as it plays: a column a sixteenth, as tall as the parts that sounded on it; the one playing lit */
+/* the bar as it plays: a column a sixteenth, as tall as the parts that sounded on it, the clave's strokes in the
+ * palm-green second colour (the theme) and a dot under them */
 static void mu_step_meter(const ma_groove *g, int32_t y, int32_t h)
 {
     int now = g->playing && g->step >= 0 ? g->step : -1;
+    int bar = g->bar < 0 ? 0 : g->bar;
     for (int k = 0; k < 16; ++k) {
         int n = 0;
         for (int p = 0; p < MA_PARTS; ++p) {
             uint16_t bits = k <= now ? g->hits[p] : g->hits_last[p];
             n += (bits >> k) & 1u;
         }
+        bool cl = ma_clave_hit(g, bar, k);
         int32_t x = 10 + k * 14, bh = n ? 6 + n * (h - 6) / 4 : 2;
-        uint16_t c = k == now ? T_ACCENT : k % 4 == 0 ? T_THEME : ux_mix(T_SURF, T_THEME, 75);
+        uint16_t c = k == now ? T_ACCENT : cl ? T_THEME : ux_mix(T_SURF, T_THEME, 60);
         cv_rect(x, y + h - bh, 10, bh, n ? c : T_LINE);
+        cv_rrect(x + 3, y + h + 4, 4, 4, 2, cl ? T_THEME : T_LINE, T_SURF);
     }
-}
-
-/* the low-pass's curve: flat, the resonant peak at the cutoff, then the fall; cutoff and reso 0..1000 */
-static void mu_filter_curve(int32_t x0, int32_t y0, int32_t w, int32_t h, int cutoff, int reso, uint16_t c, bool fill)
-{
-    int32_t cx = x0 + 8 + cutoff * (w - 16) / 1000, base = y0 + h * 45 / 100, py = -1;
-    int32_t pk = reso * (h * 40 / 100) / 1000;
-    for (int32_t x = x0; x < x0 + w; ++x) {
-        int32_t d = x - cx, y;
-        if (d < -24) y = base;
-        else if (d <= 0) y = base - pk * (24 + d) * (24 + d) / (24 * 24);
-        else y = base - pk + d * d / 6;
-        if (d > 0 && y < base - pk + d) y = base - pk + d;
-        if (y > y0 + h) y = y0 + h;
-        if (y < y0) y = y0;
-        if (fill)
-            cv_rect(x, y + 1, 1, y0 + h - y, ux_mix(T_SURF, c, 18));
-        if (py >= 0)
-            cv_line_t(x - 1, py, x, y, c, 2);
-        py = y;
-    }
-    cv_rect(cx, y0 + h + 3, 1, 4, T_ACCENT);
 }
 
 static void mu_panel_play(ma_ui *u)
@@ -467,36 +472,28 @@ static void mu_panel_play(ma_ui *u)
         cv_text_on(3 + HALF_UP(234 - lw), MU_PANEL_H / 2 + 14, &AF_S, line, T_DIM, T_SURF);
         return;
     }
-    if (g->brk) {                                  /* BREAK: the stabs alone, the roll back in */
-        static const char *const parts[4] = {"STABS", "BASS", "HOOK", "DRUMS"};
-        char t[16], a[8];
-        cv_text_on(10, 6, &AF_L, "BREAK", T_ACCENT, T_SURF);
-        int back = g->brk_held ? -1 : g->brk_end - g->bar;
-        if (back > 0) {
-            mu_cpy(t, "BACK IN ", sizeof t);
-            mu_fmt_int(a, back);
-            mu_cat(t, a, sizeof t);
-        } else {
-            mu_cpy(t, "HELD", sizeof t);
-        }
-        cv_text_r(230, mu_yb_s(10), &AF_S, t, T_TEXT, T_SURF);
-        bool roll = !g->brk_held && g->bar == g->brk_end - 1;
+    if (g->desc) {                                 /* the descarga: the percussion alone, the band back in */
+        static const char *const parts[4] = {"PIANO", "BASS", "HORNS", "PERC"};
+        cv_text_on(10, 6, &AF_L, "DESCARGA", T_ACCENT, T_SURF);
+        bool roll = g->desc_end >= 0 && g->bar == g->desc_end - 1;
+        cv_text_r(230, mu_yb_s(10), &AF_S, g->desc_held ? "HELD" : roll ? "ROLL" : "BACK IN", T_TEXT, T_SURF);
         for (int i = 0; i < 4; ++i) {
-            int32_t y = 38 + i * 15;
-            bool on = i == MA_STABS || (i == MA_DRUMS && roll);
+            int32_t y = 40 + i * 15;
+            bool on = i == MA_PERC;
             mu_label(10, y, parts[i], on ? T_TEXT : T_DIM);
             if (on)
                 cv_rect(66, y + 4, 162, 3, T_THEME);
             else
                 cv_rect(66, y + 5, 162, 1, T_LINE);
         }
-        if (roll)
-            mu_label(10, 102, "SNARE ROLL > CHORUS", T_ACCENT);
+        if (!g->desc_held)
+            mu_label(10, 102, "TIMBAL ROLL > THE BAND", T_ACCENT);
         return;
     }
-    mu_chord_strip(g, 6, ma_chord_now(g));
-    mu_step_meter(g, 32, 50);
-    mu_form_strip(g, 90);
+    mu_chord_strip(g, 5, ma_chord_now(g));
+    mu_label(10, 28, ma_clave_side(g, g->bar) == 3 ? "CLAVE 3 SIDE" : "CLAVE 2 SIDE", T_DIM);
+    mu_step_meter(g, 40, 40);
+    mu_form_strip(g, 96);
 }
 
 /* PRESETS turned: the ten styles, the queued one marked */
@@ -504,8 +501,8 @@ static void mu_panel_styles(ma_ui *u)
 {
     const ma_groove *g = u->g;
     int sel = g->next_style >= 0 ? g->next_style : g->s.style;
-    mu_label(10, 5, "CLUB", T_MID);
-    mu_label(124, 5, "RADIO", T_MID);
+    mu_label(10, 5, "CALIENTE", T_MID);
+    mu_label(124, 5, "NOCHE", T_MID);
     for (int i = 0; i < 10; ++i) {
         int col = MA_STYLE[i].side, row = 0;
         for (int k = 0; k < i; ++k) row += MA_STYLE[k].side == col;
@@ -525,111 +522,105 @@ static void mu_panel_styles(ma_ui *u)
 static void mu_panel_sound(ma_ui *u)
 {
     const ma_groove *g = u->g;
-    static const char *const nm[4] = {"STABS", "BASS", "HOOK", "DRUMS"};
+    static const char *const nm[4] = {"PIANO", "BASS", "HORNS", "PERC"};
+    static const char *const role[4] = {"MONTUNO", "TUMBAO", "SECTION AND SOLO", "THE STYLE'S SET"};
     for (int i = 0; i < 4; ++i) {
-        int32_t y = 8 + i * 28;
+        int32_t y = 6 + i * 28;
         bool hot = u->hot == i && u->hot_ms > 0;
         cv_text_on(10, y, &AF_S, nm[i], hot ? T_ACCENT : T_MID, T_SURF);
         cv_text_fit(64, y, &AF_S, mas_name(i, g->s.snd[i]), T_TEXT, T_SURF, 164);
         uint16_t bits = g->playing ? g->hits_last[i] : 0;
-        for (int k = 0; k < 16; ++k) {
-            bool on = (bits >> k) & 1;
-            cv_rect(64 + k * 10, y + 18, 7, 2, on ? (hot ? T_ACCENT : T_THEME) : T_LINE);
+        if (g->playing) {
+            for (int k = 0; k < 16; ++k) {
+                bool on = (bits >> k) & 1;
+                cv_rect(64 + k * 10, y + 16, 7, 2, on ? (hot ? T_ACCENT : T_THEME) : T_LINE);
+            }
+        } else {
+            cv_text_on(64, y + 13, &AF_S, role[i], T_DIM, T_SURF);
         }
     }
 }
 
-static void mu_panel_tone(ma_ui *u)
+/* SOLO: the phrase playing as a roll (four bars), what plays it, the solo's note lit */
+static void mu_panel_solo(ma_ui *u)
 {
     const ma_groove *g = u->g;
-    mu_label(10, 6, "THE FILTER THE LIFT MOVES", T_MID);
-    mu_filter_curve(10, 30, 220, 56, (int)(g->lift_now * 1000.0f), 150 + g->s.reso * 8, T_THEME, true);
-    char t[24], a[8];
-    mu_cpy(t, "RESO ", sizeof t);
-    mu_fmt_int(a, g->s.reso);
-    mu_cat(t, a, sizeof t);
-    cv_text_r(230, 100, &AF_S, t, T_THEME, T_SURF);
-    if (g->s.crush) {
-        mu_cpy(t, "CRUSH", sizeof t);
-    } else {
-        mu_cpy(t, "DETUNE ", sizeof t);
-        mu_fmt_int(a, g->s.ensemble);
-        mu_cat(t, a, sizeof t);
+    mu_label(10, 4, g->keys ? "YOU HAVE THE SOLO" : g->s.solo == MA_SOLO_PHRASE ? "THE PHRASE, 4 BARS" :
+                    g->s.solo == MA_SOLO_KEYS ? "THE SOLO IS ON THE KEYS" : "SOLO OFF", T_MID);
+    if (g->s.phrase != MA_PHR_GEN)
+        cv_text_r(230, 4, &AF_S, "TRAD: SOON, GEN NOW", T_DIM, T_SURF);
+    int32_t x0 = 10, w = 220, y0 = 24, h = 72, n = 64;
+    int lo = -2, hi = 9;
+    for (int b = 0; b <= 4; ++b)
+        cv_rect(x0 + b * w / 4 - (b == 4), y0, 1, h, T_LINE);
+    int pos = -1;
+    if (g->playing && g->step >= 0)
+        pos = ((g->s.arc ? g->sec_bar : g->bar) % 4) * 16 + g->step;
+    bool lit = g->playing && (float)(g->clock - g->solo_on_clock) < g->sr * 0.25f;
+    for (int k = 0; k < n; ++k) {
+        if (g->phr[k] == -128)
+            continue;
+        int len = g->phr_len[k];
+        int32_t x = x0 + k * w / n, ww = len * w / n - 2;
+        int32_t y = y0 + h - 7 - (mu_clampi(g->phr[k], lo, hi) - lo) * (h - 10) / (hi - lo);
+        bool on = pos >= k && pos < k + len && lit;
+        cv_rrect(x + 1, y, ww > 2 ? ww : 2, 5, 2, on ? T_ACCENT : T_THEME, T_SURF);
     }
-    mu_label(10, 100, t, T_DIM);
+    if (pos >= 0)
+        cv_rect(x0 + pos * w / n, y0 + h + 3, w / n > 2 ? w / n : 2, 2, T_ACCENT);
+    char t[32];
+    mu_cpy(t, mas_name(MA_HORNS, g->s.snd[MA_HORNS]), sizeof t);
+    mu_cat(t, ", ", sizeof t);
+    mu_cat(t, SN_MUTE[g->s.mute % MA_MUTE_COUNT], sizeof t);
+    mu_label(10, 104, t, T_DIM);
 }
 
-/* the choir's chords over two bars of the chorus as CHOIR sings them (ma_groove.c play_choir), the one singing lit */
-static int mu_choir_at(int choir, int bar, int i)
-{
-    if (i != 0)
-        return -1;
-    return choir == MA_CHOIR_MIX ? MA_DR_OH + bar : choir == MA_CHOIR_AH ? MA_DR_AH : MA_DR_OH;
-}
-
-/* the OOH's vowels: the formant gliding from the first to the second after each hook note; the choir under it */
-static void mu_panel_vox(ma_ui *u)
+/* PAN 3D: the top view, you in the middle, the solo where it is; the side view, its height */
+static void mu_panel_pan3d(ma_ui *u)
 {
     const ma_groove *g = u->g;
-    static const char *const VN[5] = {"AH", "EH", "EE", "OH", "OO"};
-    int a = mu_clampi((MAS_VOWELS[g->s.vowels % MA_VOWELS_COUNT][0] + 16) / 32, 0, 4);
-    int b = mu_clampi((MAS_VOWELS[g->s.vowels % MA_VOWELS_COUNT][1] + 16) / 32, 0, 4);
-    char t[24];
-    mu_label(10, 4, "VOWELS", T_MID);
-    mu_cpy(t, VN[a], sizeof t);
-    mu_cat(t, " > ", sizeof t);
-    mu_cat(t, VN[b], sizeof t);
-    cv_text_r(230, 4, &AF_S, t, T_THEME, T_SURF);
-    /* the glide: a wave from one vowel's height to the other's, the dot where the voice is now */
-    float talk_ms = 1.0f;
-    {
-        int16_t v = mas_talk(&g->s);
-        for (int k = 0; k < v; ++k) talk_ms *= 1.0752f;     /* 10000^(1/127) */
-    }
-    float since = g->playing ? (float)(g->clock - g->hook_on_clock) / g->sr * 1000.0f : talk_ms;
-    float f = since / talk_ms;
-    if (f > 1.0f) f = 1.0f;
-    if (f < 0.0f) f = 0.0f;
-    int32_t ya = 30 + a * 8, yb = 30 + b * 8, py = -1, dotx = 10 + (int32_t)(f * 220.0f);
-    for (int32_t x = 10; x < 230; ++x) {
-        int32_t s = (x - 10) * 1000 / 220;          /* smoothstep from a to b */
-        int32_t sm = s * s / 1000 * (3000 - 2 * s) / 1000;
-        int32_t y = ya + (yb - ya) * sm / 1000;
-        if (py >= 0)
-            cv_line_t(x - 1, py, x, y, T_THEME, 2);
-        py = y;
-        if (x == dotx)
-            cv_rrect(x - 4, y - 4, 9, 9, 3, T_ACCENT, T_SURF);
-    }
-    const mas_sound *hk = mas_of(g, MA_HOOK);
-    if (hk->engine != MAS_VOICE)
-        mu_label(10, 66, "HOOK: OOH SINGS THESE", T_DIM);
-    /* the choir */
-    mu_label(10, 80, "CHOIR", T_MID);
-    if (g->s.snd[3] != MA_KIT_EURO) {
-        mu_label(64, 80, "KIT EURO BRINGS THE CHOIR", T_DIM);
+    int32_t cx = 62, cy = 62, r = 46;
+    mu_circle(cx, cy, r, T_LINE);
+    cv_text_in(cx - 10, cy - r - 2 - 11, 20, &AF_S, "F", T_DIM, T_SURF);
+    cv_rrect(cx - 6, cy - 6, 13, 13, 6, T_MID, T_SURF);
+    if (g->s.p3mode == MA_P3_OFF) {
+        mu_label(130, 30, "OFF:", T_ACCENT);
+        mu_label(130, 46, "THE SOLO IN", T_DIM);
+        mu_label(130, 62, "THE HORNS' PLACE", T_DIM);
+        mu_label(130, 86, "MODE TURNS IT ON", T_DIM);
         return;
     }
-    bool lit = g->playing && (float)(g->clock - g->choir_clock) < g->sr * 0.6f;
-    static const char *const CN[2] = {"OH", "AH"};
-    for (int bar = 0; bar < 2; ++bar)
-        for (int i = 0; i < 16; i += 2) {
-            int32_t x = 10 + bar * 112 + i * 7;
-            int d = g->s.vox == MA_VOX_OFF ? -1 : mu_choir_at(g->s.choir, bar, i);
-            if (d < 0) {
-                cv_rect(x + 4, 104, 3, 3, T_LINE);
-                continue;
-            }
-            const char *nm = CN[d - MA_DR_OH];
-            int32_t w = text_w(&AF_S, nm) + 8;
-            bool on = lit && g->choir_last == d;
-            cv_rrect(x, 97, w, 17, 3, on ? T_ACCENT : T_THEME, T_SURF);
-            cv_text_in(x, 97 + CAP_IN(S, 17), w, &AF_S, nm, T_INK, on ? T_ACCENT : T_THEME);
-            i += 2 * ((w + 13) / 14);              /* (room for the word) */
-            i -= 2;
+    float a = g->p3_angle / 360.0f;
+    float s = mu_sin(a), c = mu_sin(a + 0.25f);
+    float dist = 0.45f + 0.55f * (float)g->s.p3dist / 100.0f;
+    int32_t px = cx + (int32_t)(s * (float)r * dist), py = cy - (int32_t)(c * (float)r * dist);
+    bool lit = g->playing && (float)(g->clock - g->solo_on_clock) < g->sr * 0.25f;
+    cv_rrect(px - 5, py - 5, 11, 11, 5, lit ? T_ACCENT : T_THEME, T_SURF);
+    /* the side view: the height */
+    int32_t sx = 186, sy = 62;
+    cv_rect(sx - 30, sy, 60, 1, T_LINE);
+    cv_rrect(sx - 5, sy - 5, 11, 11, 5, T_MID, T_SURF);
+    int32_t hy = sy - (int32_t)(((float)g->s.p3height - 50.0f) / 50.0f * 30.0f);
+    cv_rrect(sx + 16, hy - 4, 9, 9, 4, T_THEME, T_SURF);
+    mu_label(150, 100, "HEADPHONES", T_DIM);
+}
+
+/* PERC: every lane over the bar as the style plays it, the step lit */
+static void mu_panel_perc(ma_ui *u)
+{
+    const ma_groove *g = u->g;
+    static const char *const nm[6] = {"CONGA", "BONGO", "TIMBAL", "EXTRA", "CLAVE", "OTHER"};
+    int bar = g->bar < 0 ? 0 : g->bar;
+    for (int r = 0; r < 6; ++r) {
+        int32_t y = 5 + r * 19;
+        uint32_t bits = ma_lane_bits(g, r, bar);
+        mu_label(10, y + 2, nm[r], bits ? T_MID : T_DIM);
+        for (int k = 0; k < 16; ++k) {
+            int32_t x = 62 + k * 10;
+            bool on = (bits >> k) & 1u, now = g->playing && g->step == k;
+            cv_rrect(x, y, 8, 13, 2, on ? (now ? T_ACCENT : r == 4 ? T_THEME : ux_mix(T_SURF, T_ACCENT, 70)) : mu_well(), T_SURF);
         }
-    if (g->s.vox == MA_VOX_OFF)
-        cv_text_r(230, 80, &AF_S, "VOX OFF", T_DIM, T_SURF);
+    }
 }
 
 static void mu_panel_key(ma_ui *u)
@@ -657,46 +648,27 @@ static void mu_panel_key(ma_ui *u)
     }
 }
 
+/* GROOVE: the piano's, the bass's and the clave's last bar */
 static void mu_panel_groove(ma_ui *u)
 {
     const ma_groove *g = u->g;
-    static const char *const rows[4] = {"KICK", "CLAP", "HAT", "BASS"};
+    static const char *const rows[4] = {"PIANO", "BASS", "HORNS", "CLAVE"};
     uint16_t m[4];
-    m[0] = g->drum_last[MA_DR_KICK];
-    m[1] = (uint16_t)(g->drum_last[MA_DR_SNARE] | g->drum_last[MA_DR_CLAP]);
-    m[2] = (uint16_t)(g->drum_last[MA_DR_HAT] | g->drum_last[MA_DR_OPEN]);
-    m[3] = g->hits_last[MA_BASS];
+    m[0] = g->hits_last[MA_PIANO];
+    m[1] = g->hits_last[MA_BASS];
+    m[2] = g->hits_last[MA_HORNS];
+    m[3] = (uint16_t)ma_lane_bits(g, 4, g->bar < 1 ? 0 : g->bar - 1);
     for (int r = 0; r < 4; ++r) {
         int32_t y = 10 + r * 26;
         mu_label(10, y + 2, rows[r], T_MID);
         for (int k = 0; k < 16; ++k) {
-            bool on = g->playing && ((m[r] >> k) & 1);
-            int32_t x = 54 + k * 11;
-            cv_rrect(x, y, 9, 16, 2, on ? (r == 3 ? T_ACCENT : T_THEME) : mu_well(), T_SURF);
+            bool on = (g->playing || r == 3) && ((m[r] >> k) & 1);
+            int32_t x = 58 + k * 11;
+            cv_rrect(x, y, 9, 16, 2, on ? (r == 3 ? T_THEME : r == 1 ? T_ACCENT : ux_mix(T_SURF, T_ACCENT, 70)) : mu_well(), T_SURF);
         }
     }
     if (g->playing && g->step >= 0)
-        cv_rect(54 + g->step * 11, 112, 9, 2, T_ACCENT);
-}
-
-static void mu_panel_drums(ma_ui *u)
-{
-    const ma_groove *g = u->g;
-    mu_label(10, 6, g->s.snd[3] == MA_KIT_EURO ? "ONE-SHOTS AND THE CROWD" : "FELUCCA'S DRUM ENGINE", T_MID);
-    static const char *const nm[5] = {"KICK", "CLAP", "HAT", "OPEN", "CRASH"};
-    static const int LEN[5] = {70, 46, 12, 60, 100};
-    static const uint8_t DR[5] = {MA_DR_KICK, MA_DR_CLAP, MA_DR_HAT, MA_DR_OPEN, MA_DR_CRASH};
-    for (int i = 0; i < 5; ++i) {
-        int32_t x = 10 + i * 45, y = 30, h = 56;
-        int len = LEN[i] * (60 + g->s.snap * 4 / 10) / 100;
-        bool hit = g->playing && ((g->drum_hits[DR[i]] | (i == 1 ? g->drum_hits[MA_DR_SNARE] : 0)) >> (g->step < 0 ? 0 : g->step)) & 1u;
-        for (int k = 0; k < 40; ++k) {             /* the hit: a hard edge, then its decay */
-            int32_t a = k < 2 ? h : h * (len - k * len / 40) / (len > 0 ? len : 1);
-            a = a * mu_clampi(len * 2 - k * 3, 0, 100) / 100;
-            if (a > 0) cv_rect(x + k, y + h - a, 1, a, k < 2 ? T_ACCENT : ux_mix(T_SURF, T_THEME, hit ? 100 : 70));
-        }
-        cv_text_on(x, 94, &AF_S, nm[i], T_TEXT, T_SURF);
-    }
+        cv_rect(58 + g->step * 11, 112, 9, 2, T_ACCENT);
 }
 
 static void mu_panel_mix(ma_ui *u)
@@ -710,125 +682,46 @@ static void mu_panel_mix(ma_ui *u)
     }
 }
 
+/* SPACE: the room's size, the plate on the piano and the horns, the warmth, the width as bars */
 static void mu_panel_space(ma_ui *u)
 {
     const ma_groove *g = u->g;
-    mu_label(10, 6, "ECHOES ON THE BEAT", T_MID);
-    static const int GAP[MA_DTIME_COUNT] = {12, 24, 36, 48};   /* px a sixteenth .. a quarter, a beat 48 px */
-    int gap = GAP[g->s.dtime % MA_DTIME_COUNT];
-    int n = 1 + g->s.delay / 20;
-    for (int k = 0; k <= n && 14 + k * gap < 226; ++k) {
-        int32_t x = 14 + k * gap, h = 60 * (n + 1 - k) / (n + 1);
-        cv_rrect(x, 90 - h, 8, h, 2, k == 0 ? T_THEME : ux_mix(T_SURF, T_THEME, 80 - k * 10), T_SURF);
+    static const char *const nm[4] = {"ROOM", "PLATE", "WARMTH", "WIDTH"};
+    const uint8_t v[4] = {g->s.room, g->s.plate, g->s.warmth, g->s.width};
+    for (int i = 0; i < 4; ++i) {
+        int32_t y = 10 + i * 26, w = v[i] * 150 / 100;
+        mu_label(10, y + 2, nm[i], T_MID);
+        cv_rrect(70, y, 150, 14, 3, mu_well(), T_SURF);
+        if (w > 4)
+            cv_rrect(70, y, w, 14, 3, i == 1 ? T_ACCENT : T_THEME, mu_well());
     }
-    for (int b = 0; b < 5; ++b)
-        cv_rect(14 + b * 48, 96, 1, 6, T_MID);
 }
 
-/* the form: a bar a section, as tall as it is loud, the one playing in the accent, the key up over the last */
+/* ARC: a bar a section, as tall as it is full, the one playing in the accent */
 static void mu_panel_arc(ma_ui *u)
 {
     const ma_groove *g = u->g;
     if (!g->s.arc) {
         mu_label(10, 30, "ARC OFF", T_THEME);
-        mu_label(10, 50, "THE CHORUS ON AND ON:", T_MID);
-        mu_label(10, 66, "REC BREAKS, SEQ KEYS UP", T_MID);
+        mu_label(10, 50, "THE MONTUNO ON AND ON:", T_MID);
+        mu_label(10, 66, "SEQ BRINGS THE MAMBO IN AND OUT", T_MID);
+        mu_label(10, 82, "REC HITS THE CLAVE", T_MID);
         return;
     }
-    static const int LVL[MA_SECS] = {30, 52, 68, 88, 38, 100};
+    static const int LVL[MA_SECS] = {30, 55, 75, 100, 75, 95, 60};
     for (int k = 0; k < MA_SECS; ++k) {
-        int32_t x = 10 + k * 37, w = 33, h = LVL[k] * 74 / 100, top = 92 - h;
-        bool now = g->playing && !g->brk && g->sec == k, past = g->playing && !g->brk && k < g->sec;
-        uint16_t c = now ? T_ACCENT : past || !g->playing ? T_THEME : ux_mix(T_SURF, T_THEME, 45);
+        int32_t x = 10 + k * 32, w = 28, h = LVL[k] * 74 / 100, top = 92 - h;
+        bool skip = !g->s.mambo && (k == MA_SEC_MBO || k == MA_SEC_MON2 || k == MA_SEC_MONA);
+        bool now = g->playing && !g->desc && g->sec == k, past = g->playing && !g->desc && k < g->sec;
+        uint16_t c = skip ? T_LINE : now ? T_ACCENT : past || !g->playing ? T_THEME : ux_mix(T_SURF, T_THEME, 45);
         cv_rect(x, top, w, h, c);
-        if (now) {                                 /* how far into it */
+        if (now) {
             int len = ma_sec_len(g, k);
             int32_t p = (g->sec_bar * 16 + (g->step < 0 ? 0 : g->step)) * h / (len * 16 > 0 ? len * 16 : 1);
             cv_rect(x, 92 - p, w, 2, T_TEXT);
         }
-        cv_text_on(x, 98, &AF_S, ma_sec_short(k), now ? T_ACCENT : T_MID, T_SURF);
-        if (k == MA_SEC_CHORUS2 && g->s.keyup) {
-            char t[4] = "+1";
-            t[1] = (char)('0' + g->s.keyup);
-            cv_text_in(x, top - 15, w, &AF_S, t, T_THEME, T_SURF);
-        }
+        cv_text_on(x, 98, &AF_S, ma_sec_short(k), now ? T_ACCENT : skip ? T_DIM : T_MID, T_SURF);
     }
-}
-
-/* the hook as a roll: REPEAT bars of its notes, low to high, the step playing marked; ITALO's arpeggio as a zigzag */
-static void mu_panel_hook(ma_ui *u)
-{
-    const ma_groove *g = u->g;
-    char t[32], a[8];
-    int rep = ma_repeat_bars(&g->s);
-    bool arp = MA_STYLE[g->s.style].hook == 1;     /* (HOOK_ARP) */
-    if (g->s.speed == MA_SPEED_PAD) {              /* a pad: the chords held, a block each, the one sounding lit */
-        mu_label(10, 4, "A PAD ON THE CHORDS", T_MID);
-        int bpc = ma_bars_per_chord(&g->s), n = g->nloop < 4 ? g->nloop : 4, now = g->playing ? ma_chord_now(g) : -1;
-        int32_t gap = 4, w = (224 - gap * (n - 1)) / (n > 0 ? n : 1);
-        for (int i = 0; i < n; ++i) {
-            int32_t x = 10 + i * (w + gap);
-            cv_rrect(x, 30, w, 60, 4, i == now ? T_THEME : mu_well(), T_SURF);
-            cv_text_in(x, 30 + CAP_IN(S, 60), w, &AF_S, g->loop[i].name, i == now ? T_INK : T_TEXT,
-                       i == now ? T_THEME : mu_well());
-        }
-        char b[24], a2[8];
-        mu_fmt_int(a2, bpc);
-        mu_cpy(b, a2, sizeof b);
-        mu_cat(b, bpc == 1 ? " BAR A CHORD" : " BARS A CHORD", sizeof b);
-        cv_text_in(10, 100, 224, &AF_S, b, T_DIM, T_SURF);
-        return;
-    }
-    if (arp) {
-        mu_cpy(t, "AN ARPEGGIO THROUGH THE CHORD", sizeof t);
-    } else {
-        mu_cpy(t, "THE HOOK, ", sizeof t);
-        mu_fmt_int(a, rep);
-        mu_cat(t, a, sizeof t);
-        mu_cat(t, rep == 1 ? " BAR" : " BARS", sizeof t);
-    }
-    mu_label(10, 4, t, T_MID);
-    int32_t x0 = 10, w = 220, y0 = 24, h = 76, n = rep * 16;
-    int lo = g->s.range >= 2 ? -3 : 0, hi = g->s.range >= 2 ? 10 : 7;
-    for (int b = 0; b <= rep; ++b)
-        cv_rect(x0 + b * w / rep - (b == rep), y0, 1, h, T_LINE);
-    int pos = -1;
-    if (g->playing && g->step >= 0) {
-        int sb = g->s.arc ? g->sec_bar : g->bar;
-        pos = (sb % rep) * 16 + g->step;
-    }
-    if (arp) {
-        static const uint8_t ORD[8] = {0, 1, 2, 3, 4, 3, 2, 1};
-        for (int k = 0; k < n; ++k) {
-            int32_t x = x0 + k * w / n, y = y0 + h - 8 - ORD[k % 8] * (h - 12) / 4;
-            cv_rrect(x + 1, y, w / n - 2 > 2 ? w / n - 2 : 2, 5, 2, k == pos ? T_ACCENT : T_THEME, T_SURF);
-        }
-    } else {
-        for (int k = 0; k < n; ++k) {
-            if (g->hook[k] == -128)
-                continue;
-            int len = g->hook_len[k];
-            if (g->hook_tup[k]) {                  /* a tuplet: its notes evenly over its span, a run */
-                int tn = g->hook_tup[k], dir = g->hook[k] >= 5 ? -1 : 1;
-                bool on = pos >= k && pos < k + len;
-                for (int j = 0; j < tn; ++j) {
-                    int st = mu_clampi(g->hook[k] + dir * j, lo, hi);
-                    int32_t x = x0 + k * w / n + j * (len * w / n) / tn, ww = (len * w / n) / tn - 1;
-                    int32_t y = y0 + h - 7 - (st - lo) * (h - 10) / (hi - lo > 0 ? hi - lo : 1);
-                    cv_rrect(x + 1, y, ww > 2 ? ww : 2, 5, 2, on ? T_ACCENT : T_TEXT, T_SURF);
-                }
-                continue;
-            }
-            int32_t x = x0 + k * w / n, ww = len * w / n - 2;
-            int32_t y = y0 + h - 7 - (mu_clampi(g->hook[k], lo, hi) - lo) * (h - 10) / (hi - lo > 0 ? hi - lo : 1);
-            bool on = pos >= k && pos < k + len;
-            cv_rrect(x + 1, y, ww > 2 ? ww : 2, 5, 2, on ? T_ACCENT : T_THEME, T_SURF);
-        }
-    }
-    if (pos >= 0)
-        cv_rect(x0 + pos * w / n, y0 + h + 3, w / n > 2 ? w / n : 2, 2, T_ACCENT);
-    if (!ma_in_chorus(g) && g->playing && !(g->s.arc && g->sec == MA_SEC_BREAK))
-        cv_text_r(230, 4, &AF_S, "RESTS TILL THE CHORUS", T_DIM, T_SURF);
 }
 
 static void mu_panel_sets(ma_ui *u)
@@ -845,15 +738,14 @@ static void mu_panel_sets(ma_ui *u)
     }
 }
 
-/* MENU: what Manta is, and the CPU (the audio's load) as Tuna's MENU > SYSTEM > INFO shows it: a row, its value in
- * the theme and the unit small beside it, taken every MU_CPU_MS */
+/* MENU: what Manta is, and the CPU (the audio's load) as Tuna's MENU > SYSTEM > INFO shows it */
 #define MU_CPU_MS 500
 static void mu_panel_menu(ma_ui *u)
 {
     char cpu[8];
     cv_text_on(30, 14, &AF_M, "MANTA " MA_VERSION, T_TEXT, T_SURF);
-    cv_text_on(30, 38, &AF_S, "90S EURODANCE FOR THE FM-1", T_MID, T_SURF);
-    cv_text_on(30, 54, &AF_S, "ON FELUCCA, AFTER TUNA", T_MID, T_SURF);
+    cv_text_on(30, 38, &AF_S, "LATIN GROOVES FOR THE FM-1", T_MID, T_SURF);
+    cv_text_on(30, 54, &AF_S, "ON FELUCCA, AFTER SILL", T_MID, T_SURF);
     cv_rect(30, 72, 180, 1, T_LINE);
     int32_t vy = 80;
     cv_text_on(30, vy, &AF_M, "CPU", T_TEXT, T_SURF);
@@ -871,15 +763,14 @@ static void mu_draw_panel(ma_ui *u)
         switch (u->page) {
         case MU_PG_PLAY: mu_panel_play(u); break;
         case MU_PG_SOUND: mu_panel_sound(u); break;
-        case MU_PG_TONE: mu_panel_tone(u); break;
-        case MU_PG_VOX: mu_panel_vox(u); break;
+        case MU_PG_SOLO: mu_panel_solo(u); break;
+        case MU_PG_PAN3D: mu_panel_pan3d(u); break;
+        case MU_PG_PERC: mu_panel_perc(u); break;
         case MU_PG_KEY: mu_panel_key(u); break;
         case MU_PG_GROOVE: mu_panel_groove(u); break;
-        case MU_PG_DRUMS: mu_panel_drums(u); break;
         case MU_PG_MIX: mu_panel_mix(u); break;
         case MU_PG_SPACE: mu_panel_space(u); break;
         case MU_PG_ARC: mu_panel_arc(u); break;
-        case MU_PG_HOOK: mu_panel_hook(u); break;
         case MU_PG_SETS: mu_panel_sets(u); break;
         case MU_PG_MENU: mu_panel_menu(u); break;
         }
@@ -892,7 +783,7 @@ static void mu_background(void)
     cv_begin(240, 40, T_BG);
     for (int y = 0; y < 240; y += 40)
         cv_blit(0, (uint32_t)y);
-    if (ux.style == ST_LINE) {                    /* LINE: no cards, 1 px rules between the areas */
+    if (ux.style == ST_LINE) {
         cv_begin(240, 1, T_RULE);
         cv_blit(0, MU_HEAD + 1);
         cv_blit(0, MU_CARD_Y + MU_CARD_H + 1);
@@ -969,9 +860,6 @@ static void mu_load_set(ma_ui *u, int i)
     ma_all_off(g);
     g->s = s;
     g->next_style = g->next_song = -1;
-    g->perf_up = 0;
-    g->perf_next = -1;
-    g->tr = 0;
     ma_rebuild(g);
     g->sound_sig++;
 }
@@ -982,7 +870,7 @@ void mu_knob(ma_ui *u, int k, int d)
     char m[24], a[8];
     switch (k) {
     case MU_K_SELECT:
-        g->s.bpm = (uint8_t)mu_clampi(g->s.bpm + d, 60, 200);
+        g->s.bpm = (uint8_t)mu_clampi(g->s.bpm + d, 60, 220);
         u->hot = 9;
         u->hot_ms = 700;
         u->changed = true;
@@ -1010,7 +898,11 @@ void mu_knob(ma_ui *u, int k, int d)
         u->hot_ms = 700;
         if (c->kind == SC_OFF)
             return;
-        if (c->kind == SC_LOAD) {                  /* turned right: the set, at once */
+        if (mu_card_grey(u, c)) {                  /* (greyed: says why) */
+            mu_msg(u, "MODE FIRST");
+            return;
+        }
+        if (c->kind == SC_LOAD) {
             if (d > 0 && ((u->set_used >> u->set_sel) & 1u)) {
                 mu_load_set(u, u->set_sel);
                 mu_cpy(m, "SET ", sizeof m);
@@ -1025,7 +917,7 @@ void mu_knob(ma_ui *u, int k, int d)
             }
             return;
         }
-        if (c->kind == SC_STORE) {                 /* turned right: what plays now into the set */
+        if (c->kind == SC_STORE) {
             if (d > 0) {
                 u->sets[u->set_sel] = g->s;
                 u->set_used |= (uint8_t)(1u << u->set_sel);
@@ -1037,7 +929,7 @@ void mu_knob(ma_ui *u, int k, int d)
             }
             return;
         }
-        if (c->kind == SC_CLEAR) {                 /* three turns right within a second */
+        if (c->kind == SC_CLEAR) {
             if (d > 0) {
                 u->clear_turns++;
                 u->clear_ms = 1000;
@@ -1053,21 +945,21 @@ void mu_knob(ma_ui *u, int k, int d)
             return;
         }
         int v = mu_get(u, c) + d * c->step;
-        if (c->kind == SC_PAL)
-            v = mu_wrap(v, (int)NPALETTES);
+        if (c->kind == SC_PAL || c->kind == SC_ANGLE)
+            v = c->kind == SC_PAL ? mu_wrap(v, (int)NPALETTES) : mu_wrap(v, 36);
         else if (c->kind == SC_SND || c->kind == SC_KEY || c->kind == SC_LOOP)
             v = c->lo + mu_wrap(v - c->lo, c->hi - c->lo + 1);
         v = mu_clampi(v, c->lo, c->hi);
         mu_set(u, c, v);
         if (c->off == SS_(key) || c->off == SS_(scale) || c->off == SS_(chords) || c->off == SS_(bars) ||
-            c->off == SS_(speed) || c->off == SS_(range) || c->off == SS_(repeat))
+            c->off == SS_(snd) + 2 || c->off == SS_(snd) + 3)
             ma_rebuild(g);
         if (c->off == SS_(scale))
             mu_msg(u, SN_SCALE_LONG[g->s.scale % MA_SCALES]);
         if (c->off == SS_(palette) || c->off == SS_(look))
             mu_apply_style(u);
-        if (c->off == SS_(arc) && g->playing) {    /* ARC turned on while playing: from a chorus */
-            g->sec = MA_SEC_CHORUS;
+        if (c->off == SS_(arc) && g->playing) {    /* ARC turned on while playing: from a montuno */
+            g->sec = MA_SEC_MON;
             g->sec_bar = 0;
         }
         u->changed = true;
@@ -1091,12 +983,12 @@ void mu_button(ma_ui *u, int b, bool down)
         }
         return;
     }
-    if (b == MU_B_REC) {                           /* BREAK: down and up both count */
+    if (b == MU_B_REC) {                           /* BAND HIT: down and up both count */
         if (!g->playing) {
             if (down) mu_msg(u, "PLAY FIRST");
             return;
         }
-        ma_break(g, down);
+        ma_band_hit(g, down);
         return;
     }
     if (!down)
@@ -1104,7 +996,7 @@ void mu_button(ma_ui *u, int b, bool down)
     switch (b) {
     case MU_B_PLAY: ma_play(g, !g->playing); break;
     case MU_B_SEQ:
-        if (g->playing) ma_keyup(g);
+        if (g->playing) ma_mambo(g);
         else mu_msg(u, "PLAY FIRST");
         break;
     case MU_B_OCTDN: case MU_B_OCTUP: {
@@ -1117,13 +1009,13 @@ void mu_button(ma_ui *u, int b, bool down)
         mu_msg(u, m);
         break;
     }
-    case MU_B_FX: mu_goto_page(u, u->page == MU_PG_SOUND ? MU_PG_TONE : MU_PG_SOUND); break;
-    case MU_B_LFO: mu_goto_page(u, MU_PG_VOX); break;
+    case MU_B_FX: mu_goto_page(u, MU_PG_SOUND); break;
+    case MU_B_LFO: mu_goto_page(u, u->page == MU_PG_SOLO ? MU_PG_PAN3D : MU_PG_SOLO); break;
     case MU_B_SCL: mu_goto_page(u, MU_PG_KEY); break;
     case MU_B_ARP: mu_goto_page(u, MU_PG_GROOVE); break;
-    case MU_B_EDIT: mu_goto_page(u, MU_PG_DRUMS); break;
+    case MU_B_EDIT: mu_goto_page(u, MU_PG_PERC); break;
     case MU_B_GLO: mu_goto_page(u, u->page == MU_PG_MIX ? MU_PG_SPACE : MU_PG_MIX); break;
-    case MU_B_ENV: mu_goto_page(u, u->page == MU_PG_ARC ? MU_PG_HOOK : MU_PG_ARC); break;
+    case MU_B_ENV: mu_goto_page(u, MU_PG_ARC); break;
     case MU_B_SAVE: mu_goto_page(u, MU_PG_SETS); break;
     default: break;
     }
@@ -1137,7 +1029,7 @@ void mu_key(ma_ui *u, int note, bool down)
     uint32_t bit = 1u << k;
     if (down) {
         u->keys_down |= bit;
-        u->key_sent[k] = note + 12 * u->oct;      /* (the octave it was pressed in: its release lets go of the same) */
+        u->key_sent[k] = note + 12 * u->oct + 12;  /* (a trumpet's register: an octave over the keys as printed) */
         ma_key(u->g, k, u->key_sent[k], true);
     } else {
         u->keys_down &= ~bit;
@@ -1149,13 +1041,13 @@ void mu_key(ma_ui *u, int note, bool down)
 void mu_tick(ma_ui *u, int ms)
 {
     ma_groove *g = u->g;
-    if ((u->cpu_ms -= ms) <= 0) {                  /* MENU's CPU: a reading every MU_CPU_MS, not every frame */
+    if ((u->cpu_ms -= ms) <= 0) {
         u->cpu_ms = MU_CPU_MS;
         u->cpu_shown = u->cpu;
     }
     ma_seen n;
     while (ma_feed_pop(g, &n))
-        ;                                          /* (the panels read the groove's own state) */
+        ;
     if (g->msg_new) {
         g->msg_new = 0;
         mu_msg(u, g->msg);

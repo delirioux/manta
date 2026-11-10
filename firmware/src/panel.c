@@ -123,7 +123,7 @@ static void settings_init(void)
     if (settings.magic != SETTINGS_MAGIC || settings.palette >= NPALETTES) {
         settings.magic = SETTINGS_MAGIC;
 #if FELUCCA_MANTA
-        settings.palette = UI_LASER_INDEX;    /* Manta: LASER, its own (ma_ui.h) */
+        settings.palette = UI_HAVANA_INDEX;    /* Manta: HAVANA, its own (ma_ui.h) */
 #else
         settings.palette = UI_GREY_INDEX;      /* GREY (default; named MONO before 1.0.2) */
 #endif

@@ -49,7 +49,7 @@ sed -e 's|WebAssembly.instantiate(m.wasm, {})|WebAssembly.instantiate(m.wasm, { 
 grep -q "wasi_snapshot_preview1" "$OUT/worklet.js" || { echo "manta emu: the worklet's instantiate line moved"; exit 1; }
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@PREVIEW@/ (Manta $DAV)/g" \
     -e 's|<title>Felucca</title>|<title>Manta</title>|' \
-    -e 's|content="Felucca, the multi-engine synth firmware for the FM-1, running in your browser: the same code the instrument runs."|content="Manta, generative 90s eurodance for the FM-1, running in your browser: the same code the instrument runs."|' \
+    -e 's|content="Felucca, the multi-engine synth firmware for the FM-1, running in your browser: the same code the instrument runs."|content="Manta, generative Latin grooves for the FM-1, running in your browser: the same code the instrument runs."|' \
     -e 's|const STORE = "felucca-emu-flash"|const STORE = "manta-emu-flash"|' -e 's|"felucca-emu-knobs"|"manta-emu-knobs"|' -e 's|"felucca-emu-knobmode"|"manta-emu-knobmode"|' \
     -e 's|fetch("felucca.wasm")|fetch("manta.wasm")|' -e 's|felucca.wasm: |manta.wasm: |' \
     -e 's|  Felucca by Leo Kuroshita, Hügelton Instruments|  Manta on Felucca · Felucca by Leo Kuroshita, Hügelton Instruments|' \

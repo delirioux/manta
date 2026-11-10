@@ -11,40 +11,40 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | --- | --- |
 | Start / stop | **PLAY**: with the intro (ARC on) |
 | Tempo / volume | **SELECT** / **MASTER** |
-| Another style | **PRESETS**: one of ten, on the next bar line (CLUB: EUROSTOMP, VIKING, BUBBLEGUM, HEARTACHE, RAVE; RADIO: SKANK, PIANOHOUSE, PARTY, BALLAD, ITALO) |
-| Another song | **ALGORITHM**: a new chord loop, bass line, hook and sounds in the same style, on the next bar |
-| Break it down | **REC**: tapped, the stabs alone three bars, a roll, the chorus back; held, the break until you let go |
-| Key change | **SEQ**: the song a semitone up from the next bar; again +2, +3, then home |
-| Play the hook | **Keys**: as you press them; hold **HOME**, KNOB 3: **SNAP** on, snapped to the scale. **OCT-** / **OCT+**: their octave |
+| Another style | **PRESETS**: one of ten, on the next bar line (CALIENTE: SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA; NOCHE: SON, CHA-CHA, BOLERO, BOSSA, TANGO) |
+| Another song | **ALGORITHM**: a new chord loop, riff, melody and sounds in the same style, on the next bar |
+| Band hit | **REC** tapped: the whole band hits the clave's figure on the next bar (a cierre) |
+| Descarga | **REC** held: the percussion alone until you let go, then a timbal roll and the band back on the bar line |
+| Mambo | **SEQ**: the horn section into its riff from the next bar; again to take it out |
+| Play the solo | **Keys**: the solo trumpet as you press them; hold **HOME**, KNOB 3: **SNAP** onto the scale. **OCT-** / **OCT+**: their octave |
 
 ## The four knobs (PLAY)
 
 | What | How |
 | --- | --- |
-| The filter | KNOB 1: **LIFT**, the ceiling on the stabs (and the hook in some styles) |
-| The pump | KNOB 2: **PUMP**, how deep the mix ducks on each kick |
-| The choir | KNOB 3: **VOX**, OFF, in the CHORUS, or ALL the song |
-| Busier | KNOB 4: **ENERGY**, sixteenth hats, pickup kicks, extra stabs |
+| How hot | KNOB 1: **HEAT**, the soft strokes, the quinto's calls, the accents, the dynamics |
+| The clave | KNOB 2: **CLAVE**, 3-2 or 2-3 |
+| The solo | KNOB 3: **SOLO**, OFF, PHRASE (the band's trumpet plays) or KEYS (only you) |
+| Hits on their own | KNOB 4: **HITS**, OFF, every 4, 8 or 16 bars of the montuno |
 
 ## Sound
 
 | What | How |
 | --- | --- |
-| The parts' sounds | **FX**: **STABS**, **BASS**, **HOOK** (sixteen each), **DRUMS** (EURO, SESSION, MACHINE) |
-| Tone | **FX** again: **RESO**, **DRIVE**, **DETUNE**, **CRUSH** |
-| The OOH and the choir | **LFO**: **VOWELS**, **SHIFT**, **CHOIR** (OH, AH, MIX), **GLIDE** |
-| Drums | **EDIT**: **KIT**, **KICK** (tuned to each chord), **CLAP**, **CRASH** |
+| The parts' sounds | **FX**: **PIANO**, **BASS**, **HORNS** (eight each), **PERC** (a style's percussion set) |
+| The solo | **LFO**: **INSTR**, **MUTE** (OPEN, CONE, CUP, HARMON, WAH), **PHRASE** (GEN; TRAD and MIX coming), **BELL** |
+| PAN 3D | **LFO** again: **MODE** (OFF, FIXED, ORBIT, STEP), **ANGLE**, **HEIGHT**, **DIST**; on headphones |
+| Percussion | **EDIT**: **CONGAS** (TUMBAO, MARCHA, BOLERO), **BONGO** (MARTIL, BELL), **TIMBAL** (SHELL, BELL), **EXTRA** (GUIRO, SHAKER, CABASA, WASH); AUTO is the style's own |
 | Levels | **GLO**: the four parts |
-| Room | **GLO** again: **REVERB**, **DELAY**, **TIME**, **WIDTH** |
+| Room | **GLO** again: **ROOM**, **PLATE**, **WARMTH**, **WIDTH** |
 
 ## The music
 
 | What | How |
 | --- | --- |
-| Key and chords | **SCL**: **KEY**, **SCALE**, **CHORDS** (twelve loops), **BARS** a chord |
-| Groove | **ARP**: **SWING**, **HATS**, **BASS** (OFFBEAT, OCTAVE, ROLLING, REGGAE, LONG, BOUNCE), **FILLS** |
-| The song's form | **ENV**: **ARC** (intro, verse, pre, chorus, break, chorus), **VERSE**, **CHORUS** bars, **KEY UP** for the last chorus |
-| The hook | **ENV** again: **SPEED** (SLOW, MID, FAST, PAD), **RANGE**, **GATE**, **REPEAT** |
+| Key and chords | **SCL**: **KEY**, **SCALE** (MIN, MAJ, DOR, HARM), **CHORDS**, **BARS** a chord |
+| Groove | **ARP**: **SWING**, **PIANO** and **BASS** (pattern 1 to 4), **FILLS** |
+| The song's form | **ENV**: **ARC** (intro, verso, montuno, mambo, montuno, moña, cierre), **VERSO** and **MON** bars, **MAMBO** in the form |
 
 ## Keep and connect
 
@@ -52,5 +52,5 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | --- | --- |
 | Sets | **SAVE**: eight sets. **SET** picks, **LOAD** / **STORE** turned right, **CLEAR** turned right three times |
 | Colour, CPU | Hold **HOME**: MENU, **COLOR**, **LOOK**, **SNAP** (the keys onto the scale) |
-| MIDI out | STABS on channel 1, BASS 2, HOOK 3, drums 10 (the choir is not sent) |
+| MIDI out | PIANO on channel 1, BASS 2, HORNS 3, percussion 10 (General MIDI notes) |
 | Saving | Automatic, while stopped |

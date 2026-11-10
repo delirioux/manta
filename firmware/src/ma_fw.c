@@ -10,7 +10,7 @@
  *   the main loop (main.c -> ma_frame, ma_input): the panel into the controls (the audio ISR held off while one
  *     acts), a part's sound loaded when it changed (a preset load is the main loop's), the cards into the tracks,
  *     the LEDs, the settings and sets saved while stopped, the screen.
- * Tracks: 1 STABS, 2 BASS, 3 HOOK, 4 DRUMS (ma_sounds.h). */
+ * Tracks: 1 PIANO, 2 BASS, 3 HORNS, 4 PERC (ma_sounds.h). */
 #include "ma_groove.h"
 #include "ma_sounds.h"
 #include "ma_ui.h"
@@ -24,27 +24,21 @@ static ma_ui ma_u;
 static ma_settings ma_applied;
 static bool ma_applied_ok;
 static uint8_t ma_loaded_sig = 0xFF;
-static int8_t ma_loaded_snd[MA_PARTS] = {-1, -1, -1, -1};
+static int8_t ma_loaded_snd[MA_PARTS] = {-1, -1, -1, -1};   /* (PERC: the kit, loaded once a style or a set) */
 
 /* ---- the audio ISR --------------------------------------------------------------------------------------------- */
 static void ma_sound(void *ctx, const ma_event *e)
 {
     (void)ctx;
     uint32_t p = e->part % MA_PARTS;
-    int n = p == MA_DRUMS ? mas_drum_note(&ma_g.s, e->note) : e->note;
-    if (n < 0)                                                /* (the choir on a kit without it) */
-        return;
+    int n = p == MA_PERC ? mas_drum_note(e->note) : e->note;
     if (e->on)
         trk_note_on(&trk[p], (uint32_t)n, e->vel);
     else
         trk_note_off(&trk[p], (uint32_t)n);
-    if (p == MA_DRUMS && ma_is_choir(e->note))                /* (the choir has no General MIDI drum: not sent) */
-        return;
-    /* MIDI out: STABS on channel 1, BASS 2, HOOK 3, the drums 10 (General MIDI's) */
-    uint32_t ch = p == MA_DRUMS ? 9u : p, st = (e->on ? 0x90u : 0x80u) | ch, cin = st >> 4;
-    int dr = ma_drum_of(e->note);
-    int mn = p == MA_DRUMS ? (int)(dr == MA_DR_KICK ? 36 : dr == MA_DR_SNARE ? 38 : dr == MA_DR_CLAP ? 39
-                                   : dr == MA_DR_HAT ? 42 : dr == MA_DR_OPEN ? 46 : 49) : n;
+    /* MIDI out: PIANO on channel 1, BASS 2, HORNS 3, the percussion 10 (General MIDI's) */
+    uint32_t ch = p == MA_PERC ? 9u : p, st = (e->on ? 0x90u : 0x80u) | ch, cin = st >> 4;
+    int mn = p == MA_PERC ? mas_gm_note(e->note) : n;
     midi_out_event(cin | st << 8 | (uint32_t)mn << 16 | (uint32_t)(e->on ? e->vel : 0u) << 24);
 }
 
@@ -62,8 +56,8 @@ static void ma_audio_post(int32_t *out, uint32_t n)
 
 /* ---- the settings: one record in Felucca's first project object, the sets in the second; saved only while stopped
  * (the flash is the code's: XIP, writing it while playing would stall the audio) ---- */
-#define MA_REC_MAGIC 0x31534953u                             /* "SIS1" */
-#define MA_SETS_MAGIC 0x31544544u                            /* "DET1" */
+#define MA_REC_MAGIC 0x314E414Du                             /* "MAN1" */
+#define MA_SETS_MAGIC 0x3154534Du                            /* "MST1" */
 typedef struct { uint32_t magic; uint16_t size, ver; ma_settings s; } ma_record;
 typedef struct { uint32_t magic; uint16_t size; uint8_t used, pad; ma_settings s[MA_SETS]; } ma_sets_rec;
 static uint32_t ma_save_ms;
@@ -153,8 +147,8 @@ static void ma_fm6_load(track_t *t, const uint8_t *packed)
 static void ma_load_part(uint32_t k)
 {
     undo_depth++;                                            /* (no undo copy of Manta's loads) */
-    if (k == MA_DRUMS) {
-        set_engine_of(&trk[k], mas_kit_engine(ma_g.s.snd[3]));
+    if (k == MA_PERC) {                                      /* the kit: the SAMPLE engine's set DRUMS */
+        set_engine_of(&trk[k], mas_kit_engine());
         apply_preset_to(&trk[k], 0u);
         undo_depth--;
         return;
@@ -176,9 +170,9 @@ static void ma_apply(void)
     const ma_settings *s = &ma_g.s;
     bool all = !ma_applied_ok, every = all || ma_loaded_sig != ma_g.sound_sig;   /* (a style or a set: every part) */
     for (uint32_t k = 0; k < MA_PARTS; ++k)                  /* a sound changed (a card, a style, a set): load it */
-        if (every || ma_loaded_snd[k] != (int8_t)s->snd[k]) {
+        if (every || (k < MA_PERC && ma_loaded_snd[k] != (int8_t)s->snd[k]) || ma_loaded_snd[k] < 0) {
             ma_load_part(k);
-            ma_loaded_snd[k] = (int8_t)s->snd[k];
+            ma_loaded_snd[k] = (int8_t)(k < MA_PERC ? s->snd[k] : 0);
             all = true;
         }
     ma_loaded_sig = ma_g.sound_sig;
@@ -238,7 +232,7 @@ static void ma_fw_init(void)
     for (i = 0; i < NTRK; i++) {
         track_t *t = &trk[i];
         track_defaults(t);
-        set_engine_of(t, i == 3u ? mas_kit_engine(MA_KIT_EURO) : MAS_ANALOG);
+        set_engine_of(t, i == 3u ? mas_kit_engine() : MAS_ANALOG);
         apply_preset_to(t, 0u);
         t->engine = t->eng_req;
         track_defaults_steps(t);                             /* (Felucca's sequencer stays empty) */
@@ -294,14 +288,14 @@ static void ma_input(void)
     ma_notes_prev = notes;
 }
 
-/* the LEDs: the page's button, REC while a BREAK holds, SEQ while the key is up, PLAY green while playing; the keys: the
- * ones held, else the chord's tones (the notes that fit right now) */
+/* the LEDs: the page's button, REC while a band hit or the descarga plays, SEQ with the mambo, PLAY green while playing;
+ * the keys: the ones held, else the chord's tones (the notes that fit right now) */
 static void ma_leds(void)
 {
     static const uint8_t PAGE_BTN[MU_PAGES] = {
-        [MU_PG_PLAY] = B_HOME, [MU_PG_SOUND] = B_FX, [MU_PG_TONE] = B_FX, [MU_PG_VOX] = B_LFO, [MU_PG_KEY] = B_SCL,
-        [MU_PG_GROOVE] = B_ARP, [MU_PG_DRUMS] = B_EDIT, [MU_PG_MIX] = B_GLO, [MU_PG_SPACE] = B_GLO, [MU_PG_ARC] = B_ENV,
-        [MU_PG_HOOK] = B_ENV, [MU_PG_SETS] = B_SAVE, [MU_PG_MENU] = B_HOME};
+        [MU_PG_PLAY] = B_HOME, [MU_PG_SOUND] = B_FX, [MU_PG_SOLO] = B_LFO, [MU_PG_PAN3D] = B_LFO, [MU_PG_PERC] = B_EDIT,
+        [MU_PG_KEY] = B_SCL, [MU_PG_GROOVE] = B_ARP, [MU_PG_MIX] = B_GLO, [MU_PG_SPACE] = B_GLO, [MU_PG_ARC] = B_ENV,
+        [MU_PG_SETS] = B_SAVE, [MU_PG_MENU] = B_HOME};
     static uint8_t ready;
     uint8_t nl[FM1_NCOL] = {0}, nd[FM1_NCOL] = {0};
     uint32_t k, c;
@@ -310,8 +304,8 @@ static void ma_leds(void)
         ready = 1;
     }
     led_put(nl, panel.btn[PAGE_BTN[ma_u.page % MU_PAGES]], 1);
-    led_put(nl, panel.btn[B_REC], ma_g.brk);
-    led_put(nl, panel.btn[B_SEQ], ma_g.tr > 0);
+    led_put(nl, panel.btn[B_REC], ma_g.desc || ma_g.hit_wait || ma_g.bar == ma_g.hit_bar);
+    led_put(nl, panel.btn[B_SEQ], ma_g.mambo_next || ma_g.mambo_live || (ma_g.s.arc && ma_g.sec == MA_SEC_MBO));
     for (k = 0; k < NB; k++)
         led_put(nd, panel.btn[k], 1);
     uint32_t lit = 0;
@@ -319,7 +313,7 @@ static void ma_leds(void)
         const ma_chord *chd = &ma_g.loop[ma_chord_now(&ma_g)];
         for (k = 0; k < 27u; k++)
             for (int t = 0; t < 4; ++t)
-                if ((MU_KEY_LO + k) % 12u == (uint32_t)(chd->tone[t] + ma_g.tr) % 12u) lit |= 1u << k;
+                if ((MU_KEY_LO + k) % 12u == (uint32_t)chd->tone[t] % 12u) lit |= 1u << k;
     }
     for (k = 0; k < 27u; k++) {
         led_put(nl, 14u + k, (int)((fm1_in.notes >> k) & 1u));

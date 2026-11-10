@@ -38,8 +38,8 @@ check(`PLAY plays (peak ${peak.toFixed(3)}, bar ${w.web_da_bar()})`, w.web_playi
 check("PLAY's green LED lit", (w.web_lit_buttons() >> 14) & 1);
 
 const pages = [];
-for (const b of [B.FX, B.FX, B.LFO, B.SCL, B.ARP, B.EDIT, B.GLO, B.GLO, B.ENV, B.SAVE]) { press(b); pages.push(w.web_da_page()); }
-check(`FX x2 LFO SCL ARP EDIT GLO x2 ENV SAVE open their pages (${pages.join(" ")})`, new Set(pages).size === 10 && !pages.includes(0));
+for (const b of [B.FX, B.LFO, B.LFO, B.EDIT, B.SCL, B.ARP, B.GLO, B.GLO, B.ENV, B.SAVE]) { press(b); pages.push(w.web_da_page()); }
+check(`FX LFO x2 EDIT SCL ARP GLO x2 ENV SAVE open their pages (${pages.join(" ")})`, new Set(pages).size === 10 && !pages.includes(0));
 press(B.HOME);
 run(0.5);
 check("HOME returns", w.web_da_page() === 0);

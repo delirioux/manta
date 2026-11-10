@@ -1,36 +1,45 @@
 # Manta manual
 
-Manta 1.0.4. Every page, every card. Four parts play: **STABS** (the chords), **BASS**, **HOOK** (the chorus's tune,
-and whatever you play on the keys) and **DRUMS** (with the choir). Knob 1 to 4 turn the four cards on the
-screen. A page's button pressed again goes to its second page where it has one.
+Manta 0.1. Every page, every card. Four parts play: **PIANO** (the montuno), **BASS** (the tumbao), **HORNS** (the
+section, the solo trumpet and whatever you play on the keys) and **PERC** (the style's percussion set, on the clave).
+Knob 1 to 4 turn the four cards on the screen. A page's button pressed again goes to its second page where it has one.
 
 ## Playing
 
-PLAY starts with the intro (with ARC on) and stops. PRESETS opens the list of the ten styles while you turn; the
-chosen one comes in on the next bar line, NEXT in the header until it does. ALGORITHM picks a new song in the same
-style on the next bar: its number seeds the chord loop, the bass line, the hook and the sounds, so a song always
-comes back the same. SELECT is the tempo, MASTER the volume.
+PLAY starts with the intro (with ARC on) and stops. PRESETS opens the list of the ten styles while you turn,
+CALIENTE on the left, NOCHE on the right; the chosen one comes in on the next bar line, NEXT in the header until it
+does. ALGORITHM picks a new song in the same style on the next bar: its number seeds the chord loop, the riffs, the
+melody and the sounds, so a song always comes back the same. SELECT is the tempo, MASTER the volume.
 
-The header shows the section playing (INTRO, VERSE, PRE, CHORUS, BREAK) and, on the right, a badge: the key up
-(+1, +2, +3) or HELD while a break is held. The footer's sixteen dashes are the way through the section; under them the style and the song's number, on
-every page.
+The header shows the section playing (IN, VRS, MON, MBO, MNA, FIN) and, on the right, a badge: the clave's side
+(3/2 or 2/3, as the bar playing falls) or HELD while a descarga is held. The footer's sixteen dashes are the way
+through the section; under them the style and the song's number, on every page.
 
-**REC is BREAK.** Tap it: everything but the stabs drops out, the stabs hold their chords for three bars, a snare
-roll comes in the fourth and the chorus slams back on the bar line. Hold it: the break stays until you let go, then
-the roll, then the chorus.
+**REC is BAND HIT.** Tap it: on the next bar the whole band hits the clave's figure together, a cierre, and drops
+back into the groove. Hold it: a descarga, the percussion alone (the screen says so, and HELD) until you let go,
+then a timbal roll over the last beat and the band back on the bar line. REC lights while a hit or a descarga is on.
 
-**SEQ is KEY UP.** The whole song a semitone up from the next bar line; again for +2, +3, and once more to go home.
-A new style or song starts at home again. With ARC on, the last chorus goes up on its own as well (ARC > KEY UP).
+**SEQ is MAMBO.** The horn section goes into the mambo's riff from the next bar line, over the montuno; again to take
+it out. SEQ lights while the mambo plays. With ARC on the form brings the mambo in on its own as well.
 
-**The keys** play the HOOK, live, as you press them: an off note is yours to play. MENU's **SNAP** (hold
-HOME, KNOB 3) snaps them to the scale (and to the key up) instead, so any key you press is in key. While you
-hold one, the written hook makes way. OCT- and OCT+ move the keys' octave. The keys' LEDs glow on the notes of the
-chord playing. The keys never change a setting.
+**The keys** play the solo, on the HORNS sound with the SOLO page's mute and bell, an octave over the keys as printed,
+live, as you press them: an off note is yours to play. MENU's **SNAP** (hold HOME, KNOB 3) snaps them to the scale
+instead. While you hold one, the written solo makes way. OCT- and OCT+ move the keys' octave. The keys' LEDs glow on
+the notes of the chord playing. The keys never change a setting.
 
 <p align="center">
 <img src="screens/play.png" alt="PLAY" width="200">
-<img src="screens/keyup.png" alt="KEY UP" width="200">
+<img src="screens/bandhit.png" alt="BAND HIT" width="200">
+<img src="screens/descarga.png" alt="DESCARGA" width="200">
+<img src="screens/mambo.png" alt="MAMBO" width="200">
 </p>
+
+## The clave
+
+Every two-bar pattern in Manta, the piano's, the bass's, the horns' and every drum's, is written against the clave,
+and CLAVE (PLAY, KNOB 2) says which bar holds its three strokes: **3-2** starts on the three side, **2-3** on the two
+side. Turning it shifts the band by a bar, not the clave by a beat, so everything stays locked. MAMBO and CHA-CHA play
+2-3; the rest 3-2.
 
 ## The form
 
@@ -38,40 +47,59 @@ With ARC on, a song goes:
 
 | Section | Bars | What plays |
 | --- | --- | --- |
-| **INTRO** | 8 | The kick alone, then the hats and the bass (bar 3), then the stabs (bar 5); the filter opening. |
-| **VERSE** | 8 or 16 | No hook: the stabs every other bar, the hats a little lighter. With VOX ALL the choir sings here too, softer, as each chord comes in. |
-| **PRE** | 4 | The stabs held a bar each, louder each bar; a snare roll from quarters to sixteenths; the filter lifting; the last beat the roll alone. |
-| **CHORUS** | 8 or 16 | Everything: the hook, the choir, a crash to start it. |
-| **BREAK** | 8 | The chords held and the hook, softer; no bass, no drums; the last two bars a roll back in. |
-| **CHORUS** | 8 or 16 | Again, KEY UP's semitones higher. |
+| **INTRO** (IN) | 4 | The percussion first, then the piano, then the bass, the horns' pickup into the verso. |
+| **VERSO** (VRS) | 8 or 16 | The melody, on the solo trumpet with SOLO on PHRASE; the horns lay out; the bells light. |
+| **MONTUNO** (MON) | 8 or 16 | The groove opens: the bongo's bell and the timbal's bell, the horns' riff, the solo improvising. HITS fire here. |
+| **MAMBO** (MBO) | 8 | The horn section's mambo riff, louder; the solo rests. |
+| **MONTUNO** (MON) | 8 or 16 | Again. |
+| **MOÑA** (MNA) | 8 | The horns' riff with the solo over it, the band at its hottest. |
+| **CIERRE** (FIN) | 4 | The band's hits on the clave, then round again from the verso with a new melody. |
 
-Then round again from the VERSE, with a new hook and the key back home. With ARC off the chorus plays on and on.
+MAMBO off on the ARC page leaves the mambo and the moña out: IN, VRS, MON, FIN. With ARC off the montuno plays on
+and on, and SEQ and REC are yours to shape it.
 
 ## The pages
 
 | Page (button) | Cards |
 | --- | --- |
-| **PLAY** (HOME) | **LIFT** the filter's ceiling on the lifted parts (the stabs, and the hook in some styles). **PUMP** how deep the mix ducks on each kick. **VOX** the choir: OFF, in the CHORUS, or in ALL the song. **ENERGY** density and drive: sixteenth hats, pickup kicks, extra stabs. The panel: the chord loop, the bar as it plays (a column a sixteenth, as tall as the parts that sounded), and the form with the section playing. |
-| **SOUND** (FX) | **STABS**, **BASS**, **HOOK**: sixteen sounds each (the README lists them). Each style has four a part; song 1 plays its own, the other songs pick from the four (a card turned by hand holds until the next song). PIANO on STABS plays the offbeat piano chords in any style, the verse included, as plain triads (root, third, fifth). **DRUMS**: the kit, EURO (Manta's own one-shots and the choir), SESSION or MACHINE ([Felucca](https://github.com/hugelton/Felucca)'s DRUM engine, no choir). |
-| **TONE** (FX again) | **RESO** the lifted filter's resonance. **DRIVE** saturation. **DETUNE** the chorus that thickens the stabs and the hook. **CRUSH** bits and rate, down from clean. |
-| **VOX** (LFO) | **VOWELS** the two vowels the OOH sound sings between (OO-AH, AH-EE, OH-AH, OO-EE, AH-OH). **SHIFT** its formants, -12 to +12. **CHOIR** what the choir sings, the chord's third and fifth at the top of each bar of the chorus (and at the half bar too, every other bar, with ENERGY high): OH, AH, or a MIX (OH, then AH the bar after). **GLIDE** between the OOH's notes. The panel shows the choir over two bars. |
-| **KEY** (SCL) | **KEY** the root. **SCALE** MINOR, MAJOR, DORIAN, HARMONIC MINOR. **CHORDS** one of twelve chord loops. **BARS** a chord lasts 1, 2 or 4 bars. |
-| **GROOVE** (ARP) | **SWING** on the sixteenths. **HATS** 8THS, 16THS, OFFBEAT or OPEN. **BASS** the bass line: OFFBEAT, OCTAVE, ROLLING, REGGAE, LONG or BOUNCE. **FILLS** every 8, 4 or 2 bars, or none: sixteenths, or a snare triplet or sextuplet roll over the last beat. |
-| **DRUMS** (EDIT) | **KIT** as on SOUND. **KICK** PUNCH or ROUND, tuned to each chord's root (on EURO), so it walks with the bass. **CLAP** the backbeat: CLAP, SNARE or BOTH. **CRASH** OFF, on each SECTION, or every 8 BARS in the chorus too. |
-| **MIX** (GLO) | the four parts' levels (the stabs sit 2 dB under the others at the same number). |
-| **SPACE** (GLO again) | **REVERB**, **DELAY**, **TIME** the delay in 1/16, 1/8, 3/16 or 1/4, **WIDTH** the stereo spread. |
-| **ARC** (ENV) | **ARC** on: the song has its form; off: the chorus on and on. **VERSE** 8 or 16 bars. **CHORUS** 8 or 16 bars. **KEY UP** the last chorus OFF, +1 or +2. |
-| **HOOK** (ENV again) | Some songs' hooks hold a tuplet: a triplet (3 notes in the space of 2 eighths), a quadruplet (4 in the space of 3 eighths), a quintuplet (5 in the space of 4 sixteenths) or a sextuplet (6 in the space of 4 sixteenths), the chord's tones up or down, more often the faster the SPEED; the panel draws it. **SPEED** SLOW (long sung notes), MID (eighths), FAST (the syncopated sixteenth riff) or PAD (no tune: the chords held, a fill that plays through the verse too; PIANOHOUSE starts with it, on the PAD sound). **RANGE** 1 or 2 octaves. **GATE** how long each note holds. **REPEAT** the hook's phrase: 1, 2 or 4 bars, a motif and its answer. The panel draws the hook, the note playing lit (ITALO: its arpeggio). |
+| **PLAY** (HOME) | **HEAT** how hot the band plays: the ghost strokes, the quinto's calls, the accents and the dynamics. **CLAVE** 3-2 or 2-3. **SOLO** OFF, PHRASE (the band's solo trumpet plays the melody and improvises) or KEYS (only you play it). **HITS** OFF, or band hits on their own at the end of every 4, 8 or 16 bars of the montuno. The panel: the chord loop, the bar as it plays with the clave's strokes over it, and the form with the section playing. |
+| **SOUND** (FX) | **PIANO**: UPRIGHT (sampled), EPIANO, ORGAN, TRES, HARP, ACCORD (accordion), BANDO (bandoneon), MALLETS. **BASS**: BABY (the baby bass), UPRIGHT, FM BASS, SUB, SLAP, SLIDE, ROUND, TUBA. **HORNS**: TPT+TBN, TPT, BRASS, SAX, FLUTE, VIOLINS, ACCORD, BANDO. **PERC**: a style's percussion set, any style's. Each style has its own sound a part and three more; song 1 plays its own, the other songs pick from the four (a card turned by hand holds until the next song). |
+| **SOLO** (LFO) | **INSTR** the solo's sound (the HORNS sound: the section and the solo share the track). **MUTE** OPEN, CONE (the straight mute), CUP, HARMON or WAH (the harmon's stem opening and closing on each note); filters over the open horn, so they cost no flash. **PHRASE** where the solo's lines come from: GEN, made in the style; TRAD and MIX, phrases from traditional songs, are coming and play GEN for now. **BELL** how bright the bell sounds. |
+| **PAN 3D** (LFO again) | As [Sardine](https://github.com/delirioux/sardine)'s, for the solo, on headphones. **MODE** OFF, FIXED (where ANGLE puts it), ORBIT (round your head, a bar a step) or STEP (a new place each phrase). **ANGLE** FRONT, R10 to R170, BACK, L170 to L10. **HEIGHT** up or down. **DIST** near or far. Behind you the bell turns away and the trumpet goes duller; far off it goes softer. The cards are grey while MODE is OFF. In 0.1 PAN 3D is the bell's tone, the level and the pan; Sardine's binaural filters are next. |
+| **PERC** (EDIT) | **CONGAS** OFF, AUTO (the style's), TUMBAO, MARCHA, BOLERO. **BONGO** OFF, AUTO, MARTIL (the martillo), BELL (the bongo bell, in the montuno). **TIMBAL** OFF, AUTO, SHELL (the cascara on the shell), BELL. **EXTRA** OFF, AUTO, GUIRO, SHAKER, CABASA, WASH (the washboard; merengue's güira). The panel draws the two bars of the clave and the lanes playing. |
+| **KEY** (SCL) | **KEY** the root. **SCALE** MIN, MAJ, DOR (dorian), HARM (harmonic minor). **CHORDS** a chord loop. **BARS** a chord lasts 1, 2 or 4 bars. |
+| **GROOVE** (ARP) | **SWING** on the sixteenths (salsa plays it straight, cumbia and bossa a little swung). **PIANO** the montuno's pattern, 1 to 4 of the style's own. **BASS** the tumbao's pattern, 1 to 4. **FILLS** every 8, 4 or 2 bars, or none: the timbal's and the conga's fills into the next phrase. |
+| **MIX** (GLO) | the four parts' levels. |
+| **SPACE** (GLO again) | **ROOM** a small, dry room: Manta is meant to be punchy. **PLATE** more of the room on the horns and the piano. **WARMTH** a softer top, as an old record. **WIDTH** the stereo spread of the percussion and the piano. |
+| **ARC** (ENV) | **ARC** on: the song has its form; off: the montuno on and on. **VERSO** 8 or 16 bars. **MON** the montuno, 8 or 16 bars. **MAMBO** the mambo and the moña in the form or not. |
 | **SETS** (SAVE) | Eight sets: the whole song, style and all. **SET** picks one, **LOAD** and **STORE** turned right do it, **CLEAR** turned right three times empties it. |
-| **MENU** (hold HOME) | **COLOR** the palette: LASER by default, and Felucca's. **LOOK** FLAT or LINE. **SNAP** the keys: OFF, as you press them (the default), or ON, onto the scale. The panel: the version and the CPU, the audio's load (as [Tuna](https://github.com/delirioux/tuna)'s MENU > SYSTEM > INFO shows it). |
+| **MENU** (hold HOME) | **COLOR** the palette: HAVANA by default (mango and palm), and Felucca's. **LOOK** FLAT or LINE. **SNAP** the keys: OFF, as you press them (the default), or ON, onto the scale. The panel: the version and the CPU, the audio's load. |
 
-A style sets its tempo, sounds, key, chord loop, groove, drums, choir, space and hook; MIX, ARC and MENU stay
-yours.
+A style sets its tempo, sounds, key, chord loop, clave, groove, percussion, space and the solo's mute; MIX, PAN 3D,
+ARC and MENU stay yours.
+
+<p align="center">
+<img src="screens/sound.png" alt="SOUND" width="200">
+<img src="screens/solo.png" alt="SOLO" width="200">
+<img src="screens/pan3d.png" alt="PAN 3D" width="200">
+<img src="screens/perc.png" alt="PERC" width="200">
+</p>
+
+## The percussion
+
+Thirty one-shots, recorded (the [Versilian Community Sample Library](https://github.com/sgossner/VCSL), CC0) where a
+good recording was free, made where it was not: the quinto, the conga's open and muted tones and the tumba; the
+bongo's high, low and muted; the timbales' high and low heads (a rope-snare stroke and a tuned head), their rim and
+the paila; the mambo bell, the bongo bell and a muted bell; the agogô's two bells; the claves; a woodblock; the güiro
+short and long; the shaker forward and back; the cabasa; the triangle open and muted; two toms; a kick; the
+washboard's scrape and tap. Each style plays its own set of them: the surdo and tamborim of the samba on the toms,
+the llamador and guacharaca of the cumbia on the conga and the güiro, the tango none at all.
 
 ## MIDI out
 
-STABS on channel 1, BASS on 2, HOOK (and the keys) on 3, the drums on 10 with General MIDI notes. The choir
-has no General MIDI drum and is not sent.
+PIANO on channel 1, BASS on 2, HORNS (and the keys) on 3, the percussion on 10 with General MIDI notes (the congas,
+bongos, timbales, cowbell, agogô, claves, woodblock, güiro, maracas, cabasa and triangle each on their own; the
+washboard's scrape on the short güiro's, its tap on the claves').
 
 ## Saving
 

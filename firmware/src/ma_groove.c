@@ -50,7 +50,7 @@ static const char *const SCALE_NAMES[MA_SCALES] = {"MIN", "MAJ", "DOR", "HARM"};
 const char *ma_scale_name(int i) { return SCALE_NAMES[clampi(i, 0, MA_SCALES - 1)]; }
 /* (the screen's font is ASCII: the moña is written MONA) */
 static const char *const SEC_NAMES[MA_SECS] = {"INTRO", "VERSO", "MONTUNO", "MAMBO", "MONTUNO", "MONA", "CIERRE"};
-static const char *const SEC_SHORT[MA_SECS] = {"IN", "VRS", "MON", "MBO", "MON", "MOA", "FIN"};
+static const char *const SEC_SHORT[MA_SECS] = {"IN", "VRS", "MON", "MBO", "MON", "MNA", "FIN"};
 const char *ma_sec_name(int s) { return SEC_NAMES[clampi(s, 0, MA_SECS - 1)]; }
 const char *ma_sec_short(int s) { return SEC_SHORT[clampi(s, 0, MA_SECS - 1)]; }
 static const char *const DR_NAMES[MA_DR_COUNT] = {
@@ -218,7 +218,7 @@ void ma_defaults(ma_settings *s)
     s->verse = 8;
     s->mbars = 8;
     s->mambo = 1;
-    s->palette = 10;                               /* HAVANA (ui_palettes.h UI_LASER_INDEX: the slot Sill's took) */
+    s->palette = 10;                               /* HAVANA (ui_palettes.h UI_HAVANA_INDEX) */
     s->look = 0;
     s->keysnap = 0;
 }

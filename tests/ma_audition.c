@@ -5,9 +5,9 @@
  * without the mix jumping. With an OUTDIR it also writes each phrase as a WAV, to hear.
  *
  *   tests/ma_audition.sh [OUTDIR]
- * The phrases: STABS a three-note chord on the off-beat eighths, BASS eighths on C2 and its octave, HOOK a held
- * quarter-note line round C5, DRUMS a bar of four on the floor. The loudness is the RMS over the phrase, the drums'
- * the same; the marks: STABS -20, BASS -18, HOOK -19, DRUMS -13 dBFS at MIX 100. */
+ * The phrases: PIANO a three-note chord on the off-beat eighths, BASS eighths on C2 and its octave, HORNS a held
+ * quarter-note line round C5, PERC a bar of the salsa's congas, bell and clave. The loudness is the RMS over the
+ * phrase; the marks: PIANO -20, BASS -18, HORNS -19, PERC -16 dBFS at MIX 100. */
 #define main hostsim_main
 #include "hostsim.c"
 #undef main
@@ -15,7 +15,7 @@
 #include "ma_sounds.h"
 
 static ma_groove G;
-static const float MARK[MA_PARTS] = {-20.0f, -18.0f, -19.0f, -13.0f};
+static const float MARK[MA_PARTS] = {-20.0f, -18.0f, -19.0f, -16.0f};
 
 static void host_own(track_t *t, const preset_t *pr)
 {
@@ -46,8 +46,8 @@ static float audition(int p, const char *dir, const char *name)
     for (int k = 0; k < MA_PARTS; ++k)
         trk[k].p[P_LEVEL] = 0;
     track_t *t = &trk[p];
-    if (p == MA_DRUMS) {
-        host_preset(t, mas_kit_engine(G.s.snd[3]), 0);
+    if (p == MA_PERC) {
+        host_preset(t, mas_kit_engine(), 0);
     } else {
         const mas_sound *snd = mas_of(&G, p);
         host_preset(t, snd->engine, snd->preset);
@@ -79,7 +79,7 @@ static float audition(int p, const char *dir, const char *name)
         if (st != last && f < frames) {
             last = st;
             int i = st % 16;
-            if (p == MA_STABS) {
+            if (p == MA_PIANO) {
                 if (i % 4 == 2) {
                     trk_note_on(t, 60, 100); trk_note_on(t, 64, 100); trk_note_on(t, 67, 100);
                 } else if (i % 4 == 3) {
@@ -88,15 +88,13 @@ static float audition(int p, const char *dir, const char *name)
             } else if (p == MA_BASS) {
                 if (i % 2 == 0) trk_note_on(t, i % 4 ? 48 : 36, 100);
                 else trk_note_off(t, i % 4 == 1 ? 36 : 48);
-            } else if (p == MA_HOOK) {
+            } else if (p == MA_HORNS) {
                 if (i % 4 == 0) trk_note_on(t, (uint32_t)HOOK[(st / 4) % 8], 100);
                 else if (i % 4 == 3) trk_note_off(t, (uint32_t)HOOK[(st / 4) % 8]);
             } else {
-                static const uint8_t KICK[16] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0};
-                if (KICK[i]) trk_note_on(t, (uint32_t)mas_drum_note(&G.s, MA_DR_KICK), 120);
-                if (i == 4 || i == 12) trk_note_on(t, (uint32_t)mas_drum_note(&G.s, MA_DR_CLAP), 115);
-                if (i % 4 == 2) trk_note_on(t, (uint32_t)mas_drum_note(&G.s, MA_DR_OPEN), 95);
-                else trk_note_on(t, (uint32_t)mas_drum_note(&G.s, MA_DR_HAT), i % 2 ? 40 : 70);
+                if (i % 2 == 0) trk_note_on(t, (uint32_t)mas_drum_note(i == 4 ? MA_DR_QUINTO : i >= 12 ? MA_DR_CONGA : MA_DR_CONGA_MUTE), i == 4 ? 118 : 90);
+                if (i % 4 == 0) trk_note_on(t, (uint32_t)mas_drum_note(MA_DR_BELL_MAMBO), i == 0 ? 118 : 100);
+                if (i == 0 || i == 6 || i == 12) trk_note_on(t, (uint32_t)mas_drum_note(MA_DR_CLAVE), 96);
             }
         }
         int32_t o[2 * CTL];
@@ -115,16 +113,13 @@ static float audition(int p, const char *dir, const char *name)
 int main(int argc, char **argv)
 {
     const char *dir = argc > 1 ? argv[1] : 0;
-    static const char *const PART[MA_PARTS] = {"STABS", "BASS", "HOOK", "DRUMS"};
+    static const char *const PART[MA_PARTS] = {"PIANO", "BASS", "HORNS", "PERC"};
     ma_init(&G, (float)FS);
     G.s.bpm = 120;
-    G.s.reso = 30;
-    G.s.drive = 0;
-    G.s.ensemble = 0;
-    G.s.crush = 0;
+    G.s.warmth = 0;
     for (int p = 0; p < MA_PARTS; ++p) {
         printf("%s (mark %.0f dBFS)\n", PART[p], (double)MARK[p]);
-        int n = p == MA_DRUMS ? MA_KIT_COUNT : MA_SOUNDS;
+        int n = p == MA_PERC ? 1 : MA_SOUNDS;
         for (int i = 0; i < n; ++i) {
             G.s.snd[p] = (uint8_t)i;
             char nm[40];

@@ -45,26 +45,27 @@ def ma_version():
     return m[1] if m else "?"
 
 
-BLURB = """Generative 90s eurodance for the M-VAVE FM-1, pickled in 1995: offbeat basses, piano and supersaw stabs,
-big choruses, a choir and a key change for the last chorus. Ten styles; press play."""
+BLURB = """Generative Latin grooves for the M-VAVE FM-1. Let the band play, tu al solo: a sampled percussion
+section on the clave, a montuno upright, a tumbao bass and the horns, from salsa and mambo to bolero and tango.
+Ten styles; press play, and take the solo on the keys."""
 
 
 def page(body, foot):
-    """a start page in Manta's LASER colours: the logo, the blurb, body (buttons, notes), the footer"""
+    """a start page in Manta's HAVANA colours: the logo, the blurb, body (buttons, notes), the footer"""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Manta</title><link rel="icon" href="manta-logo.png">
 <style>
   :root {{ color-scheme: dark; }}
-  body {{ margin: 0; background: #0e061a; color: #fff0fa; font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI",
+  body {{ margin: 0; background: #140b07; color: #fff0de; font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI",
          Arial, sans-serif; }}
   main {{ max-width: 540px; margin: 0 auto; padding: 40px 16px; text-align: center; }}
   img {{ width: 220px; height: 220px; border-radius: 10px; }}
   h1 {{ font-size: 28px; margin: 12px 0 4px; }}
   p {{ color: #c4a8d8; margin: 0 0 24px; }}
-  p.t {{ color: #ff3cc7; }}
-  a {{ color: #33d6ff; }}
-  .b {{ display: inline-block; margin: 6px; padding: 10px 22px; border-radius: 6px; background: #33d6ff; color: #0e061a;
+  p.t {{ color: #2fd47a; }}
+  a {{ color: #ff8a1f; }}
+  .b {{ display: inline-block; margin: 6px; padding: 10px 22px; border-radius: 6px; background: #ff8a1f; color: #140b07;
         font-weight: 600; text-decoration: none; }}
   small {{ display: block; margin-top: 28px; color: #c4a8d8; }}
 </style></head>

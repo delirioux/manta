@@ -1,22 +1,23 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* MANTA screen and controls: Manta's pages on Felucca's drawing (gfx.c: canvas, fonts, palettes, icons), in
- * Tuna's frame: the header, four knob cards, the panel, the footer (Daurade's layout). Compiled after gfx.c in one unit, as Felucca's
- * ui*.c are (the firmware's unity build, or a host test).
+/* MANTA screen and controls: Manta's pages on Felucca's drawing (gfx.c: canvas, fonts, palettes, icons), in Sill's
+ * frame (Tuna's header, four knob cards, the panel, the footer). Compiled after gfx.c in one unit, as Felucca's ui*.c
+ * are (the firmware's unity build, or a host test).
  *
  * The controls
  *   SELECT     tempo                                  MASTER     volume (Felucca's)
  *   PRESETS    the style (the list shows while turning; playing, it comes in on the next bar)
  *   ALGORITHM  a new song in the same style (on the next bar)
- *   KNOB 1..4  the four cards of the page (PLAY: LIFT PUMP VOX ENERGY)
+ *   KNOB 1..4  the four cards of the page (PLAY: HEAT CLAVE SOLO HITS)
  *   PLAY       start (with the intro, ARC on) / stop
- *   REC        BREAK: tapped, the stabs alone for three bars, a snare roll, the chorus on the bar; held, until let go
- *   SEQ        KEY UP: the song a semitone up from the next bar (+1 +2 +3, then home)
- *   keys       the hook, live, snapped to the scale. Music only, never settings
+ *   REC        BAND HIT: tapped, the band hits the clave together on the next bar (a cierre); held, the descarga
+ *              (the percussion alone) until let go, a timbal roll, the band back on the bar line
+ *   SEQ        MAMBO: the horn section into its mambo from the next bar (ARC off: the riff in and out)
+ *   keys       the solo trumpet, live, as pressed (MENU's SNAP: onto the scale). Music only, never settings
  *   OCT- OCT+  the keys' octave
- *   HOME       PLAY; held: MENU (colour, look)
- *   FX         SOUND, again: TONE           LFO   VOX                SCL   KEY
- *   ARP        GROOVE                       EDIT  DRUMS              GLO   MIX, again: SPACE
- *   ENV        ARC, again: HOOK             SAVE  SETS (eight sets on the knobs) */
+ *   HOME       PLAY; held: MENU (colour, look, snap)
+ *   FX         SOUND                        LFO   SOLO, again: PAN 3D   SCL   KEY
+ *   ARP        GROOVE                       EDIT  PERC                  GLO   MIX, again: SPACE
+ *   ENV        ARC                          SAVE  SETS (eight sets on the knobs) */
 #ifndef MA_UI_H
 #define MA_UI_H
 
@@ -30,8 +31,8 @@ enum {
     MU_B_HOME, MU_B_SAVE, MU_B_ARP, MU_B_SEQ, MU_B_PLAY, MU_B_REC,
     MU_B_OCTDN, MU_B_OCTUP, MU_BUTTONS
 };
-enum { MU_PG_PLAY, MU_PG_SOUND, MU_PG_TONE, MU_PG_VOX, MU_PG_KEY, MU_PG_GROOVE, MU_PG_DRUMS, MU_PG_MIX,
-       MU_PG_SPACE, MU_PG_ARC, MU_PG_HOOK, MU_PG_SETS, MU_PG_MENU, MU_PAGES };
+enum { MU_PG_PLAY, MU_PG_SOUND, MU_PG_SOLO, MU_PG_PAN3D, MU_PG_PERC, MU_PG_KEY, MU_PG_GROOVE, MU_PG_MIX,
+       MU_PG_SPACE, MU_PG_ARC, MU_PG_SETS, MU_PG_MENU, MU_PAGES };
 #define MU_KEY_LO 53                      /* F3: the FM-1's lowest key */
 #define MU_KEY_HI 79                      /* G5 */
 

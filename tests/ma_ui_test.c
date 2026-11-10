@@ -168,197 +168,177 @@ int main(int argc, char **argv)
     ma_set_sound(&g, sound, 0);
     mu_init(&ui, &g);
     ui.cpu = 47;                                   /* (the screenshots: a load on MENU) */
-    CHECK(g.s.palette == UI_LASER_INDEX && !strcmp(UI_PALETTES[UI_LASER_INDEX].name, "LASER"), "LASER by default");
-    CHECK(g.s.style == MA_ST_EUROSTOMP, "EUROSTOMP first");
-    shot("01_play_stopped");
+    shot("01_stopped");
+    CHECK(g.s.style == MA_ST_SALSA, "SALSA first");
+    CHECK(g.s.palette == UI_HAVANA_INDEX && !strcmp(UI_PALETTES[UI_HAVANA_INDEX].name, "HAVANA"), "HAVANA by default");
     all_palettes("play_stopped");
+    /* PLAY: the intro, the parts in one by one */
     press(MU_B_PLAY);
     CHECK(g.playing, "PLAY plays");
-    bars(9);
-    CHECK(g.sec == MA_SEC_VERSE, "the intro over at bar 8 (%s at %d)", ma_sec_name(g.sec), g.bar);
-    CHECK(part_on[MA_STABS] && part_on[MA_BASS] && part_on[MA_DRUMS], "the parts play (%d %d %d %d)", part_on[0],
+    for (int k = 0; k < 40; ++k) { run_ms(16); if (k % 2 == 0) { char n[32]; snprintf(n, sizeof n, "anim_%03d", k / 2); lint_where = n; write_ppm(n); } }
+    bars(4);
+    CHECK(g.sec == MA_SEC_VRS, "the intro over at bar 4 (%s at %d)", ma_sec_name(g.sec), g.bar);
+    CHECK(part_on[MA_PIANO] && part_on[MA_BASS] && part_on[MA_PERC], "the parts play (%d %d %d %d)", part_on[0],
           part_on[1], part_on[2], part_on[3]);
-    while (g.sec != MA_SEC_CHORUS) run_ms(16);
-    bars(2);
-    CHECK(part_on[MA_HOOK] > 0, "the chorus: the hook (%d)", part_on[MA_HOOK]);
+    bars(1);
     shot("02_play");
     all_palettes("play");
-    /* the PLAY animation: a bar, a frame every 48 ms */
-    for (int f = 0; f < 40; ++f) {
-        char nm[32];
-        run_ms(48);
-        snprintf(nm, sizeof nm, "anim_%03d", f);
-        lint_where = nm;
-        write_ppm(nm);
-    }
-    /* the knobs of PLAY */
-    mu_knob(&ui, MU_K1, -4);
-    CHECK(g.s.lift == 65, "LIFT -4 steps of 5 (%d)", g.s.lift);
-    mu_knob(&ui, MU_K1, 4);
-    mu_knob(&ui, MU_K3, 1);
-    CHECK(g.s.vox == MA_VOX_ALL, "VOX: ALL (%d)", g.s.vox);
-    mu_knob(&ui, MU_K3, -1);
-    /* BREAK: tapped, back four bars on */
-    mu_button(&ui, MU_B_REC, true);
-    CHECK(g.brk, "REC: BREAK");
-    run_ms(64);
-    mu_button(&ui, MU_B_REC, false);
+    /* the cards: HEAT, CLAVE, SOLO, HITS */
+    mu_knob(&ui, MU_K2, 1);
+    CHECK(g.s.clave == MA_CLAVE_23, "K2: CLAVE 2-3");
+    mu_knob(&ui, MU_K2, -1);
+    mu_knob(&ui, MU_K1, -2);
+    CHECK(g.s.heat == 60, "K1: HEAT down (%d)", g.s.heat);
+    /* REC: BAND HIT */
+    press(MU_B_REC);
+    CHECK(g.hit_wait, "REC: a band hit on the next bar");
     bars(1);
-    shot("03_break");
-    all_palettes("break");
-    int back = g.brk_end;
-    bars(4);
-    CHECK(!g.brk && g.bar >= back, "back on the bar (%d, %d)", g.bar, back);
-    /* KEY UP: SEQ, from the next bar */
+    run_ms(200);
+    shot("03_bandhit");
+    /* REC held: the descarga */
+    mu_button(&ui, MU_B_REC, true);
+    bars(1);
+    g.desc = true;                                 /* (held past the cierre) */
+    bars(1);
+    shot("04_descarga");
+    mu_button(&ui, MU_B_REC, false);
+    bars(3);
+    CHECK(!g.desc, "let go: the band back");
+    /* SEQ: MAMBO */
     press(MU_B_SEQ);
     bars(1);
-    CHECK(g.tr == 1, "SEQ: KEY UP +1 (%d)", g.tr);
-    run_ms(1600);
-    shot("17_keyup");
-    all_palettes("keyup");
-    press(MU_B_SEQ); press(MU_B_SEQ); press(MU_B_SEQ);
-    bars(1);
-    CHECK(g.tr == 0, "SEQ after +3: home (%d)", g.tr);
-    /* the styles: PRESETS queues one for the next bar */
+    run_ms(100);
+    CHECK(g.sec == MA_SEC_MBO, "SEQ: the mambo (%s)", ma_sec_name(g.sec));
+    shot("05_mambo");
+    /* PRESETS: the styles, on the bar line */
     mu_knob(&ui, MU_K_PRESETS, 7);
-    CHECK(g.next_style == MA_ST_PARTY, "PRESETS +7: PARTY queued (%d)", g.next_style);
-    shot("04_styles");
+    CHECK(g.next_style == MA_ST_BOLERO, "PRESETS +7: BOLERO queued (%d)", g.next_style);
+    shot("06_styles");
     all_palettes("styles");
     bars(1);
-    CHECK(g.s.style == MA_ST_PARTY && g.s.bpm == 140, "PARTY on the bar line (%d, %d BPM)", g.s.style, g.s.bpm);
+    CHECK(g.s.style == MA_ST_BOLERO && g.s.bpm == MA_STYLE[MA_ST_BOLERO].bpm, "BOLERO on the bar line (%d, %d BPM)",
+          g.s.style, g.s.bpm);
     run_ms(2000);
-    /* SOUND, TONE */
+    /* the pages */
     press(MU_B_FX);
     CHECK(ui.page == MU_PG_SOUND, "FX: SOUND");
-    bars(1);
-    shot("05_sound");
+    shot("07_sound");
     all_palettes("sound");
+    int snd0 = g.s.snd[MA_PIANO];
     mu_knob(&ui, MU_K1, 1);
-    CHECK(g.s.snd[MA_STABS] == 3, "K1: the next STABS sound (%d)", g.s.snd[MA_STABS]);
-    mu_knob(&ui, MU_K1, -1);
-    {                                              /* every sound's name on its card and the panel: the lint */
-        uint8_t keep[4];
-        memcpy(keep, g.s.snd, sizeof keep);
-        for (int i = 0; i < MA_SOUNDS; ++i) {
-            char nm[32];
-            g.s.snd[0] = g.s.snd[1] = g.s.snd[2] = (uint8_t)i;
-            snprintf(nm, sizeof nm, "sound_%02d", i);
-            shot(nm);
+    CHECK(g.s.snd[MA_PIANO] == (snd0 + 1) % MA_SOUNDS, "K1: the next PIANO sound (%d)", g.s.snd[MA_PIANO]);
+    for (int p = 0; p < 4; ++p) {                 /* every sound's name on its card */
+        int keep = g.s.snd[p], n = p == 3 ? MA_STYLES : MA_SOUNDS;
+        for (int i = 0; i < n; ++i) {
+            char nm[24];
+            g.s.snd[p] = (uint8_t)i;
+            snprintf(nm, sizeof nm, "sound_%d_%d", p, i);
+            lint_where = nm;
+            mu_draw_all(&ui);
         }
-        memcpy(g.s.snd, keep, sizeof keep);
+        g.s.snd[p] = (uint8_t)keep;
     }
-    press(MU_B_FX);
-    CHECK(ui.page == MU_PG_TONE, "FX again: TONE");
-    shot("06_tone");
-    all_palettes("tone");
-    /* HEARTACHE for VOX: the OOH sings the hook */
-    ma_queue_style(&g, MA_ST_HEARTACHE);
-    bars(2);
     press(MU_B_LFO);
-    CHECK(ui.page == MU_PG_VOX, "LFO: VOX");
-    CHECK(mas_of(&g, MA_HOOK)->engine == MAS_VOICE, "HEARTACHE: the OOH on the hook");
-    run_ms(300);
-    shot("07_vox");
-    all_palettes("vox");
-    mu_knob(&ui, MU_K3, 3);
-    CHECK(g.s.choir == MA_CHOIR_MIX, "CHOIR: MIX (%d)", g.s.choir);
-    shot("07b_vox_mix");
-    /* KEY */
-    ma_queue_style(&g, MA_ST_EUROSTOMP);
-    bars(1);
+    CHECK(ui.page == MU_PG_SOLO, "LFO: SOLO");
+    for (int m = 0; m < MA_MUTE_COUNT; ++m) {
+        mu_knob(&ui, MU_K2, m ? 1 : -9);
+        char nm[24];
+        snprintf(nm, sizeof nm, "solo_mute_%d", m);
+        lint_where = nm;
+        mu_draw_all(&ui);
+    }
+    CHECK(g.s.mute == MA_MUTE_WAH, "MUTE up to WAH (%d)", g.s.mute);
+    mu_knob(&ui, MU_K2, -2);
+    shot("08_solo");
+    all_palettes("solo");
+    press(MU_B_LFO);
+    CHECK(ui.page == MU_PG_PAN3D, "LFO again: PAN 3D");
+    mu_knob(&ui, MU_K2, 1);
+    CHECK(g.s.p3angle == 3, "PAN 3D OFF: ANGLE greyed, untouched (%d)", g.s.p3angle);
+    mu_knob(&ui, MU_K1, 2);
+    CHECK(g.s.p3mode == MA_P3_ORBIT, "MODE: ORBIT (%d)", g.s.p3mode);
+    for (int a = 0; a < 36; ++a) {
+        mu_knob(&ui, MU_K2, 1);
+        char nm[24];
+        snprintf(nm, sizeof nm, "pan3d_%d", a);
+        lint_where = nm;
+        mu_draw_all(&ui);
+    }
+    run_ms(500);
+    shot("09_pan3d");
+    all_palettes("pan3d");
+    press(MU_B_EDIT);
+    CHECK(ui.page == MU_PG_PERC, "EDIT: PERC");
+    mu_knob(&ui, MU_K4, 4);
+    CHECK(g.s.extra == MA_EXTRA_WASH, "EXTRA: WASHBOARD (%d)", g.s.extra);
+    shot("10_perc");
+    all_palettes("perc");
     press(MU_B_SCL);
     CHECK(ui.page == MU_PG_KEY, "SCL: KEY");
-    shot("08_key");
-    all_palettes("key");
-    mu_knob(&ui, MU_K1, 1);
-    CHECK(g.s.key == 10 && g.loop[0].root == 10, "KEY A#: the loop follows (%d)", g.loop[0].root);
-    mu_knob(&ui, MU_K1, -1);
-    /* GROOVE, DRUMS */
+    shot("11_key");
     press(MU_B_ARP);
-    while (!ma_in_chorus(&g)) run_ms(16);
-    bars(1);
     CHECK(ui.page == MU_PG_GROOVE, "ARP: GROOVE");
-    shot("09_groove");
-    all_palettes("groove");
-    mu_knob(&ui, MU_K3, 2);
-    CHECK(g.s.bassline == MA_BL_ROLLING, "GROOVE BASS: ROLLING (%d)", g.s.bassline);
-    mu_knob(&ui, MU_K3, -2);
-    press(MU_B_EDIT);
-    CHECK(ui.page == MU_PG_DRUMS, "EDIT: DRUMS");
-    shot("10_drums");
-    all_palettes("drums");
-    /* MIX, SPACE */
+    mu_knob(&ui, MU_K2, 1);
+    CHECK(g.s.montuno == 1, "MONTUNO 2 (%d)", g.s.montuno);
+    shot("12_groove");
     press(MU_B_GLO);
     CHECK(ui.page == MU_PG_MIX, "GLO: MIX");
-    shot("11_mix");
-    all_palettes("mix");
+    shot("13_mix");
     press(MU_B_GLO);
     CHECK(ui.page == MU_PG_SPACE, "GLO again: SPACE");
-    shot("12_space");
-    all_palettes("space");
-    /* ARC, HOOK */
+    shot("14_space");
     press(MU_B_ENV);
     CHECK(ui.page == MU_PG_ARC, "ENV: ARC");
-    shot("13_arc");
+    shot("15_arc");
     all_palettes("arc");
-    press(MU_B_ENV);
-    CHECK(ui.page == MU_PG_HOOK, "ENV again: HOOK");
-    while (!ma_in_chorus(&g)) run_ms(16);
-    run_ms(400);
-    shot("14_hook");
-    all_palettes("hook");
-    mu_knob(&ui, MU_K4, 1);
-    CHECK(g.s.repeat == 4, "REPEAT: 4 BARS (%d)", g.s.repeat);
     mu_knob(&ui, MU_K4, -1);
-    /* ITALO's arpeggio on the HOOK page */
-    ma_queue_style(&g, MA_ST_ITALO);
-    bars(1);
-    shot("14b_hook_arp");
-    /* SETS: store into 3, load it back */
-    ma_queue_style(&g, MA_ST_EUROSTOMP);
-    bars(1);
+    CHECK(!g.s.mambo, "MAMBO off");
+    shot("16_arc_nomambo");
+    mu_knob(&ui, MU_K4, 1);
+    /* SETS */
     press(MU_B_SAVE);
     CHECK(ui.page == MU_PG_SETS, "SAVE: SETS");
     mu_knob(&ui, MU_K1, 2);
     mu_knob(&ui, MU_K3, 1);
-    CHECK((ui.set_used & 4u) && ui.sets[2].style == MA_ST_EUROSTOMP, "STORE into set 3");
-    ui.sets[0] = g.s; ui.sets[0].style = MA_ST_PARTY; ui.set_used |= 1u;
-    ui.sets[4] = g.s; ui.sets[4].style = MA_ST_PIANOHOUSE; ui.set_used |= 16u;
-    ui.sets[6] = g.s; ui.sets[6].style = MA_ST_BUBBLEGUM; ui.set_used |= 64u;
-    shot("15_sets");
-    all_palettes("sets");
+    CHECK((ui.set_used & 4u) && ui.sets[2].style == MA_ST_BOLERO, "STORE into set 3");
+    ui.sets[0] = g.s; ui.sets[0].style = MA_ST_MAMBO; ui.set_used |= 1u;
+    ui.sets[4] = g.s; ui.sets[4].style = MA_ST_TANGO; ui.set_used |= 16u;
+    shot("17_sets");
     mu_knob(&ui, MU_K1, -2);
     mu_knob(&ui, MU_K2, 1);
-    CHECK(g.s.style == MA_ST_PARTY, "LOAD set 1: PARTY at once");
-    mu_knob(&ui, MU_K4, 1); mu_knob(&ui, MU_K4, 1);
-    CHECK(ui.set_used & 1u, "CLEAR twice: not yet");
-    mu_knob(&ui, MU_K4, 1);
-    CHECK(!(ui.set_used & 1u), "CLEAR three times: cleared");
-    /* the keys: the hook, snapped to the scale */
-    int before = part_on[MA_HOOK];
-    mu_key(&ui, 54, true);
-    CHECK(part_on[MA_HOOK] == before + 1, "a key plays the hook");
-    mu_key(&ui, 54, false);
-    /* MENU: HOME held */
+    CHECK(g.s.style == MA_ST_MAMBO, "LOAD set 1: MAMBO at once");
+    /* the keys: the solo */
+    int before = part_on[MA_HORNS];
+    mu_key(&ui, 60, true);
+    CHECK(part_on[MA_HORNS] == before + 1, "a key plays the solo");
+    mu_key(&ui, 60, false);
+    /* MENU */
     mu_button(&ui, MU_B_HOME, true);
     run_ms(700);
     mu_button(&ui, MU_B_HOME, false);
     CHECK(ui.page == MU_PG_MENU, "HOME held: MENU");
-    shot("16_menu");
+    shot("18_menu");
     all_palettes("menu");
     press(MU_B_HOME);
     CHECK(ui.page == MU_PG_PLAY, "HOME: PLAY");
+    /* every style's PLAY page */
+    for (int st = 0; st < MA_STYLES; ++st) {
+        ma_queue_style(&g, st);
+        bars(2);
+        char nm[32];
+        snprintf(nm, sizeof nm, "style_%02d_%s", st, ma_style_name(st));
+        shot(nm);
+    }
     /* ALGORITHM: a new song on the next bar */
     int song = g.s.song;
     mu_knob(&ui, MU_K_ALGO, 1);
     bars(1);
     CHECK(g.s.song == song + 1, "ALGORITHM: the next song (%d)", g.s.song);
-    /* stopped again */
     press(MU_B_PLAY);
     CHECK(!g.playing, "PLAY stops");
     CHECK(g.nheld == 0, "nothing left sounding");
     CHECK(lint_findings == 0, "the layout lint: %d findings", lint_findings);
-    printf("ma_ui: %d checks, %d failed, %d frames, %d notes on (stabs %d, bass %d, hook %d, drums %d)\n", checks, fails,
+    printf("ma_ui: %d checks, %d failed, %d frames, %d notes on (piano %d, bass %d, horns %d, perc %d)\n", checks, fails,
            frames_written, notes_on, part_on[0], part_on[1], part_on[2], part_on[3]);
     return fails ? 1 : 0;
 }

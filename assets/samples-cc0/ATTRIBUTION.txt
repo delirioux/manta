@@ -1,16 +1,16 @@
-DRUMS: Manta's drum kit, seven one-shots (00_kick_punch, 01_kick_round, 02_snare, 03_clap, 04_hat, 05_open_hat,
-06_crash), synthesized by tools/ma_drums.py (seeded, so it always makes the same files): no recording of any
-instrument and no third-party sample is in them. 16-bit mono WAV at 44.1 kHz; tools/gen_samples.py encodes them
-into the firmware.
-CHOIR: Manta's choir, a sung OH and AH at F3 and F4 (oh_53, oh_65, ah_53, ah_65), synthesized by tools/ma_choir.py
-(seeded too): twelve synthetic voices through formant filters, no recording of anyone's voice. 16-bit mono WAV at
-22,050 Hz; tools/gen_samples.py puts them on the drum kit's set.
-To the extent possible under law, delirioux has waived all copyright and related rights to these sounds:
-CC0 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/
-PIANO: Manta's club piano, six notes (00_Piano_C2 .. 05_Piano_F#4, VCSL's names: C3 is middle C) of the Kawai
-grand of the Versilian Community Sample Library (VCSL, by Sam Gossner and contributors, CC0 1.0,
-https://github.com/sgossner/VCSL, "Chordophones/Zithers/Grand Piano, Kawai/Sustains", the v4 layer), changed by
-tools/ma_piano.py: summed to mono, cut to 0.85 .. 1.15 s and faded, a high-pass at 180 Hz, a high shelf (+5 dB from 2 kHz), a presence
-lift, less body, a soft clip, normalised. CC0 as their source; Manta keeps it so.
-Manta uses none of Felucca's other CC0 sample sets (VCSL and VSCO-2 CE); tools/fetch_cc0.py still fetches them for
-anyone who wants them back.
+DRUMS: Manta's percussion kit, thirty one-shots (00_quinto .. 29_wash_tap_air) made by tools/ma_perc.py.
+Twenty-six are taken from the Versilian Community Sample Library (VCSL, by Sam Gossner and contributors, CC0 1.0,
+https://github.com/sgossner/VCSL): its Conga, Bongos, Tom 1, Tom 2, Snare Drum (Rope Tension), Cowbells, Agogo
+Bells, Claves, Woodblock, Guiro, Shaker (Small), Cabasa and Triangles folders (the files are named in
+tools/ma_perc.py), each summed to mono, started at its onset, cut and faded, normalised. The two timbales are the
+attack of VCSL's rope-tension snare (snares off) over a tuned head and shell synthesized by tools/ma_perc.py. The
+kick and the washboard (a scrape and a tap) are synthesized by tools/ma_perc.py (seeded, so it always makes the same
+files): no recording in them. 16-bit mono WAV at 44.1 kHz; tools/gen_samples.py encodes them into the firmware (the
+skins at 22,050 Hz, the metal, wood and shakers at 32 kHz). CC0 as their source; Manta keeps them so.
+PIANO: Manta's upright, six notes (00_Upright_G1 .. 05_Upright_C4, VCSL's names: C3 is middle C) of the Yamaha
+upright of VCSL ("Chordophones/Zithers/Upright Piano, Yamaha/Sustains", the vl3 layer), changed by
+tools/ma_piano.py: summed to mono, cut to 0.8 .. 1.0 s and faded, a high-pass at 110 Hz, a little high shelf and
+bite, a touch less body, a light firmness, normalised. CC0 as their source; Manta keeps it so.
+To the extent possible under law, delirioux has waived all copyright and related rights to Manta's own changes and
+sounds: CC0 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/
+Manta uses none of Felucca's other CC0 sample sets; tools/fetch_cc0.py still fetches them for anyone who wants them.

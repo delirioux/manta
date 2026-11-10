@@ -24,7 +24,7 @@ static void sound(void *ctx, const ma_event *e)
 {
     (void)ctx;
     track_t *t = &trk[e->part % MA_PARTS];
-    int n = e->part == MA_DRUMS ? mas_drum_note(&G.s, e->note) : e->note;
+    int n = e->part == MA_PERC ? mas_drum_note(e->note) : e->note;
     if (n < 0)
         return;
     if (e->on) {
@@ -64,7 +64,7 @@ static void load_parts(void)
         if (snd->own) host_own(&trk[p], snd->own);
         if (snd->fm6) host_fm6(&trk[p], snd->fm6);
     }
-    host_preset(&trk[3], mas_kit_engine(G.s.snd[3]), 0);
+    host_preset(&trk[3], mas_kit_engine(), 0);
     for (int p = 0; p < MA_PARTS; ++p) {
         mas_track(&trk[p], &G, p);
         if (only_part >= 0 && p != only_part) trk[p].p[P_LEVEL] = 0;
@@ -85,16 +85,15 @@ int main(int argc, char **argv)
     ma_song_sounds(&G.s);                         /* (the song's sounds from its style's pool) */
     G.s.arc = (uint8_t)env_int("ARC", 1);
     if (getenv("KIT")) G.s.snd[3] = (uint8_t)env_int("KIT", 0);
-    if (getenv("LIFT")) G.s.lift = (uint8_t)env_int("LIFT", 85);
-    if (getenv("PUMP")) G.s.pump = (uint8_t)env_int("PUMP", 70);
-    if (getenv("VOX")) G.s.vox = (uint8_t)env_int("VOX", 1);
-    if (getenv("ENERGY")) G.s.energy = (uint8_t)env_int("ENERGY", 75);
+    if (getenv("HEAT")) G.s.heat = (uint8_t)env_int("HEAT", 70);
+    if (getenv("MUTE")) G.s.mute = (uint8_t)env_int("MUTE", 0);
+    if (getenv("P3")) G.s.p3mode = (uint8_t)env_int("P3", 0);
     only_part = env_int("PART", -1);
     ma_settings_fix(&G.s);
     ma_rebuild(&G);
     ma_set_sound(&G, sound, 0);
     const char *name = getenv("NAME") ? getenv("NAME") : "groove";
-    snprintf(path, sizeof path, "%s/sill_%s.wav", dir, name);
+    snprintf(path, sizeof path, "%s/manta_%s.wav", dir, name);
     load_parts();
     FILE *w = fopen(path, "wb");
     if (!w) { fprintf(stderr, "cannot write %s\n", path); return 1; }
@@ -114,14 +113,14 @@ int main(int argc, char **argv)
         mas_block(&G);
         if (G.bar != last_bar && G.step == 0) {
             last_bar = G.bar;
-            if (G.bar == brk_at) ma_break(&G, true);
-            if (G.bar == brk_at) ma_break(&G, false);
-            if (G.bar == keyup_at) ma_keyup(&G);
+            if (G.bar == brk_at) ma_band_hit(&G, true);
+            if (G.bar == brk_at) ma_band_hit(&G, false);
+            if (G.bar == keyup_at) ma_mambo(&G);
             if (G.bar == keys_at) ma_key(&G, 13, 66, true);
             if (G.bar == keys_at + 1) ma_key(&G, 13, 66, false);
             if (getenv("TRACE"))
-                fprintf(stderr, "bar %3d  %-6s  chord %-7s cut %3d  muted %d%d%d%d\n", G.bar, ma_sec_name(G.sec),
-                        G.loop[ma_chord_now(&G)].name, G.cut[0], G.muted[0], G.muted[1], G.muted[2], G.muted[3]);
+                fprintf(stderr, "bar %3d  %-6s  chord %-7s tone %3d  muted %d%d%d%d\n", G.bar, ma_sec_name(G.sec),
+                        G.loop[ma_chord_now(&G)].name, G.tone[2], G.muted[0], G.muted[1], G.muted[2], G.muted[3]);
         }
         uint64_t t0 = now_ns();
         mix_block(o, CTL);
