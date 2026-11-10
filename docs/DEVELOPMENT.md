@@ -100,6 +100,13 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   song and round), the corte (the soloist alone a bar), a trumpet phrase, the piano's montuno solo, then the montuno,
   the mambo, the moña, the cierre. The groove's sections break the montuno up into syncopated arpeggios and add maracas
   and a woodblock.
+- **The old Havana's ease.** The son, the guaracha, the bolero, the danzón and the cha-cha sit back: the piano, the
+  strings and the trumpet 10 to 28 ms behind the beat, the bass a little. The SON is the old Havana's: 100 BPM, in
+  minor, the upright's montuno, the acoustic bass, one trumpet, a warmer room; a long solo note sings with vibrato.
+  The TRES or the GUITAR on the PIANO part bring the upright beside them on the PERC track.
+- **In tune strings.** The PHYS string is Rings': its STRUCTURE below about 0.24 adds a curved bridge's buzz and
+  above about 0.26 a stiff string's dispersion, both heard as out of tune. TRES, GUITAR and REQUINT sit at 32
+  (0.25), between them: their fundamentals measured within 5 cents.
 - **No singing, no empty room.** Manta leaves the singing to whoever sings along, but leaves no gap where a singer
   would be: in the montuno the section plays the coro's refrain (the phrase's first two bars, the same each time, in
   two voices on the chord) four bars, the solo improvises the next four, and so on.

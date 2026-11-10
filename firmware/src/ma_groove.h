@@ -68,7 +68,7 @@ enum { MA_SEC_IN, MA_SEC_TEMA, MA_SEC_VRS, MA_SEC_CORTE, MA_SEC_FRASE, MA_SEC_PN
 #define MA_SETS 8
 #define MA_SOUNDS 8                                /* each part's SOUND list (ma_sounds.h) */
 #define MA_PIANO_UPRIGHT 0                         /* PIANO sound 0: the sampled upright */
-#define MA_LOOPS 12                                /* the chord loops (ma_groove.c MA_LOOP) */
+#define MA_LOOPS 13                                /* the chord loops (ma_groove.c MA_LOOP) */
 
 /* what the player set: the cards. Saved as it is (ma_fw.c), so append only */
 typedef struct {
@@ -161,6 +161,7 @@ typedef struct {
      * and PAN 3D), and has the trombone too (the section's second horn an octave down, on it) */
     bool brass, trombone;
     bool guitar;                                   /* in: the PIANO part is the GUITAR (strums, its own patterns) */
+    bool tres;                                     /* in: the PIANO part is the TRES (its guajeo; the upright beside it) */
     /* what each part played, a bit per sixteenth: the bar playing and the bar before (the screen) */
     uint16_t hits[MA_PARTS], hits_last[MA_PARTS];
     uint16_t dr_hits[MA_DR_COUNT], dr_last[MA_DR_COUNT];

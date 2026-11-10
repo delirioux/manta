@@ -15,7 +15,7 @@
 #include "ma_sounds.h"
 
 static ma_groove G;
-static const float MARK[MA_PARTS] = {-20.0f, -18.0f, -19.0f, -16.0f};
+static const float MARK[MA_TRACKS] = {-20.0f, -18.0f, -19.0f, -16.0f};
 
 static void host_own(track_t *t, const preset_t *pr)
 {
@@ -43,7 +43,7 @@ static void host_fm6(track_t *t, const uint8_t *packed)
 static float audition(int p, const char *dir, const char *name)
 {
     host_tracks_init();
-    for (int k = 0; k < MA_PARTS; ++k)
+    for (int k = 0; k < MA_TRACKS; ++k)
         trk[k].p[P_LEVEL] = 0;
     track_t *t = &trk[p];
     if (p == MA_PERC) {
@@ -114,11 +114,11 @@ static float audition(int p, const char *dir, const char *name)
 int main(int argc, char **argv)
 {
     const char *dir = argc > 1 ? argv[1] : 0;
-    static const char *const PART[MA_PARTS] = {"PIANO", "BASS", "HORNS", "PERC"};
+    static const char *const PART[MA_TRACKS] = {"PIANO", "BASS", "HORNS", "PERC"};
     ma_init(&G, (float)FS);
     G.s.bpm = 120;
     G.s.warmth = 0;
-    for (int p = 0; p < MA_PARTS; ++p) {
+    for (int p = 0; p < MA_TRACKS; ++p) {
         printf("%s (mark %.0f dBFS)\n", PART[p], (double)MARK[p]);
         int n = p == MA_PERC ? 1 : MA_SOUNDS;
         for (int i = 0; i < n; ++i) {

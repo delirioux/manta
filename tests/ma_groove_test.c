@@ -385,6 +385,22 @@ int main(void)
         g.guitar = false;
     }
 
+    /* the tres: its guajeo on the PIANO track, the upright's montuno beside it on the PERC track */
+    {
+        ma_defaults(&g.s);
+        ma_style_apply(&g.s, MA_ST_SON);
+        g.s.arc = 0;
+        g.tres = true;
+        ma_rebuild(&g);
+        reset_counts();
+        ma_play(&g, true);
+        run_bars(4);
+        ma_play(&g, false);
+        CHECK(on[MA_PIANO] >= 8 && on[MA_KEYS] >= 8 && bad_pc == 0 && still_sounding(MA_KEYS) == 0,
+              "SON: the tres and the upright beside it (%d, %d)", on[MA_PIANO], on[MA_KEYS]);
+        g.tres = false;
+    }
+
     /* the washboard: a scrape a bar, now and then (hot) a tap; the merengue's guira on the guiro, not on it */
     {
         ma_defaults(&g.s);

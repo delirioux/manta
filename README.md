@@ -67,7 +67,7 @@ first. Installing firmware is at your own risk.
 
 | CALIENTE | | NOCHE | |
 | --- | --- | --- | --- |
-| **SALSA** · 184 | montuno, tumbao, trumpet and trombone, timbales and bells | **SON** · 112 | the tres's guajeo, bongos, maracas, a dorian lilt |
+| **SALSA** · 184 | montuno, tumbao, trumpet and trombone, timbales and bells | **SON** · 100 | old Havana: the upright's montuno laid back, the acoustic bass, one trumpet, bongó, maracas, a warm room |
 | **MAMBO** · 192 | big-band riffs, the mambo bell, 2-3 | **CHA-CHA** · 120 | güiro and bell, the cha-cha-chá bass, charanga violins |
 | **MERENGUE** · 152 | fast tambora, the güira's scrape, sax riffs | **BOLERO** · 80 | arpeggios, a harmon-muted trumpet, soft bongos |
 | **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | the nylon guitar's bossa, rim clicks, sevenths, a tenor sax |

@@ -105,6 +105,7 @@ static const ma_loopdef MA_LOOP[MA_LOOPS] = {
     {4, {0, 4, 4, 0}, 3, 1},   /* 10 I V V I: the cumbia's two chords */
     {4, {0, 3, 0, 4}, 7, 1},   /* 11 i iv i V7: the tango's */
     {4, {0, 2, 3, 4}, 3, 1},   /* 12 I iii IV V: the cha-cha's climb */
+    {4, {0, 2, 3, 4}, 3, 1},   /* 13 i III iv V: the old son's turn in minor, the guitar trio's */
 };
 void ma_loop_name(const ma_settings *s, int loop, char *out, int max)
 {
@@ -141,8 +142,10 @@ const ma_style MA_STYLE[MA_STYLES] = {
      PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_OPEN, {{7, 0, 1}, {0, 2, 3}, {4, 3, 2}}},
     {"SAMBA", MA_SIDE_CALIENTE, 102, 0, MA_SC_MAJOR, 85, MA_CLAVE_32, MA_HITS_8, {7, 1, 2}, {7, 0, 8, 1}, 1, 0,
      PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_OPEN, {{3, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
-    {"SON", MA_SIDE_NOCHE, 112, 4, MA_SC_DORIAN, 55, MA_CLAVE_32, MA_HITS_16, {3, 1, 1}, {0, 6, 3, 1}, 1, 0,
-     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 35, 30, 30, MA_MUTE_OPEN, {{0, 4, 7}, {0, 6, 5}, {0, 4, 3}}},
+    /* the son of old Havana: the upright's montuno, the acoustic bass, one trumpet, bongo, maracas and claves; laid
+     * back, a warm room (a song now and then brings the guitar, the upright beside it) */
+    {"SON", MA_SIDE_NOCHE, 100, 2, MA_SC_MINOR, 50, MA_CLAVE_23, MA_HITS_16, {0, 1, 1}, {12, 0, 3, 1}, 1, 0,
+     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 50, 25, 55, MA_MUTE_OPEN, {{0, 7, 0}, {1, 6, 1}, {1, 2, 1}}},
     {"CHA-CHA", MA_SIDE_NOCHE, 120, 5, MA_SC_MAJOR, 55, MA_CLAVE_23, MA_HITS_16, {0, 0, 5}, {11, 0, 1, 2}, 1, 0,
      PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_OPEN,
      {{1, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
@@ -153,8 +156,8 @@ const ma_style MA_STYLE[MA_STYLES] = {
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
      PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
     /* the guaracha: the son fast and cheeky, a conjunto's (the tres, the bongo, the maracas, a trumpet) */
-    {"GUARACHA", MA_SIDE_CALIENTE, 200, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {3, 1, 1}, {0, 1, 2, 11}, 1, 0,
-     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_OPEN, {{7, 0, 3}, {0, 6, 5}, {0, 1, 2}}},
+    {"GUARACHA", MA_SIDE_CALIENTE, 200, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
+     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_OPEN, {{7, 0, 0}, {0, 6, 5}, {0, 1, 2}}},
     /* the danzon: Cuba's ballroom, a charanga's violins over the piano, the pailas' cinquillo, the guiro */
     {"DANZON", MA_SIDE_NOCHE, 112, 5, MA_SC_MAJOR, 45, MA_CLAVE_32, MA_HITS_16, {0, 1, 5}, {2, 11, 0, 7}, 2, 0,
      PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_DANZON, 0, 40, 35, 35, MA_MUTE_OPEN, {{1, 2, 7}, {0, 6, 5}, {4, 5, 3}}},
@@ -992,7 +995,7 @@ static void bar_line(ma_groove *g)
 /* is part p out (the form, the descarga, its level 0) */
 static bool part_out(const ma_groove *g, int p)
 {
-    if (p == MA_KEYS && !g->guitar)               /* the upright beside the guitar only */
+    if (p == MA_KEYS && !g->guitar && !g->tres)   /* the upright beside the guitar or the tres only */
         return true;
     if (g->s.lvl[p == MA_KEYS ? MA_PIANO : p] == 0)
         return true;
@@ -1000,7 +1003,7 @@ static bool part_out(const ma_groove *g, int p)
         return p != MA_PERC;
     if (!g->s.arc)
         return false;
-    int pp = g->guitar ? MA_KEYS : MA_PIANO;      /* (the piano: the upright beside the guitar, or the PIANO part) */
+    int pp = g->guitar || g->tres ? MA_KEYS : MA_PIANO;   /* (the piano: the upright beside the guitar, or the PIANO part) */
     switch (g->sec) {
     case MA_SEC_IN:                                /* the groove: the piano, the guitar, the percussion, the bass a bar on */
         return p == MA_HORNS || (p == MA_BASS && g->sec_bar < 1);
@@ -1009,7 +1012,7 @@ static bool part_out(const ma_groove *g, int p)
     case MA_SEC_CORTE:                             /* the soloist alone */
         return g->vrs_piano ? p != pp : p != MA_HORNS;
     case MA_SEC_PNO:                               /* the piano's solo: no horns, the guitar rests */
-        return p == MA_HORNS || (g->guitar && p == MA_PIANO);
+        return p == MA_HORNS || ((g->guitar || g->tres) && p == MA_PIANO);
     default: break;
     }
     return false;
@@ -1095,7 +1098,7 @@ static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
     bool tx_sec = !s->arc || sc == MA_SEC_IN || sc == MA_SEC_VRS || sc == MA_SEC_PNO || sc == MA_SEC_TEMA;
     int st3 = s->snd[3];
     bool tx_style = st3 != MA_ST_TANGO && st3 != MA_ST_BOSSA && st3 != MA_ST_BOLERO && st3 != MA_ST_DANZON &&
-                    st3 != MA_ST_SAMBA;
+                    st3 != MA_ST_SAMBA && st3 != MA_ST_SON;   /* (the son: its own maracas and claves, no more) */
     if (tx_sec && tx_style && heat >= 0.35f && s->extra == MA_EXTRA_AUTO && !intro_soft)
         play_lanes(g, st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? &L_TX[1] : L_TX, st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? 1 : 2,
                    i, delay, hum, heat * 0.85f);   /* (the son's own maracas: the woodblock only) */
@@ -1324,22 +1327,27 @@ static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf,
         }
     }
     const ma_style *st = &MA_STYLE[g->s.style];
-    const char *pat = PIANO_PAT[st->piano][g->s.montuno & 3];
+    int fam = st->piano;
+    if (g->tres)                                   /* the tres its guajeo, the upright beside it its montuno */
+        fam = pp == MA_KEYS ? PF_MONTUNO : PF_GUAJEO;
+    const char *pat = PIANO_PAT[fam][g->s.montuno & 3];
     /* the groove's sections (the intro, the tema, the horns' verso, the frase): the montuno broken up, arpeggiated on
      * syncopated sixteenths (the bolero, the bossa and the tango keep their own) */
     int sc = sec_now(g);
     bool arp_sec = g->s.arc && (sc == MA_SEC_IN || sc == MA_SEC_TEMA || sc == MA_SEC_VRS || sc == MA_SEC_FRASE);
-    if (arp_sec && st->piano != PF_BOLERO && st->piano != PF_BOSSA && st->piano != PF_TANGO)
-        pat = ARP_PAT[(g->s.montuno + (st->piano == PF_GUAJEO)) & 3];
+    if (arp_sec && fam != PF_BOLERO && fam != PF_BOSSA && fam != PF_TANGO && !(g->tres && pp == MA_PIANO))
+        pat = ARP_PAT[(g->s.montuno + (fam == PF_GUAJEO)) & 3];
     char ch = pat[cbar(g, g->bar) * 16 + i];
     if (ch == '.' || ch == ' ')
+        return;
+    if (pp == MA_KEYS && g->s.bpm >= 170 && (i & 1))   /* (fast, beside the tres or the guitar: the eighths, room left) */
         return;
     bool acc = ch >= 'A' && ch <= 'Z';
     char c = acc ? (char)(ch - 'A' + 'a') : ch;
     float heat = (float)g->s.heat / 100.0f;
     int vel = (acc ? 112 : 96) + (i % 4 == 0 ? 4 : 0) + (int)(hum * 8.0f);
     vel = (int)((float)vel * (0.85f + 0.15f * heat));
-    float gate = st->piano == PF_BOLERO ? 1.6f : st->piano == PF_TANGO ? 0.45f : 0.7f;
+    float gate = fam == PF_BOLERO ? 1.6f : fam == PF_TANGO ? 0.45f : 0.7f;
     float len = sf * 2.0f * gate;
     switch (c) {
     case 'o': {                                    /* a chord tone in octaves: the montuno's melody, walking the chord */
@@ -1348,7 +1356,7 @@ static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf,
         int k = WALK[((g->bar & 1) * 8 + i / 2) % 8];
         int n = tone_at(ch2, k, 64);
         schedule(g, delay, pp, n, clampi(vel, 1, 127), len);
-        if (st->piano != PF_GUAJEO || heat > 0.5f) /* (the tres's line single; hotter, doubled) */
+        if (fam != PF_GUAJEO || heat > 0.5f) /* (the tres's line single; hotter, doubled) */
             schedule(g, delay, pp, n + 12, clampi(vel - 8, 1, 127), len);
         break;
     }
@@ -1356,7 +1364,7 @@ static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf,
     case 'n': {
         const ma_chord *ch2 = chord_for(g, c == 'n');
         int t[3];
-        triad_at(ch2, st->piano == PF_BOSSA ? 58 : 62, t);
+        triad_at(ch2, fam == PF_BOSSA ? 58 : 62, t);
         for (int k = 0; k < 3; ++k)
             schedule(g, delay, pp, t[k], clampi(vel - (k == 2 ? 0 : 6), 1, 127), c == 'n' ? sf * 3.0f : len);
         break;
@@ -1377,7 +1385,7 @@ static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf,
         break;
     }
     case 'b':                                      /* the left hand's root */
-        schedule(g, delay, pp, tone_at(chord_at(g, g->bar), 0, 43), clampi(vel, 1, 127), st->piano == PF_TANGO ? sf : sf * 6.0f);
+        schedule(g, delay, pp, tone_at(chord_at(g, g->bar), 0, 43), clampi(vel, 1, 127), fam == PF_TANGO ? sf : sf * 6.0f);
         break;
     case 'c': {                                    /* the left hand's chord, low (the tango's marcato) */
         int t[3];
@@ -1599,6 +1607,7 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
     int n, len;
     if (!solo_note(g, sec_bar(g), i, improv, &n, &len))
         return;
+    g->vib = len >= 6;                             /* a long note sings (the LFO eased in from its start) */
     if (s->arc && sc == MA_SEC_TEMA && g->sec_bar == ma_sec_len(g, sc) - 1 && last_phrase_note(g, i)) {
         n = high_tonic(s);                         /* the theme's end: the tonic, high, held, singing */
         len = 16 - i;
@@ -1683,6 +1692,14 @@ static void do_step(ma_groove *g)
             continue;
         float hum = (rnd_f(&g->rnd) - 0.5f) * 2.0f * (float)g->s.human / 100.0f;
         uint32_t d = delay + (uint32_t)((hum > 0 ? hum : 0.0f) * g->sr * 0.008f);   /* late only, up to 8 ms */
+        /* the old Havana's ease: the piano, the strings and the trumpet sit behind the beat, the bass a little (ms) */
+        static const uint8_t LAY[MA_STYLES] = {[MA_ST_SON] = 22, [MA_ST_GUARACHA] = 10, [MA_ST_BOLERO] = 28,
+                                               [MA_ST_DANZON] = 14, [MA_ST_CHACHA] = 10};
+        int lay = LAY[clampi(g->s.style, 0, MA_STYLES - 1)];
+        if (p == MA_PIANO || p == MA_KEYS || p == MA_HORNS)
+            d += (uint32_t)((float)lay * g->sr * 0.001f);
+        else if (p == MA_BASS)
+            d += (uint32_t)((float)lay * g->sr * 0.0003f);
         switch (p) {
         case MA_PIANO: play_piano(g, i, d, sf, hum); break;
         case MA_KEYS: play_piano_on(g, MA_KEYS, i, d, sf, hum); break;
