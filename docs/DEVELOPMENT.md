@@ -116,6 +116,9 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   triangle and the upright piano's tails a little shorter made the room). Each bar the bass plays its pattern as
   written about half the time, otherwise another of its family's rhythms, or holds back its first note, or on a
   chord's last bar walks up the scale to the next root; a fifth now and then becomes the octave or the third.
+- **The solo played, not sequenced.** Each of its notes a little late or not (up to 20 ms), louder or softer, held its
+  own length; and while it plays the HORNS track is one voice with a short portamento (GLIDE 14): each note slides
+  in from the last, as a lip does. The section's chords get their voices back.
 - **A long, warm hall for the solo.** Felucca's HALL, longer; the band's sends lower; the solo's send up while it
   plays; the reverb's top damped.
 - **The SAMPLE engine's rates.** Its step was `(ratio >> 8) * (rate >> 8)`, which lost up to 1 % of a rate not a

@@ -171,7 +171,9 @@ static inline int mas_gm_note(int drum)
 static inline int16_t mas_clamp(int v, int lo, int hi) { return (int16_t)(v < lo ? lo : v > hi ? hi : v); }
 #define MAS_PIANO_CUT 92                  /* the upright's CUT: a little edge off (eng_sample.c's one-pole) */
 
-static int16_t mas_rev_base[MA_TRACKS];          /* each track's reverb send from the cards (mas_block adds the solo's) */
+static int16_t mas_rev_base[MA_TRACKS];
+static int16_t mas_horns_voice = V_POLY;          /* the HORNS sound's own voice mode (the section's) */
+#define MAS_SOLO_GLIDE 14                         /* the solo's portamento: a short slide into each note */          /* each track's reverb send from the cards (mas_block adds the solo's) */
 
 /* a part's track from the cards, over its sound's preset: the level, the place, the sends, WARMTH, and the matrix's
  * slots for the groove (above). Main loop, the audio held off (or the host) */
@@ -234,6 +236,8 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     if (snd->voice >= 0)
         t->p[P_VOICE] = (int16_t)(snd->voice == MAS_UNISON ? V_UNISON : snd->voice == MAS_LEGATO ? V_LEGATO
                                   : snd->voice == MAS_MONO ? V_MONO : V_POLY);
+    if (part == MA_HORNS)
+        mas_horns_voice = t->p[P_VOICE];
     /* WARMTH: the tape's saturation, a little on every part */
     t->p[P_DIST] = mas_clamp((snd->dist >= 0 ? snd->dist : 0) + s->warmth * 30 / 100, 0, 127);
     t->p[P_ITYPE] = 0;
@@ -263,7 +267,12 @@ static inline void mas_block(const ma_groove *g)
     trk[MA_HORNS].p[P_LD_PIT] = g->vib ? 2 : 0;
     /* the solo in a warm, wide hall: more of the reverb on it while it plays (the section drier, punchy) */
     int rv = mas_rev_base[MA_HORNS] + (g->soloing || g->keys ? 46 : 0);
-    trk[MA_HORNS].p[P_REV] = (int16_t)(rv > 127 ? 127 : rv);  /* the tema's held note: vibrato (about +-35 cents, the LFO's) */
+    trk[MA_HORNS].p[P_REV] = (int16_t)(rv > 127 ? 127 : rv);
+    /* the solo slurs: one voice, each note gliding up or down from the last a little (a lip, not a sequencer); the
+     * section's chords back to their voices */
+    bool solo = g->soloing || g->keys;
+    trk[MA_HORNS].p[P_VOICE] = (int16_t)(solo ? V_MONO : mas_horns_voice);
+    trk[MA_HORNS].p[P_GLIDE] = (int16_t)(solo ? MAS_SOLO_GLIDE : 0);  /* the tema's held note: vibrato (about +-35 cents, the LFO's) */
 }
 
 /* the groove told what the sounds are: the HORNS the sampled brass (its mutes) with the trombone (an octave down);
