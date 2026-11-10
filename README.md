@@ -2,6 +2,8 @@
 
 # Manta
 
+**Generative Latin grooves for the FM-1. Let the band play, ¡tú al solo!**
+
 Generative Latin grooves for the M-VAVE FM-1: salsa, mambo, merengue, cumbia, samba, son, cha-cha, bolero, bossa
 and tango, with a sampled percussion section, piano, trumpet and trombone, and a solo trumpet on the keys.
 
