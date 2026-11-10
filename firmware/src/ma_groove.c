@@ -887,6 +887,9 @@ static struct { uint32_t at; uint8_t part, note, vel, pad; float len; } pend[MA_
 static int npend;
 static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, float len)
 {
+    if (part == MA_PIANO || part == MA_KEYS)       /* the piano kept out of its thin top: down an octave above A5 */
+        while (n > 81)
+            n -= 12;
     if (delay == 0 || npend >= MA_PEND) {
         note(g, part, n, vel, len);
         return;
