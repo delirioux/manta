@@ -304,6 +304,23 @@ int main(void)
         ma_play(&g, false);
     }
 
+    /* no room left empty: in the montuno the solo's four bars and the coro's, played by the section, take turns */
+    {
+        ma_defaults(&g.s);
+        g.s.arc = 0;
+        ma_rebuild(&g);
+        ma_play(&g, true);
+        int empty = 0, blocks = 0;
+        for (int b = 0; b < 4; ++b) {
+            reset_counts();
+            run_bars(4);
+            blocks++;
+            empty += on[MA_HORNS] == 0;
+        }
+        ma_play(&g, false);
+        CHECK(empty == 0, "the montuno: the horns in every four bars (%d of %d empty)", empty, blocks);
+    }
+
     /* the guitar: every style strums, its notes in the guitar's range, all ended */
     for (int st = 0; st < MA_STYLES; ++st) {
         ma_defaults(&g.s);

@@ -91,6 +91,9 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   güira plays on the güiro.
 - **One mute for the HORNS track.** The section and the solo share it; BOLERO's horns are muted and sit back
   (its GAIN down, about 9 dB under the mix).
+- **No singing, no empty room.** Manta leaves the singing to whoever sings along, but leaves no gap where a singer
+  would be: in the montuno the section plays the coro's refrain (the phrase's first two bars, the same each time, in
+  two voices on the chord) four bars, the solo improvises the next four, and so on.
 - **BAND HIT is the clave's figure.** A cierre is the whole band on the clave's strokes of the next bar, the cymbal on
   the last; held, the descarga leaves the percussion alone and a timbal roll brings the band back on the bar line.
 - **A small, dry room.** Latin records of the era are close and punchy; ROOM is short, PLATE adds to the horns and the

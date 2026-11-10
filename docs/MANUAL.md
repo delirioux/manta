@@ -49,7 +49,7 @@ With ARC on, a song goes:
 | --- | --- | --- |
 | **INTRO** (IN) | 4 | The percussion first, then the piano, then the bass, the horns' pickup into the verso. |
 | **VERSO** (VRS) | 8 or 16 | The melody, on the solo trumpet with SOLO on PHRASE; the horns lay out; the bells light. |
-| **MONTUNO** (MON) | 8 or 16 | The groove opens: the bongo's bell and the timbal's bell, the horns' riff, the solo improvising. HITS fire here. |
+| **MONTUNO** (MON) | 8 or 16 | The groove opens: the bongo's bell and the timbal's bell. Call and response, four bars each: the horn section plays the coro's refrain (where a son's singers would answer), then the solo improvises (or you, on the keys). HITS fire here. |
 | **MAMBO** (MBO) | 8 | The horn section's mambo riff, louder; the solo rests. |
 | **MONTUNO** (MON) | 8 or 16 | Again. |
 | **MOÑA** (MNA) | 8 | The horns' riff with the solo over it, the band at its hottest. |

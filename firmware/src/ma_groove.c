@@ -1320,6 +1320,42 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         schedule(g, delay, MA_HORNS, low, clampi(vel - 10, 1, 127), len);
         return;
     }
+    /* the coro, played: where a son's singers would answer the soloist (the montuno's other four bars) the section
+     * plays the coro's refrain instead, the phrase's first two bars over and over, the same each time, in two voices
+     * (Manta leaves the singing to whoever sings along, and fills the room with the horns) */
+    bool mon = s->arc ? (sc == MA_SEC_MON || sc == MA_SEC_MON2) : true;
+    if (mon && (sec_bar(g) / 4) % 2 == 0) {
+        g->soloing = false;
+        if (g->keys)                               /* (a key held: the player's, not the coro's) */
+            return;
+        int cp = (sec_bar(g) % 2) * 16 + i;
+        if (g->phr[cp] == -128)
+            return;
+        const ma_chord *c = chord_at(g, g->bar);
+        int n = step_note(s->scale, 60 + s->key + (s->key < 5 ? 12 : 0), g->phr[cp]);
+        int top = n, bd = 99;                      /* every note of the refrain onto the chord: sung, it is a chord */
+        for (int t = 0; t < 3; ++t)
+            for (int o = -1; o <= 1; ++o) {
+                int cand = n - ((n % 12) - c->tone[t]) + o * 12;
+                int d = cand > n ? cand - n : n - cand;
+                if (d < bd) {
+                    bd = d;
+                    top = cand;
+                }
+            }
+        while (top > 82) top -= 12;
+        while (top < 67) top += 12;
+        int low = top - 1;                         /* the second voice: the chord tone below */
+        while (low % 12 != c->tone[0] && low % 12 != c->tone[1] && low % 12 != c->tone[2])
+            --low;
+        if (g->trombone)
+            low -= 12;
+        float len = sf * (float)g->phr_len[cp] * 0.85f;
+        int vel = 94 + (i % 4 == 0 ? 6 : 0) + (int)(hum * 6.0f) + (int)((float)s->heat / 100.0f * 8.0f);
+        schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
+        schedule(g, delay, MA_HORNS, low, clampi(vel - 10, 1, 127), len);
+        return;
+    }
     /* the solo: in the verso the melody, in the montuno every other four bars an improvised answer (a variation of
      * the phrase), in the moña over the riff's rests; the keys take it over */
     g->soloing = true;
