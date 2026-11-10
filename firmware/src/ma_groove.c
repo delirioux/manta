@@ -562,34 +562,45 @@ typedef struct { uint8_t drum, group; const char *p; } lane_t;
 #define LANES_MAX 9
 typedef struct { uint8_t n; lane_t l[LANES_MAX]; } perc_set_t;
 /* the generic lanes the PERC cards pick (TUMBAO MARCHA BOLERO, MARTILLO BELL, CASCARA BELL, GUIRO SHAKER CABASA) */
-static const lane_t L_TUMBAO[3] = {{MA_DR_CONGA_MUTE, G_CONGA, "o.o.X.o.o.o...o.o.o.X.o.o.o...o."},
-                                   {MA_DR_CONGA, G_CONGA, "............x.x.............x.x."},
-                                   {MA_DR_TUMBA, G_CONGA, "..............x...............x."}};
-static const lane_t L_MARCHA[3] = {{MA_DR_CONGA_MUTE, G_CONGA, "o...X...o...o...o...X...o...o..."},
-                                   {MA_DR_CONGA, G_CONGA, "..o.......o.x.x...o.......o.x.x."},
-                                   {MA_DR_QUINTO, G_CONGA, "......x...............x........."}};
-static const lane_t L_CBOLERO[2] = {{MA_DR_CONGA_MUTE, G_CONGA, "o.......X.......o.......X......."},
-                                    {MA_DR_TUMBA, G_CONGA, "............x.x.............x.x."}};
-static const lane_t L_MARTILLO[3] = {{MA_DR_BONGO_HI, G_BONGO, "X...x...X...x...X...x...X...x..."},
-                                     {MA_DR_BONGO_MUTE, G_BONGO, "..o...o...o.......o...o...o....."},
-                                     {MA_DR_BONGO_LO, G_BONGO, "..............x...............x."}};
-static const lane_t L_BBELL[1] = {{MA_DR_BELL_BONGO, G_BONGO, "X...x...X...x...X...x...X...x.x."}};
-static const lane_t L_CASCARA[1] = {{MA_DR_PAILA, G_TIMBAL, "x...x...x.x...x.x...x.x...x...x."}};
-static const lane_t L_TBELL[2] = {{MA_DR_BELL_MAMBO, G_TIMBAL, "X...x...X...x...X...x.x.X...x..."},
-                                  {MA_DR_BELL_MUTE, G_TIMBAL, "..o...o...o...o...o.......o...o."}};
-static const lane_t L_GUIRO[2] = {{MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},
-                                  {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.o.....o.o.....o.o.....o.o."}};
-static const lane_t L_SHAKER[2] = {{MA_DR_SHAKER_FWD, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
-                                   {MA_DR_SHAKER_BACK, G_EXTRA, ".o.o.o.o.o.o.o.o.o.o.o.o.o.o.o.o"}};
-static const lane_t L_CABASA[1] = {{MA_DR_CABASA, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}};
+#define L_TUMBAO_0 {MA_DR_CONGA_MUTE, G_CONGA, "o.o.X.o.o.o...o.o.o.X.o.o.o...o."}
+#define L_TUMBAO_1 {MA_DR_CONGA, G_CONGA, "............x.x.............x.x."}
+#define L_TUMBAO_2 {MA_DR_TUMBA, G_CONGA, "..............x...............x."}
+static const lane_t L_TUMBAO[3] = {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2};
+#define L_MARCHA_0 {MA_DR_CONGA_MUTE, G_CONGA, "o...X...o...o...o...X...o...o..."}
+#define L_MARCHA_1 {MA_DR_CONGA, G_CONGA, "..o.......o.x.x...o.......o.x.x."}
+#define L_MARCHA_2 {MA_DR_QUINTO, G_CONGA, "......x...............x........."}
+static const lane_t L_MARCHA[3] = {L_MARCHA_0, L_MARCHA_1, L_MARCHA_2};
+#define L_CBOLERO_0 {MA_DR_CONGA_MUTE, G_CONGA, "o.......X.......o.......X......."}
+#define L_CBOLERO_1 {MA_DR_TUMBA, G_CONGA, "............x.x.............x.x."}
+static const lane_t L_CBOLERO[2] = {L_CBOLERO_0, L_CBOLERO_1};
+#define L_MARTILLO_0 {MA_DR_BONGO_HI, G_BONGO, "X...x...X...x...X...x...X...x..."}
+#define L_MARTILLO_1 {MA_DR_BONGO_MUTE, G_BONGO, "..o...o...o.......o...o...o....."}
+#define L_MARTILLO_2 {MA_DR_BONGO_LO, G_BONGO, "..............x...............x."}
+static const lane_t L_MARTILLO[3] = {L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2};
+#define L_BBELL_0 {MA_DR_BELL_BONGO, G_BONGO, "X...x...X...x...X...x...X...x.x."}
+static const lane_t L_BBELL[1] = {L_BBELL_0};
+#define L_CASCARA_0 {MA_DR_PAILA, G_TIMBAL, "x...x...x.x...x.x...x.x...x...x."}
+static const lane_t L_CASCARA[1] = {L_CASCARA_0};
+#define L_TBELL_0 {MA_DR_BELL_MAMBO, G_TIMBAL, "X...x...X...x...X...x.x.X...x..."}
+#define L_TBELL_1 {MA_DR_BELL_MUTE, G_TIMBAL, "..o...o...o...o...o.......o...o."}
+static const lane_t L_TBELL[2] = {L_TBELL_0, L_TBELL_1};
+#define L_GUIRO_0 {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."}
+#define L_GUIRO_1 {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.o.....o.o.....o.o.....o.o."}
+static const lane_t L_GUIRO[2] = {L_GUIRO_0, L_GUIRO_1};
+#define L_SHAKER_0 {MA_DR_SHAKER_FWD, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}
+#define L_SHAKER_1 {MA_DR_SHAKER_BACK, G_EXTRA, ".o.o.o.o.o.o.o.o.o.o.o.o.o.o.o.o"}
+static const lane_t L_SHAKER[2] = {L_SHAKER_0, L_SHAKER_1};
+#define L_CABASA_0 {MA_DR_CABASA, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}
+static const lane_t L_CABASA[1] = {L_CABASA_0};
 /* the washboard: a scrape on the beat, the thimbles tapping the sixteenths between (the guira's way) */
-static const lane_t L_WASH[2] = {{MA_DR_WASH, G_EXTRA, "X...x...X...x...X...x...X...x..."},
-                                 {MA_DR_WASH_TAP, G_EXTRA, "..oo..oo..oo..oo..oo..oo..oo..oo"}};
+#define L_WASH_0 {MA_DR_WASH, G_EXTRA, "X...x...X...x...X...x...X...x..."}
+#define L_WASH_1 {MA_DR_WASH_TAP, G_EXTRA, "..oo..oo..oo..oo..oo..oo..oo..oo"}
+static const lane_t L_WASH[2] = {L_WASH_0, L_WASH_1};
 
 static const perc_set_t PERC[MA_STYLES] = {
-    [MA_ST_SALSA] = {7, {L_TUMBAO[0], L_TUMBAO[1], L_TUMBAO[2], L_MARTILLO[0], L_MARTILLO[1], L_MARTILLO[2],
-                         L_CASCARA[0]}},
-    [MA_ST_MAMBO] = {8, {L_TUMBAO[0], L_TUMBAO[1], L_TUMBAO[2], L_MARTILLO[0], L_MARTILLO[1], L_CASCARA[0],
+    [MA_ST_SALSA] = {7, {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2, L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2,
+                         L_CASCARA_0}},
+    [MA_ST_MAMBO] = {8, {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2, L_MARTILLO_0, L_MARTILLO_1, L_CASCARA_0,
                          {MA_DR_GUIRO_SHORT, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
                          {MA_DR_TIMBAL_LO, G_OTHER, "..............................x."}}},
     [MA_ST_MERENGUE] = {7, {{MA_DR_TUMBA, G_CONGA, "X.......x.......X.......x......."},
@@ -612,10 +623,10 @@ static const perc_set_t PERC[MA_STYLES] = {
                          {MA_DR_AGOGO_HI, G_TIMBAL, "..x.x...x...x.x...x.x...x...x.x."},
                          {MA_DR_SHAKER_FWD, G_EXTRA, "o.oxo.oxo.oxo.oxo.oxo.oxo.oxo.ox"},
                          {MA_DR_CONGA_MUTE, G_CONGA, "......o.......o.......o.......o."}}},
-    [MA_ST_SON] = {6, {L_MARTILLO[0], L_MARTILLO[1], L_MARTILLO[2], {MA_DR_TUMBA, G_CONGA, "..............x...............x."},
+    [MA_ST_SON] = {6, {L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2, {MA_DR_TUMBA, G_CONGA, "..............x...............x."},
                        {MA_DR_SHAKER_FWD, G_EXTRA, "x...x...x...x...x...x...x...x..."},
                        {MA_DR_SHAKER_BACK, G_EXTRA, "..o...o...o...o...o...o...o...o."}}},
-    [MA_ST_CHACHA] = {7, {L_GUIRO[0], {MA_DR_GUIRO_LONG, G_EXTRA, "....x.......x.......x.......x..."},
+    [MA_ST_CHACHA] = {7, {L_GUIRO_0, {MA_DR_GUIRO_LONG, G_EXTRA, "....x.......x.......x.......x..."},
                           {MA_DR_BELL_MAMBO, G_TIMBAL, "X...o...X...o...X...o...X...o..."},
                           {MA_DR_BELL_MUTE, G_TIMBAL, "....x.......x.......x.......x..."},
                           {MA_DR_CONGA_MUTE, G_CONGA, "o...X...o...o...o...X...o...o..."},
@@ -623,7 +634,7 @@ static const perc_set_t PERC[MA_STYLES] = {
                           {MA_DR_TIMBAL_LO, G_OTHER, "............................x.x."}}},
     [MA_ST_BOLERO] = {5, {{MA_DR_BONGO_HI, G_BONGO, "x.......o.o.o...x.......o.o.o..."},
                           {MA_DR_BONGO_LO, G_BONGO, "......o.......x.......o.......x."},
-                          L_CBOLERO[0], L_CBOLERO[1],
+                          L_CBOLERO_0, L_CBOLERO_1,
                           {MA_DR_SHAKER_FWD, G_EXTRA, "o...o...o...o...o...o...o...o..."}}},
     [MA_ST_BOSSA] = {4, {{MA_DR_TIMBAL_RIM, G_TIMBAL, "x..x..x...x..x..x..x..x...x..x.."},
                          {MA_DR_KICK, G_KICK, "o.....o.o.....o.o.....o.o.....o."},
