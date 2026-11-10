@@ -1206,6 +1206,8 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         int low = top - 1;                         /* the second horn: the chord tone below the first */
         while (low % 12 != c->tone[0] && low % 12 != c->tone[1] && low % 12 != c->tone[2])
             --low;
+        if (g->brass)                              /* the sampled brass: the trombone, an octave under the trumpet's */
+            low -= 12;
         float heat = (float)s->heat / 100.0f;
         int vel = 104 + (g->riff_len[pos] == 1 ? 10 : 0) + (int)(hum * 6.0f) + (int)(heat * 10.0f);
         float len = sf * (float)g->riff_len[pos] * (g->riff_len[pos] == 1 ? 0.6f : 0.9f);
@@ -1512,11 +1514,16 @@ void ma_process(ma_groove *g, int frames)
         g->gain[p] = 0;
     }
     g->pan_horns = 64;
+    g->mute_live = MA_MUTE_OPEN;
     if (!g->soloing && !g->keys)                   /* the section: open, in the middle */
         return;
+    g->mute_live = (uint8_t)(g->s.mute % MA_MUTE_COUNT);
     /* the solo: the MUTE's darkness, the BELL, PAN 3D (behind: duller, as the bell turns away; far: softer, darker) */
     static const float MUTE_TONE[MA_MUTE_COUNT] = {1.0f, 0.72f, 0.55f, 0.46f, 0.6f};
-    float t = MUTE_TONE[g->s.mute % MA_MUTE_COUNT];
+    /* (the sampled brass: the engine's mute filter is the mute; the TONE only takes a little off the cup's top, and
+     * the wah's sweep is the filter's) */
+    static const float MUTE_TONE_BRASS[MA_MUTE_COUNT] = {1.0f, 1.0f, 0.85f, 1.0f, 0.6f};
+    float t = (g->brass ? MUTE_TONE_BRASS : MUTE_TONE)[g->s.mute % MA_MUTE_COUNT];
     if (g->s.mute == MA_MUTE_WAH) {                /* the wah: the plunger opening and closing on the eighths */
         float beat = g->playing ? ((float)(g->step < 0 ? 0 : g->step) + 1.0f - g->wait / step_frames(g)) / 2.0f : 0.0f;
         t = 0.3f + 0.65f * (0.5f + 0.5f * sin_turns(beat));

@@ -11,6 +11,12 @@ PIANO: Manta's upright, six notes (00_Upright_G1 .. 05_Upright_C4, VCSL's names:
 upright of VCSL ("Chordophones/Zithers/Upright Piano, Yamaha/Sustains", the vl3 layer), changed by
 tools/ma_piano.py: summed to mono, cut to 0.8 .. 1.0 s and faded, a high-pass at 110 Hz, a little high shelf and
 bite, a touch less body, a light firmness, normalised. CC0 as their source; Manta keeps it so.
+BRASS: Manta's trumpet and trombone, eleven notes (00_TBN_F1 .. 04_TBN_C3, 05_TPT_D#3 .. 10_TPT_A4, VSCO's names: C3
+is middle C) of the Versilian Studios Chamber Orchestra 2 Community Edition (VSCO 2 CE, by Sam Gossner and
+contributors, CC0 1.0, https://github.com/sgossner/VSCO-2-CE): "Brass/Tenor Trombone/sus" and "Brass/Trumpet/sus", the
+loudest layer, changed by tools/ma_brass.py: summed to mono, a high-pass, a little presence, the swell evened and an
+accent on the attack, the sustain levelled, cut to 0.62 s; tools/gen_samples.py loops each over whole periods of its
+pitch. CC0 as their source; Manta keeps them so.
 To the extent possible under law, delirioux has waived all copyright and related rights to Manta's own changes and
 sounds: CC0 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/
 Manta uses none of Felucca's other CC0 sample sets; tools/fetch_cc0.py still fetches them for anyone who wants them.

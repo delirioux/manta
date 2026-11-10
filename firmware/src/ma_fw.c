@@ -176,6 +176,7 @@ static void ma_apply(void)
             all = true;
         }
     ma_loaded_sig = ma_g.sound_sig;
+    mas_brass(&ma_g);
     if (all || memcmp(s, &ma_applied, sizeof *s)) {
         fm1_irq_off();
         for (uint32_t k = 0; k < MA_PARTS; ++k)

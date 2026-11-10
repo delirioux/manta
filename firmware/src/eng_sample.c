@@ -188,6 +188,8 @@ static void sample_note_on(track_t *t, voice_t *v)
     v->s[2] = v->s[3] = 0;
     v->s[6] = zi == 0xFFFFu;     /* 1 = sample ended (one-shot); a kit key with no sound stays silent */
     v->s[7] = 0;                 /* lo-pass state */
+    v->s[5] = 0;                 /* (Manta) the mute's low-pass and band-pass states */
+    v->ph[2] = 0;
     if (smp_set_missing(si))
         v->s[6] = 2;             /* 2 = no sample data: the sine (smp_sine; ph[0] its phase) */
 }
@@ -213,6 +215,21 @@ static void sample_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, cons
     }
     if (v->ph[0] == 0 && v->ph[1] == 0 && v->s[3] == 0)
         v->s[3] = sample_next(z, v, p[P_E3]);         /* prime the interpolator */
+    /* (Manta) a brass mute, E5 1..4: a state-variable filter after CUT (Chamberlin, Q15; s[5] its low-pass, ph[2]
+     * its band-pass), its outputs mixed as each mute colours the horn. 1 STRAIGHT: thin and buzzy, the lows gone;
+     * 2 CUP: soft, round, no top; 3 HARMON: the nasal, focused honk; 4 WAH: the harmon's stem, its centre swept by
+     * the TONE (CUT). 0, Felucca's own: none */
+    int32_t mute = p[P_E5], mf = 0, mq = 0, gl = 0, gb = 0, gh = 0;
+    if (mute > 0 && mute <= 4) {
+        static const int16_t FC[5] = {0, 1700, 950, 1500, 0}, Q[5] = {0, 22000, 30000, 9000, 11000};
+        static const int16_t GL[5] = {0, 0, 200, 0, 70}, GB[5] = {0, 230, 160, 200, 260}, GH[5] = {0, 190, 0, 40, 24};
+        int32_t fc = mute == 4 ? 450 + (lp - 4000) * 2100 / 28767 : FC[mute];   /* (the wah: 450 .. 2550 Hz) */
+        mf = fc * 4669 / 1000;                        /* 2 pi fc / 44100 in Q15 (the small angle: fc stays low) */
+        mq = Q[mute];
+        gl = GL[mute];
+        gb = GB[mute];
+        gh = GH[mute];
+    }
     for (i = 0; i < n; i++) {
         int32_t s;
         frac += stepq;
@@ -236,7 +253,16 @@ static void sample_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, cons
         if (drv)
             s = softclip(s + (((s >> 2) * (drv * 150)) >> 11));   /* = s * drv * 600 / 32768, no overflow */
         v->s[7] += mulq15(s - v->s[7], lp);           /* gentle tone control (CUT) */
-        out[i] += voice_amp(v->s[7], m, i) << 1;
+        s = v->s[7];
+        if (mf) {                                     /* (Manta) the mute */
+            int32_t band = (int32_t)v->ph[2];
+            v->s[5] += (mf * band) >> 15;
+            int32_t hi = s - v->s[5] - ((mq * band) >> 15);
+            band = clamp(band + ((mf * hi) >> 15), -262144, 262143);
+            v->ph[2] = (uint32_t)band;
+            s = clamp((v->s[5] * gl + band * gb + hi * gh) >> 8, -65536, 65535);
+        }
+        out[i] += voice_amp(s, m, i) << 1;
         if (v->s[6])
             break;
     }

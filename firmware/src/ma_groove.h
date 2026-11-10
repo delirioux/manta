@@ -144,6 +144,10 @@ typedef struct {
     float p3_angle;                                /* the solo's angle now (degrees, 0 in front, 90 right) */
     bool muted[MA_PARTS];                          /* out (the form, a break, a level of 0) */
     bool soloing;                                  /* the horns' track is the solo now (the form, the keys) */
+    uint8_t mute_live;                             /* the solo's MUTE now (MA_MUTE_OPEN while the section plays) */
+    /* in, from the glue: the HORNS sound is the sampled brass (its mutes are its own filters, the TONE only the bell
+     * and PAN 3D; the section's second horn is the trombone, an octave down) */
+    bool brass;
     /* what each part played, a bit per sixteenth: the bar playing and the bar before (the screen) */
     uint16_t hits[MA_PARTS], hits_last[MA_PARTS];
     uint16_t dr_hits[MA_DR_COUNT], dr_last[MA_DR_COUNT];

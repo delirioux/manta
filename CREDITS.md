@@ -7,6 +7,8 @@
   cabasa and triangle, cut by `tools/ma_perc.py`; the timbales, the kick and the washboard Manta's own, made by the same
   script, CC0 1.0 ([attribution](assets/samples-cc0/ATTRIBUTION.txt))
 - **The piano**: six notes of VCSL's Yamaha upright (CC0 1.0), made into a montuno upright by `tools/ma_piano.py`
+- **The brass**: eleven notes of the trumpet and the tenor trombone of [VSCO 2 CE](https://github.com/sgossner/VSCO-2-CE)
+  (Sam Gossner and contributors, CC0 1.0), made into a Latin section's brass by `tools/ma_brass.py`
 - **[Sill](https://github.com/delirioux/sill)** (delirioux, GPL-3.0-only): the machine Manta runs on: the groove's frame
   (the clock, the notes held, the keys), the glue, the cards and pages, the sets, the browser build; after
   [Daurade](https://github.com/delirioux/daurade)'s

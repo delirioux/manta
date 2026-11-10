@@ -6,6 +6,7 @@
  * Tracks: 1 PIANO, 2 BASS, 3 HORNS (the section and the solo), 4 PERC. Each music part has a list of eight sounds (the
  * SOUND page): an engine and its factory preset, or a sound of Manta's own on that engine, or one of the FM6 patches
  * (ma_fm6.inc). The UPRIGHT is the SAMPLE engine's set 1: six notes of VCSL's Yamaha upright (CC0, tools/ma_piano.py).
+ * TPT+TBN and TPT are its sets 2 and 3: VSCO 2 CE's trumpet and tenor trombone (CC0, tools/ma_brass.py).
  * The percussion is the SAMPLE engine's set DRUMS: thirty one-shots, a key each from 53 (tools/ma_perc.py).
  *
  * The matrix's slots carry the groove's controls, set every block by the glue:
@@ -39,6 +40,11 @@ typedef struct {
 static const preset_t MAS_ACCORDION = {"ACCORDION", {4, 16, 64, 0, 96, 12, 18, 64}, {3, 70, 112, 28}, 0, 0, FX(0, 30, 20, 30)};
 /* the bandoneon: the tango's, darker, fewer beats, a slower breath */
 static const preset_t MAS_BANDONEON = {"BANDONEON", {4, 7, 64, 0, 76, 14, 16, 64}, {9, 80, 110, 30}, 0, 0, FX(0, 10, 15, 35)};
+/* the sampled brass (tools/ma_brass.py, VSCO 2 CE): the SAMPLE engine's set BRASS (the trombone below the trumpet)
+ * and TRUMPET (its trumpet alone), looped; tongued at once, held, let go short as a section does. The SAMPLE E
+ * values: SET TUNE BITS LOOP CUT MUTE DRV - (MUTE: Manta's, set by the glue every block) */
+static const preset_t MAS_BRASS = {"BRASS", {2, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 20}, 0, 0, FX(0, 0, 0, 30)};
+static const preset_t MAS_TPT = {"TRUMPET", {3, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 24}, 0, 0, FX(0, 0, 0, 34)};
 /* a solo trumpet, light: one saw, a breath of noise, the filter swelling open on each note (the lip) (Sill's CORNET) */
 static const preset_t MAS_TRUMPET = {"TRUMPET", {0, 0, 0, 6, 50, 12, 6, 64}, {12, 60, 96, 26}, 42, 0, FX(0, 15, 20, 30)};
 /* the tenor sax of the merengue: a square, some breath and growl */
@@ -78,8 +84,8 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         SX("TUBA", MAS_PHASE, 0, 4, MAS_KEEP, MAS_MONO, 2, -9),   /* PHASE's BRASS in the low end */
     },
     {   /* HORNS: the section and the solo (the solo's mute, bell and place on the TONE, GAIN and PAN slots) */
-        S("TPT+TBN", MAS_FM6, 3, 2, 5),                 /* FM6's BRASS: a trumpet and a trombone in one */
-        SO("TPT", MAS_ANALOG, 0, MAS_TRUMPET, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -4),
+        SO("TPT+TBN", MAS_SAMPLE, 2, MAS_BRASS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),   /* the sampled brass: set BRASS */
+        SO("TPT", MAS_SAMPLE, 3, MAS_TPT, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),         /* its trumpet alone: TRUMPET */
         S("BRASS", MAS_ANALOG, 9, 4, 1),
         SO("SAX", MAS_ANALOG, 0, MAS_SAX, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -2),
         S("FLUTE", MAS_WHEEL, 3, 3, 2),                 /* SOFT FLUTE: the charanga's */
@@ -163,11 +169,12 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
         t->p[P_DIST] = 0;
         return;
     }
-    if (snd->engine == MAS_SAMPLE) {     /* the upright: its velocity, a little edge off */
+    if (snd->engine == MAS_SAMPLE) {     /* the upright and the brass: their velocity; the upright a little edge off */
         t->p[P_M4SRC] = MS_VEL;
         t->p[P_M4DST] = MD_AMP;
         t->p[P_M4AMT] = 64;
-        t->p[P_E4] = MAS_PIANO_CUT;
+        if (part == MA_PIANO)
+            t->p[P_E4] = MAS_PIANO_CUT;
     } else {
         t->p[P_M4SRC] = MS_OFF;
     }
@@ -201,6 +208,13 @@ static inline void mas_block(const ma_groove *g)
         trk[p].ex_off = g->gain[p];
     }
     trk[MA_HORNS].at = g->pan_horns;
+    trk[MA_HORNS].p[P_E5] = g->brass ? g->mute_live : 0;   /* the sampled brass's mute filter (eng_sample.c) */
+}
+
+/* the groove told whether the HORNS sound is the sampled brass (its mutes, the trombone an octave down), as it loads */
+static inline void mas_brass(ma_groove *g)
+{
+    g->brass = mas_of(g, MA_HORNS)->engine == MAS_SAMPLE;
 }
 
 #endif

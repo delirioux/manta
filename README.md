@@ -9,13 +9,13 @@
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue.svg)](LICENSE)
 
 **Generative Latin grooves for the M-VAVE FM-1. Let the band play, ¡tú al solo!** Press PLAY and Manta's band
-plays: a sampled percussion section locked to the clave, a montuno on an upright piano, a tumbao bass and the
-horns, from salsa and mambo to bolero and tango. You lead it: fire the band's hits, send the horns into a mambo, and
+plays: a sampled percussion section locked to the clave, a montuno on an upright piano, a tumbao bass and a
+sampled trumpet and trombone section, from salsa and mambo to bolero and tango. You lead it: fire the band's hits, send the horns into a mambo, and
 take the solo trumpet on the keys. Built on [Sill](https://github.com/delirioux/sill),
 [Tuna](https://github.com/delirioux/tuna) and [Felucca](docs/FELUCCA.md).
 
-> **Version 0.1, a test build.** The groove, the percussion kit, the upright and the pages are in; the sampled
-> trumpet and trombone, the old songs' phrases and the full PAN 3D are next. Built with no warranty.
+> **Version 0.1, a test build.** The groove, the percussion kit, the upright, the trumpet and trombone and the
+> pages are in; the old songs' phrases and the full PAN 3D are next. Built with no warranty.
 > [Felucca](https://github.com/hugelton/Felucca)'s installer, or the official V15, takes the FM-1 back.
 
 <p align="center"><img src="docs/manta-play.gif" alt="PLAY: the chords, the bar and the clave as they play, the song's form" width="240"></p>
@@ -41,13 +41,14 @@ first. Installing firmware is at your own risk.
    tango), each with its own tempo, patterns, sounds and percussion.
 3. **A real percussion section**: thirty one-shots, congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
    shakers, cabasa, triangle, toms and a washboard, from CC0 recordings.
-4. **The montuno on an upright**: a sampled Yamaha upright playing the montuno's octaves and anticipations.
+4. **Real piano and brass**: a sampled Yamaha upright playing the montuno, and a sampled trumpet and trombone section,
+   the trombone an octave under the trumpets.
 5. **A song form**: intro, verso, montuno, mambo, montuno, moña and the cierre, round again with a new melody.
 6. **BAND HIT** (REC): the whole band hits the clave's figure together on the next bar. Hold it for a descarga: the
    percussion alone, then a timbal roll and the band back on the bar line.
 7. **MAMBO** (SEQ): the horn section into its riff from the next bar.
-8. **The solo is yours**: the keys play the solo trumpet as you press them, with mutes (cone, cup, harmon, wah) and its
-   bell's brightness.
+8. **The solo is yours**: the keys play the solo trumpet as you press them, with mutes (cone, cup, harmon, wah: filters over
+   the real horn) and its bell's brightness.
 9. **PAN 3D** (as [Sardine](https://github.com/delirioux/sardine)'s): the solo placed around your head on headphones,
    duller behind you as the bell turns away, softer far off, orbiting if you like.
 10. **The cards**: four knobs, four cards a page, no menus; a new style or song always on the next bar line.
@@ -89,7 +90,8 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
 - **The parts**: PIANO (the montuno: the upright, an electric piano, organ, tres, harp, accordion, bandoneon or
   mallets), BASS (the tumbao: a baby bass, an upright, FM, sub, slap, slide, round or tuba), HORNS (the section and the
   solo: trumpet and trombone, trumpet, brass, sax, flute, violins, accordion or bandoneon) and PERC (a style's
-  percussion set). The percussion and the upright are samples; the rest is Felucca's synthesis.
+  percussion set). The percussion, the upright and the trumpet and trombone (TPT+TBN, TPT) are samples; the rest is
+  Felucca's synthesis.
 - **The form** (ARC): INTRO (the percussion, then the piano, then the bass, the horns), VERSO (the melody), MONTUNO
   (the solo improvising, the bongo and timbal bells), MAMBO (the horn section), MONTUNO, MOÑA (the riff with the solo
   over it), CIERRE (the band's hits), then round again. MAMBO off leaves the mambo and the moña out; ARC off plays the
@@ -111,6 +113,7 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
 ## Credits
 
 Manta is by delirioux and Claude. The percussion is from the [Versilian Community Sample
-Library](https://github.com/sgossner/VCSL) (CC0), and so is the upright; the rest is Manta's, built on
+Library](https://github.com/sgossner/VCSL) (CC0), and so is the upright; the trumpet and trombone from
+[VSCO 2 CE](https://github.com/sgossner/VSCO-2-CE) (CC0); the rest is Manta's, built on
 [Sill](https://github.com/delirioux/sill), [Tuna](https://github.com/delirioux/tuna) and Felucca by Leo Kuroshita
 (Hügelton Instruments). See [CREDITS.md](CREDITS.md) and [LICENSING.md](LICENSING.md). GPL-3.0-only.

@@ -25,7 +25,7 @@ static int fails, checks;
 static ma_groove g;
 static int on[MA_PARTS], off[MA_PARTS], sounding[MA_PARTS][128], bad_pc, drum_on[MA_DR_COUNT];
 static int clave_at[2][16];                       /* the claves' strokes by (bar of the clave, step) */
-static int horns_in_desc, others_in_cierre, horn_range_bad, watch_bar = -1, watch_piano;
+static int horns_low, horns_in_desc, others_in_cierre, horn_range_bad, watch_bar = -1, watch_piano;
 static uint32_t hash;
 static void sound(void *ctx, const ma_event *e)
 {
@@ -50,6 +50,8 @@ static void sound(void *ctx, const ma_event *e)
         }
         if (e->part == MA_HORNS && g.desc)
             horns_in_desc++;
+        if (e->part == MA_HORNS && e->note < 64)
+            horns_low++;
         if (e->part == MA_HORNS && !g.keys && (e->note < 52 || e->note > 96))
             horn_range_bad++;
     } else {
@@ -64,7 +66,7 @@ static void reset_counts(void)
     memset(sounding, 0, sizeof sounding);
     memset(drum_on, 0, sizeof drum_on);
     memset(clave_at, 0, sizeof clave_at);
-    bad_pc = horns_in_desc = others_in_cierre = horn_range_bad = 0;
+    bad_pc = horns_low = horns_in_desc = others_in_cierre = horn_range_bad = 0;
 }
 static void run_bars(int bars)
 {
@@ -302,6 +304,29 @@ int main(void)
         ma_play(&g, false);
     }
 
+    /* the sampled brass: the section's second horn is the trombone, an octave under the trumpet */
+    {
+        ma_defaults(&g.s);
+        g.s.arc = 0;
+        ma_rebuild(&g);
+        g.brass = true;
+        reset_counts();
+        ma_play(&g, true);
+        ma_mambo(&g);                              /* (arc off: the section's riff from the next bar) */
+        run_bars(8);
+        ma_play(&g, false);
+        int lows = horns_low;
+        g.brass = false;
+        reset_counts();
+        ma_play(&g, true);
+        ma_mambo(&g);
+        run_bars(8);
+        ma_play(&g, false);
+        CHECK(lows > 0 && horns_low == 0 && horn_range_bad == 0,
+              "brass: the trombone under the trumpets (%d low, %d without)", lows, horns_low);
+        g.brass = false;
+    }
+
     /* the solo's tone, gain and place: OPEN in front bright and centred; HARMON darker; PAN 3D behind duller, far
      * softer, to the right on the right */
     {
@@ -318,6 +343,18 @@ int main(void)
         ma_process(&g, 32);
         g.soloing = true;
         CHECK(g.tone[MA_HORNS] < open * 6 / 10, "HARMON: darker (%d)", g.tone[MA_HORNS]);
+        CHECK(g.mute_live == MA_MUTE_HARMON, "the solo's mute live for the engine (%d)", g.mute_live);
+        g.brass = true;                            /* the sampled brass: the filter is the mute, not the TONE */
+        ma_process(&g, 32);
+        g.soloing = true;
+        CHECK(g.tone[MA_HORNS] == open && g.mute_live == MA_MUTE_HARMON, "brass HARMON: the filter's, the tone open (%d)",
+              g.tone[MA_HORNS]);
+        g.soloing = false;
+        g.keys = 0;
+        ma_process(&g, 32);
+        CHECK(g.mute_live == MA_MUTE_OPEN, "the section: no mute (%d)", g.mute_live);
+        g.brass = false;
+        g.soloing = true;
         g.s.mute = MA_MUTE_OPEN;
         g.s.p3mode = MA_P3_FIXED;
         g.s.p3angle = 9;                           /* 90 degrees: right */

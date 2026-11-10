@@ -70,10 +70,12 @@ TR = 22050                                   # stored sample rate
 # from the web editor). TRANH was removed (66 KB of flash); its index 1 stays, an alias of PIANO
 # ("alias": the set named). PERC (the GM kit) was removed (66 KB); its index 4 stays, an alias of
 # PIANO too (PERC_SLOT; its sounds load as the DRUM engine)
-CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("DRUMS", "alias"), ("DRUMS", "alias"), ("DRUMS", "alias")]
-# (Manta: two sets, its percussion kit (tools/ma_perc.py, from VCSL's hand percussion, CC0) and its montuno upright
-# (tools/ma_piano.py, from VCSL's Yamaha upright, CC0); the other indexes are aliases of the kit. Felucca's FLUTE and
-# SAX are left out)
+CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("BRASS", "sus"), ("TRUMPET", "part"), ("DRUMS", "alias")]
+# (Manta: its percussion kit (tools/ma_perc.py, from VCSL's hand percussion, CC0), its montuno upright
+# (tools/ma_piano.py, from VCSL's Yamaha upright, CC0) and its brass (tools/ma_brass.py, from VSCO 2 CE's trumpet and
+# tenor trombone, CC0): BRASS the trombone below the trumpet, TRUMPET its trumpet zones alone ("part": the zones of
+# another set from a root up, no data of its own, SET_PART). Felucca's FLUTE and SAX are left out)
+SET_PART = {"TRUMPET": ("BRASS", 62)}
 PERC_SLOT = 4                                # core.h SMP_SET_PERC: SAMPLE's factory presets end before it
 MEASURED_TUNING = ()                         # sets whose recordings are not at A440 (was TRANH, ~+35 ct)
 
@@ -106,7 +108,7 @@ ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75
 # shakers (a file name ending in _air) at AIR_RATE: their air lives above 11 kHz, which 22,050 Hz would cut away (the
 # engine plays each zone at its own rate)
 SET_DIR = {}
-SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2}               # (the piano: tools/ma_piano.py cut and faded it already)
+SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55}  # (the piano: tools/ma_piano.py cut and faded it already)
 SET_KEEP_BY_ROOT = {}
 SET_FADE = {}
 SET_RATE = {}
@@ -185,7 +187,18 @@ def cc0_entries(setname, kind):
                 break
         x = x[:int(keep * rate)]
         n = len(x)
-        if kind == "sus":                            # crossfaded sustain loop in the steady part
+        if kind == "sus" and setname in SET_KEEP:   # (Manta) a loop of whole periods at the end, crossfaded
+            per = rate / (440.0 * 2 ** ((root - 69) / 12))
+            m = min(range(max(1, int(0.09 * rate / per)), int(0.16 * rate / per) + 1),
+                    key=lambda k: abs(k * per - round(k * per)))
+            le = n - 1
+            ls = le - int(round(m * per))
+            xf = min((le - ls) // 2, int(0.04 * rate))
+            for i in range(xf):                      # (the last sample becomes the one before ls: ls follows it)
+                a = (i + 1) / xf
+                x[le - xf + 1 + i] = x[le - xf + 1 + i] * (1 - a) + x[ls - xf + i] * a
+            loop = (ls, le)
+        elif kind == "sus":                          # crossfaded sustain loop in the steady part
             ls, le, xf = int(0.40 * TR), n - 1, int(0.06 * TR)
             for i in range(xf):
                 a = i / xf
@@ -333,6 +346,14 @@ class Builder:
         self.zones += entries
         self.kinds[name] = kind
 
+    def part_set(self, name):
+        """a set of another's zones from a root up (SET_PART; no data of its own): its key ranges as the other's"""
+        src, lo = SET_PART[name]
+        _, z0, nz = next(t for t in self.sets if t[0] == src)
+        first = next(i for i in range(z0, z0 + nz) if self.zones[i]["root16"] >= lo * 16)
+        self.sets.append((name, first, z0 + nz - first))
+        self.kinds[name] = self.kinds[src]
+
     def alias_set(self, name):
         """a retired set's index: the zones of the earlier set `name` (no data of its own)"""
         orig = next(i for i, (n, _, _) in enumerate(self.sets) if n == name)
@@ -468,7 +489,7 @@ def input_key(have_cc0):
 
 def main(out):
     subprocess.run([sys.executable, str(Path(__file__).with_name("gen_waves.py")), str(GENDIR)], check=True)
-    have_cc0 = all(SET_DIR.get(n, CC0 / n).exists() and any(SET_DIR.get(n, CC0 / n).glob("*.wav")) for n, k in CC0_SETS if k != "alias")
+    have_cc0 = all(SET_DIR.get(n, CC0 / n).exists() and any(SET_DIR.get(n, CC0 / n).glob("*.wav")) for n, k in CC0_SETS if k not in ("alias", "part"))
     if not have_cc0:
         print("samples: the drum kit is missing (assets/samples-cc0/DRUMS: python3 tools/ma_perc.py) - no SAMPLE sets")
     key = input_key(have_cc0)
@@ -485,6 +506,8 @@ def main(out):
         for name, kind in CC0_SETS:
             if kind == "alias":
                 b.alias_set(name)
+            elif kind == "part":
+                b.part_set(name)
             else:
                 b.cc0_set(name, kind)
     if slice_on():                                  # SLICE's BREAK: only when that engine is built

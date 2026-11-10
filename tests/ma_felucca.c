@@ -70,6 +70,7 @@ static void load_parts(void)
         if (only_part >= 0 && p != only_part) trk[p].p[P_LEVEL] = 0;
     }
     mas_song(&G.s);
+    mas_brass(&G);
     sig_loaded = G.sound_sig;
 }
 

@@ -6,8 +6,9 @@ Manta is a fork of [Sill](https://github.com/delirioux/sill) (itself after [Daur
 `tests/ma_*`, `tools/ma_*`, `tools/draw_logo.py`, `web/ma_*`, `web/emu/ma_*`, `docs/`, `assets/logo.*`) are
 Copyright (C) 2026 delirioux, GPL-3.0-only; the maths (`tuna_libm.c`, `tuna_sys.h`) are Tuna's. The percussion kit in
 `assets/samples-cc0/DRUMS/` (from VCSL's hand percussion, CC0 1.0, with Manta's own timbales, kick and washboard) and
-the upright in `assets/samples-cc0/PIANO/` (VCSL's Yamaha upright, CC0 1.0) and their tools `tools/ma_perc.py` and
-`tools/ma_piano.py` are CC0 1.0 (see `assets/samples-cc0/ATTRIBUTION.txt`). Everything else is Felucca's, as Felucca
+the upright in `assets/samples-cc0/PIANO/` (VCSL's Yamaha upright, CC0 1.0), the brass in `assets/samples-cc0/BRASS/`
+(VSCO 2 CE's trumpet and tenor trombone, CC0 1.0) and their tools `tools/ma_perc.py`, `tools/ma_piano.py` and
+`tools/ma_brass.py` are CC0 1.0 (see `assets/samples-cc0/ATTRIBUTION.txt`). Everything else is Felucca's, as Felucca
 licenses it:
 
 ## Felucca licensing

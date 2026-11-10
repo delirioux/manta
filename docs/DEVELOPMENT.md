@@ -19,7 +19,7 @@ the upright and the pages, tested on the host and in the browser emulator; the F
 | Description | "Generative Latin grooves for the FM-1. Let the band play, ¡tú al solo!" |
 | Melodies | Only from the public domain: traditional (anonymous) songs, or composers dead before 1926, transcribed from public-domain scores, never from MIDI files; and phrases Manta makes in the style. |
 | Language | English throughout: code, comments, commits, docs. The screen is ASCII (MONA for moña). |
-| Licence | GPL-3.0-only. The samples are CC0: VCSL's recordings and what `tools/ma_perc.py` synthesizes. |
+| Licence | GPL-3.0-only. The samples are CC0: VCSL's and VSCO 2 CE's recordings and what `tools/ma_perc.py` synthesizes. |
 | Commits | Author `delirioux <340923392+delirioux@users.noreply.github.com>`. Work done with Claude ends with the `Co-Authored-By` and `Claude-Session` lines. |
 | Repository contents | The firmware, its tests and tools, its docs and its plan (this file). Chat discussions stay out. Docs and screenshots change with the code. |
 | Controls | The keys only ever play music; settings, pages and sets are on knobs and buttons. |
@@ -50,6 +50,7 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 | `ma_fw.c` | the glue: the groove on the tracks and MIDI out, loading a part's sound when it changes, the panel and its LEDs, the settings and the sets in flash, the splash |
 | `ma_logo.inc` | the splash logo, made by `tools/ma_logo.py` from the same drawing as `assets/logo.svg` (`tools/draw_logo.py`) |
 | `tools/ma_perc.py` | the thirty one-shots into `assets/samples-cc0/DRUMS/`: VCSL's recordings, trimmed and levelled; the timbales' heads, the kick and the washboard synthesized, seeded. `--fetch DIR` takes VCSL from a clone |
+| `tools/ma_brass.py` | the brass: eleven notes of VSCO 2 CE's tenor trombone (F1 to C3) and trumpet (D#3 to A4), CC0, into `assets/samples-cc0/BRASS/`: the swell evened, an accent on the attack, the sustain levelled |
 | `tools/ma_piano.py` | the UPRIGHT: six notes of VCSL's Yamaha upright (CC0) into `assets/samples-cc0/PIANO/` |
 | `tests/ma_groove_test.c` | the engine: every style plays and ends its notes, in key; the clave's sides; the form's order; a song replays exactly; the style and song on the bar line; BAND HIT tapped and held; the mambo; the keys; the mutes and PAN 3D; a bad record |
 | `tests/ma_ui_test.c` | the screen: the controls, every page in every palette, the layout lint, PNGs and a GIF (`docs/screens/`) |
@@ -69,15 +70,20 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   good (VCSL), synthesis only where they were not (the timbales' heads under a real rope-snare stroke, the kick, the
   washboard). The dry sounds (the bells, the shakers, the güiro, the washboard) play at 32 kHz for their air, the
   skins at 22,050 Hz. 34 zones with the upright, about 210 KB, under Sill's footprint.
-- **A sampled upright, the rest synthesized.** The montuno lives on the piano's attack; six notes of an upright,
-  bright but not hard. The bass, the horns' section sounds and the other keyboards are Felucca's engines: bytes, not
-  kilobytes.
-- **The mutes are filters.** Four mutes as recordings would cost four times the trumpet; a straight mute, a cup, a
-  harmon and a wah are a band-pass, a low-pass, a narrow peak and a moving peak over the open horn (the matrix's tone
-  slot and the sound's filter).
+- **A sampled upright and sampled brass, the rest synthesized.** The montuno lives on the piano's attack; six notes of
+  an upright, bright but not hard. A salsa section lives on real brass: eleven notes of a trumpet and a trombone in
+  one set (BRASS, the trombone below D#3), and its trumpet zones alone as a second set (TRUMPET, no bytes of its own).
+  Each is cut to 0.55 s and looped over whole periods of its pitch, so a held note holds; about 67 KB, the image
+  about 535 KB of the 581 KB slot. With TPT+TBN the section's second horn goes an octave down, onto the trombone.
+  The bass, the other horns and the other keyboards are Felucca's engines: bytes, not kilobytes.
+- **The mutes are filters.** Four mutes as recordings would cost four times the trumpet. On the sampled brass the
+  SAMPLE engine runs a state-variable filter after CUT (Manta's, `eng_sample.c`, its E5 set by the glue each block
+  while the solo plays): STRAIGHT the lows gone, thin and buzzy; CUP a low-pass, round, no top; HARMON a narrow
+  band-pass, the nasal honk; WAH that band swept by the TONE. Measured on the solo: the open horn's centroid 2.3 kHz,
+  the cup's 1.2 kHz, the straight's lows 19 dB down. On the synthesized horns the mutes are the TONE's darkness.
 - **PAN 3D in the matrix, for now.** The solo shares the HORNS track (four tracks only), so PAN 3D moves the horns'
   place, tone and level by the matrix's third slot (AT to PAN): behind you duller, far off softer. Sardine's
-  binaural filters need a track of their own; that waits for the trumpet samples.
+  binaural filters need a track of their own.
 - **BAND HIT is the clave's figure.** A cierre is the whole band on the clave's strokes of the next bar, the cymbal on
   the last; held, the descarga leaves the percussion alone and a timbal roll brings the band back on the bar line.
 - **A small, dry room.** Latin records of the era are close and punchy; ROOM is short, PLATE adds to the horns and the
@@ -100,8 +106,7 @@ comes from the FM-1 (MENU shows the CPU).
 
 1. **On the FM-1.** It installs, boots and plays; the settings and sets survive a power cycle; MIDI out; the CPU at
    SALSA and MAMBO over a long session. Confirm the firmware ID with the Hub.
-2. **The horns.** A sampled trumpet and trombone (VSCO 2 CE, CC0) for TPT+TBN and TPT, the mutes as filters over them.
-3. **PAN 3D in full.** Sardine's binaural filters on the solo, on a track of its own.
-4. **TRAD.** Phrases from traditional songs of the Latin countries, transcribed from public-domain scores, on PHRASE's
+2. **PAN 3D in full.** Sardine's binaural filters on the solo, on a track of its own.
+3. **TRAD.** Phrases from traditional songs of the Latin countries, transcribed from public-domain scores, on PHRASE's
    TRAD and MIX.
-5. **The sound by ear.** The kit's levels, the upright against the bass, the mutes, the trims.
+4. **The sound by ear.** The kit's levels, the upright against the bass, the brass and its mutes, the trims.
