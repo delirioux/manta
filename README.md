@@ -37,8 +37,8 @@ first. Installing firmware is at your own risk.
 ## Ten things Manta does
 
 1. **A band on the clave**: piano, bass, horns and percussion all phrase with the clave, 3-2 or 2-3 (the CLAVE card).
-2. **Ten styles** on two sides: CALIENTE (salsa, mambo, merengue, cumbia, samba) and NOCHE (son, cha-cha, bolero, bossa,
-   tango), each with its own tempo, patterns, sounds and percussion.
+2. **Twelve styles** on two sides: CALIENTE (salsa, mambo, merengue, cumbia, samba, guaracha) and NOCHE (son, cha-cha,
+   bolero, bossa, tango, danzón), each with its own tempo, patterns, sounds and percussion.
 3. **A real percussion section**: thirty one-shots, congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
    shakers, cabasa, triangle, toms and a washboard, from CC0 recordings.
 4. **Real piano and brass**: a sampled Yamaha upright playing the montuno, and a sampled trumpet and trombone section,
@@ -62,7 +62,7 @@ first. Installing firmware is at your own risk.
 | **SOLO** | OFF, PHRASE (the solo trumpet plays the melody in the verso and improvises in the montuno) or KEYS (only you). |
 | **HITS** | Band hits on their own at the end of every 4, 8 or 16 bars of the montuno, or OFF. |
 
-## Ten styles
+## Twelve styles
 
 | CALIENTE | | NOCHE | |
 | --- | --- | --- | --- |
@@ -71,6 +71,7 @@ first. Installing firmware is at your own risk.
 | **MERENGUE** · 152 | fast tambora, the güira's scrape, sax riffs | **BOLERO** · 80 | arpeggios, a harmon-muted trumpet, soft bongos |
 | **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | the nylon guitar's bossa, rim clicks, sevenths, a tenor sax |
 | **SAMBA** · 102 | surdo, tamborim, agogô, ganzá, the guitar's partido alto | **TANGO** · 118 | marcato piano, bandoneon, no drums at all |
+| **GUARACHA** · 200 | the son fast: tres, bongó, maracas, a trumpet | **DANZON** · 112 | Cuba's ballroom: violins, the pailas' cinquillo, güiro |
 
 A style brings its own tempo, sounds, key, chord loop, patterns and percussion; your MIX, PAN 3D, ARC and MENU stay.
 ALGORITHM picks another song in the same style: a new chord loop, riff and melody, the same each time you come back to

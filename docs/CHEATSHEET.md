@@ -11,7 +11,7 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | --- | --- |
 | Start / stop | **PLAY**: with the intro (ARC on) |
 | Tempo / volume | **SELECT** / **MASTER** |
-| Another style | **PRESETS**: one of ten, on the next bar line (CALIENTE: SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA; NOCHE: SON, CHA-CHA, BOLERO, BOSSA, TANGO) |
+| Another style | **PRESETS**: one of twelve, on the next bar line (CALIENTE: SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA, GUARACHA; NOCHE: SON, CHA-CHA, BOLERO, BOSSA, TANGO, DANZON) |
 | Another song | **ALGORITHM**: a new chord loop, riff, melody and sounds in the same style, on the next bar |
 | Band hit | **REC** tapped: the whole band hits the clave's figure on the next bar (a cierre) |
 | Descarga | **REC** held: the percussion alone until you let go, then a timbal roll and the band back on the bar line |

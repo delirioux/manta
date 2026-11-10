@@ -4,7 +4,7 @@ The working notes behind Manta: the agreements, how the work flows, why the code
 stands and what comes next. What Manta is and how to play it is in the [README](../README.md) and the
 [manual](MANUAL.md).
 
-Status: 10 November 2026. Version 0.1, a test build on `dev`: the groove engine, the ten styles, the percussion kit,
+Status: 10 November 2026. Version 0.1, a test build on `dev`: the groove engine, the twelve styles, the percussion kit,
 the upright and the pages, tested on the host and in the browser emulator; the FM-1 build comes from CI.
 
 ## Agreements
@@ -44,7 +44,7 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 
 | File | Does |
 | --- | --- |
-| `ma_groove.h/.c` | the engine: ten styles, the chord loops, the clave and the two-bar patterns of each part and each drum, the form, BAND HIT and the descarga, the mambo, the solo (its phrases, its mute, PAN 3D), swing and human timing. Plain C, no Felucca: it runs on the host as it does on the FM-1 |
+| `ma_groove.h/.c` | the engine: twelve styles, the chord loops, the clave and the two-bar patterns of each part and each drum, the form, BAND HIT and the descarga, the mambo, the solo (its phrases, its mute, PAN 3D), swing and human timing. Plain C, no Felucca: it runs on the host as it does on the FM-1 |
 | `ma_sounds.h` | the sounds on Felucca's engines and their trims, the kit's notes and their General MIDI notes, and how the cards set a part's track (level, place, sends, the matrix's tone, gain and place slots) |
 | `ma_ui.h/.c` | the twelve pages, the cards, the styles list, the sets, on Felucca's `gfx.c` |
 | `ma_fw.c` | the glue: the groove on the tracks and MIDI out, loading a part's sound when it changes, the panel and its LEDs, the settings and the sets in flash, the splash |

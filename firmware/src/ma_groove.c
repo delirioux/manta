@@ -151,6 +151,12 @@ const ma_style MA_STYLE[MA_STYLES] = {
      PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_OPEN, {{1, 7, 0}, {1, 6, 0}, {1, 4, 5}}},
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
      PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
+    /* the guaracha: the son fast and cheeky, a conjunto's (the tres, the bongo, the maracas, a trumpet) */
+    {"GUARACHA", MA_SIDE_CALIENTE, 200, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {3, 1, 1}, {0, 1, 2, 11}, 1, 0,
+     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_OPEN, {{7, 0, 3}, {0, 6, 5}, {0, 1, 2}}},
+    /* the danzon: Cuba's ballroom, a charanga's violins over the piano, the pailas' cinquillo, the guiro */
+    {"DANZON", MA_SIDE_NOCHE, 112, 5, MA_SC_MAJOR, 45, MA_CLAVE_32, MA_HITS_16, {0, 1, 5}, {2, 11, 0, 7}, 2, 0,
+     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_DANZON, 0, 40, 35, 35, MA_MUTE_OPEN, {{1, 2, 7}, {0, 6, 5}, {4, 5, 3}}},
 };
 const char *ma_style_name(int i) { return MA_STYLE[clampi(i, 0, MA_STYLES - 1)].name; }
 
@@ -549,6 +555,8 @@ static const char *const GUITAR_PAT[MA_STYLES][2] = {
     [MA_ST_BOLERO] = {"b.a.a.a.f.a.a.a.b.a.a.a.f.a.a.a.", "b...a.a.f...a.a.b...a.a.f.a.a.a."},
     [MA_ST_BOSSA] = {"b..c..c.f.c..c..b..c..c.f..c..c.", "b.c..c.cf.c..c..b.c..c.cf..c.c.."},
     [MA_ST_TANGO] = {"D...D...D...D...D...D...D...D...", "D..D..D.D...D...D..D..D.D...D..."},
+    [MA_ST_GUARACHA] = {"D..u..d.m.u.d.u.D..u.d..m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
+    [MA_ST_DANZON] = {"b.a.a.a.f.a.a.a.b.a.a.a.f.a.a.a.", "D...m...D...d.d.D...m...D...d.d."},
 };
 /* the bass: '.' rest, 'r' root, 'f' fifth, 'o' octave, 't' third, 'n' the next chord's root (the tumbao's
  * anticipation), 'p' a semitone below the next root (the approach); '-' holds the note before. Four of each family
@@ -663,6 +671,17 @@ static const perc_set_t PERC[MA_STYLES] = {
     /* the tango has no drums: the band is the rhythm. A wooden knock on the strong beats when HEAT is up */
     [MA_ST_TANGO] = {2, {{MA_DR_WOOD, G_OTHER, "x...............x..............."},
                          {MA_DR_TOM_LO, G_KICK, "o...............o..............."}}},
+    /* the guaracha: a conjunto's, the bongo's martillo, the maracas on the eighths (the claves on their own) */
+    [MA_ST_GUARACHA] = {6, {L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2,
+                            {MA_DR_SHAKER_FWD, G_EXTRA, "x...x...x...x...x...x...x...x..."},
+                            {MA_DR_SHAKER_BACK, G_EXTRA, "..o...o...o...o...o...o...o...o."},
+                            {MA_DR_CONGA_MUTE, G_CONGA, "......o.......o.......o.......o."}}},
+    /* the danzon: the pailas (the timbal's shell) on the cinquillo and its answer, the low paila's boom at the end of
+     * the phrase, the guiro; no congas, no clave */
+    [MA_ST_DANZON] = {4, {{MA_DR_PAILA, G_TIMBAL, "X.xx.xx.x...x.x.X.xx.xx.x...x.x."},
+                          {MA_DR_TIMBAL_LO, G_TIMBAL, "..............................X."},
+                          {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},
+                          {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.o.....o.o.....o.o.....o.o."}}},
 };
 
 /* the lanes for the PERC panel: CONGA BONGO TIMBAL EXTRA CLAVE and the rest */
@@ -1013,7 +1032,8 @@ static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
     float heat = (float)s->heat / 100.0f;
     int sc = sec_now(g);
     bool bells = sc == MA_SEC_MON || sc == MA_SEC_MON2 || sc == MA_SEC_MBO || sc == MA_SEC_MONA;
-    bool salsa_like = s->snd[3] == MA_ST_SALSA || s->snd[3] == MA_ST_MAMBO || s->snd[3] == MA_ST_SON;
+    bool salsa_like = s->snd[3] == MA_ST_SALSA || s->snd[3] == MA_ST_MAMBO || s->snd[3] == MA_ST_SON ||
+                      s->snd[3] == MA_ST_GUARACHA;
     bool intro_soft = s->arc && g->sec == MA_SEC_IN && g->sec_bar == 0;
     /* the style's lanes, but for the groups a card has set to its own pattern (or OFF) */
     for (int k = 0; k < ps->n; ++k) {

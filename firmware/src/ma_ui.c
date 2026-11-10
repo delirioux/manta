@@ -503,13 +503,13 @@ static void mu_panel_styles(ma_ui *u)
     int sel = g->next_style >= 0 ? g->next_style : g->s.style;
     mu_label(10, 5, "CALIENTE", T_MID);
     mu_label(124, 5, "NOCHE", T_MID);
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < MA_STYLES; ++i) {
         int col = MA_STYLE[i].side, row = 0;
         for (int k = 0; k < i; ++k) row += MA_STYLE[k].side == col;
-        int32_t x = col ? 120 : 6, y = 22 + row * 19;
+        int32_t x = col ? 120 : 6, y = 21 + row * 16;
         bool now = i == g->s.style, q = i == sel && g->next_style >= 0;
         if (q || (i == sel && !g->playing)) {
-            cv_rrect(x, y - 3, 110, 17, 3, T_ACCENT, T_SURF);
+            cv_rrect(x, y - 2, 110, 15, 3, T_ACCENT, T_SURF);
             cv_text_fit(x + 6, y, &AF_S, MA_STYLE[i].name, T_INK, T_ACCENT, 100);
         } else {
             cv_text_fit(x + 6, y, &AF_S, MA_STYLE[i].name, now ? T_THEME : T_TEXT, T_SURF, 100);

@@ -47,7 +47,7 @@ def ma_version():
 
 BLURB = """Generative Latin grooves for the M-VAVE FM-1. Let the band play, tu al solo: a sampled percussion
 section on the clave, a montuno upright, a tumbao bass and the horns, from salsa and mambo to bolero and tango.
-Ten styles; press play, and take the solo on the keys."""
+Twelve styles; press play, and take the solo on the keys."""
 
 
 def page(body, foot):

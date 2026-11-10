@@ -2,8 +2,8 @@
 
 The first test build: a Latin band on the FM-1.
 
-- Ten styles on two sides: CALIENTE (SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA) and NOCHE (SON, CHA-CHA, BOLERO, BOSSA,
-  TANGO), every pattern on the clave, 3-2 or 2-3.
+- Twelve styles on two sides: CALIENTE (SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA, GUARACHA) and NOCHE (SON, CHA-CHA,
+  BOLERO, BOSSA, TANGO, DANZON), every pattern on the clave, 3-2 or 2-3.
 - A sampled percussion section of thirty one-shots (congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
   shakers, cabasa, triangle, toms, a kick, a washboard), a sampled upright piano, a sampled trumpet and
   trombone section (VSCO 2 CE), the trombone an octave under the trumpets, a sampled tenor sax and violin section,

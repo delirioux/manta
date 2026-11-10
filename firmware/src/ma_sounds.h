@@ -115,7 +115,8 @@ static inline const char *mas_name(int part, int i)
 {
     if (part == MA_PERC) {               /* (the PERC card: a style's percussion, its name short enough for a card) */
         static const char *const SHORT[MA_STYLES] = {"SALSA", "MAMBO", "MERENG", "CUMBIA", "SAMBA", "SON", "CHACHA",
-                                                     "BOLERO", "BOSSA", "TANGO"};
+                                                     "BOLERO", "BOSSA", "TANGO", "GUARAC",
+                                                     "DANZON"};
         return SHORT[(unsigned)i % MA_STYLES];
     }
     return MAS_SOUND[part % 3][(unsigned)i % MA_SOUNDS].name;
