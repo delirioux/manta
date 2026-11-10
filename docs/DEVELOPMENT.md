@@ -106,7 +106,8 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   The TRES or the GUITAR on the PIANO part bring the upright beside them on the PERC track.
 - **In tune strings.** The PHYS string is Rings': its STRUCTURE below about 0.24 adds a curved bridge's buzz and
   above about 0.26 a stiff string's dispersion, both heard as out of tune. TRES, GUITAR and REQUINT sit at 32
-  (0.25), between them: their fundamentals measured within 5 cents.
+  (0.25), between them; the string still rang about 8 cents sharp (its loop's filters), so the PHYS string model's
+  pitch is taken down 8 cents (`eng_phys.c`); the tres without its chorus: all three within 5 cents, measured.
 - **The fast styles count two bars to the clave.** Salsa, mambo, merengue and the guaracha are written as the
   dancers count them, two bars of 4/4 to a clave (a tempo of 140 to 200), so their pulse is the eighth: their
   piano, guitar, solo and texture keep to the eighths (a sixteenth there would sound as a thirty-second, frantic).

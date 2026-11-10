@@ -164,6 +164,8 @@ static void phys_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const 
     const int16_t *p = t->p;
     phys_slot_t *S = phys_slot_of(t, v);
     uint32_t md = (uint32_t)p[P_E0] % PM_COUNT, i, f0 = m->inc;
+    if (md == PM_STRING)                                 /* (Manta) the string rings ~8 cents sharp (its loop's filters): */
+        f0 -= f0 / 217u;                                 /* down by 2^(-8/1200), measured on the tres, guitar and requinto */
     int32_t y[CTL], ax[CTL];
     int32_t strc = p[P_E1] * 516, brit = clamp(p[P_E2] * 516 + m->cutoff * 2, 0, 65536);   /* Q16 0..1 */
     int32_t damp = p[P_E3] * 516, pos = p[P_E4], exc = p[P_E7] * 258;   /* exc Q15 */

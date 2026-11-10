@@ -60,7 +60,7 @@ static const preset_t MAS_PANFLUTE = {"PANFLUTE", {2, 0, 0, 44, 62, 40, 0, 100},
  * Rings' neutral point (no curved bridge's buzz below, no stiffness's dispersion above), so they play in tune */
 static const preset_t MAS_GUITAR = {"GUITAR", {1, 32, 58, 100, 30, 110, 0, 0}, {0, 100, 127, 60}, 0, 0, FX(0, 10, 15, 30)};
 /* the tres: three courses of doubled steel strings, bright and close, the doubling a chorus's shimmer */
-static const preset_t MAS_TRES = {"TRES", {1, 32, 92, 108, 20, 124, 0, 0}, {0, 100, 127, 45}, 0, 0, FX(0, 18, 10, 30)};
+static const preset_t MAS_TRES = {"TRES", {1, 32, 80, 108, 20, 124, 0, 0}, {0, 100, 127, 45}, 0, 0, FX(0, 0, 10, 30)};
 static const preset_t MAS_REQUINTO = {"REQUINTO", {1, 32, 86, 116, 30, 127, 0, 0}, {0, 100, 127, 50}, 0, 0, FX(0, 15, 25, 35)};
 /* a solo trumpet, light: one saw, a breath of noise, the filter swelling open on each note (the lip) (Sill's CORNET) */
 static const preset_t MAS_TRUMPET = {"TRUMPET", {0, 0, 0, 6, 50, 12, 6, 64}, {12, 60, 96, 26}, 42, 0, FX(0, 15, 20, 30)};
