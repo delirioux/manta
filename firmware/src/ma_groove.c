@@ -688,9 +688,11 @@ static const perc_set_t PERC[MA_STYLES] = {
                           {MA_DR_BONGO_LO, G_BONGO, "......o.......x.......o.......x."},
                           L_CBOLERO_0, L_CBOLERO_1,
                           {MA_DR_SHAKER_FWD, G_EXTRA, "o...o...o...o...o...o...o...o..."}}},
-    [MA_ST_BOSSA] = {4, {{MA_DR_TIMBAL_RIM, G_TIMBAL, "x..x..x...x..x..x..x..x...x..x.."},
-                         {MA_DR_KICK, G_KICK, "o.....o.o.....o.o.....o.o.....o."},
-                         {MA_DR_SHAKER_FWD, G_EXTRA, "xoooxoooxoooxoooxoooxoooxoooxooo"},
+    /* the bossa: the cross-stick on its clave, the bass drum as the surdo (one and three, the pickup before), the
+     * shaker's eighths leaning on the off-beats */
+    [MA_ST_BOSSA] = {4, {{MA_DR_TIMBAL_RIM, G_TIMBAL, "X..x..x...x..x..X..x..x...x..x.."},
+                         {MA_DR_KICK, G_KICK, "x.....x.x.....x.x.....x.x.....x."},
+                         {MA_DR_SHAKER_FWD, G_EXTRA, "o.x.o.x.o.x.o.x.o.x.o.x.o.x.o.x."},
                          {MA_DR_TRIANGLE_MUTE, G_OTHER, "..o...o...o...o...o...o...o...o."}}},
     /* the tango has no drums: the band is the rhythm. A wooden knock on the strong beats when HEAT is up */
     [MA_ST_TANGO] = {2, {{MA_DR_WOOD, G_OTHER, "x...............x..............."},
