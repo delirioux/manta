@@ -81,7 +81,7 @@ static const preset_t MAS_ROUND = {"ROUND", {3, 0, 0, 0, 127, 0, 25, 0}, {0, 70,
 static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
     {   /* PIANO */
         S("UPRIGHT", MAS_SAMPLE, 1, 4, -1),             /* the montuno's upright (tools/ma_piano.py) */
-        S("EPIANO", MAS_FM6, 0, 2, -1),                  /* TINE EP: the bolero's, the bossa's */
+        S("MALLETS", MAS_FM6, 5, 2, 6),                  /* the Guatemalan marimba (no electric piano: the upright is it) */
         S("ORGAN", MAS_WHEEL, 1, 3, -1),                 /* JAZZ PERC: the cha-cha's and the boogaloo's organ */
         SO("TRES", MAS_PHYS, 0, MAS_TRES, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 3),   /* PHYS's PLUCK: the son's tres */
         S("HARP", MAS_PHYS, 8, 2, 2),                    /* the Paraguayan and the jarocho harp */
@@ -189,7 +189,7 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     t->p[P_PAN] = (int16_t)(part == MA_PIANO ? -w * 16 / 100 : part == MA_HORNS ? -64 : 0);
     t->p[P_SPRD] = mas_clamp(part == MA_PERC ? w * 70 / 100 : part == MA_PIANO ? w * 40 / 100 : 0, 0, 127);
     /* the sends: ROOM on everything, PLATE more on the piano and the horns */
-    static const uint8_t ROOM[MA_PARTS] = {42, 10, 60, 30, 42};   /* (a long hall: the band a little in it) */
+    static const uint8_t ROOM[MA_PARTS] = {64, 10, 60, 30, 42};   /* (a long hall: the band a little in it) */
     int rev = s->room * 127 / 100 * ROOM[part] / 100 + (part == MA_PIANO || part == MA_HORNS ? s->plate * 50 / 100 : 0);
     t->p[P_REV] = mas_clamp(rev, 0, 127);
     mas_rev_base[part % MA_TRACKS] = t->p[P_REV];

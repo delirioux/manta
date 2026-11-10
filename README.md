@@ -89,7 +89,7 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
 <img src="docs/screens/perc.png" alt="PERC" width="200">
 </p>
 
-- **The parts**: PIANO (the montuno: the upright, an electric piano, organ, tres, harp, accordion, bandoneon or
+- **The parts**: PIANO (the montuno: the upright, a marimba, organ, tres, harp, accordion, bandoneon or
   a nylon guitar that strums), BASS (the tumbao: a baby bass, an upright, FM, sub, slap, slide, round or tuba), HORNS (the section and the
   solo: trumpet and trombone, trumpet, a requinto (the lead guitar), sax, pan pipes, violins, accordion or bandoneon) and PERC (a style's
   percussion set). The percussion, the upright, the trumpet and trombone (TPT+TBN, TPT), the tenor sax and the violin

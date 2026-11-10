@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: CC0-1.0
 """Manta's PIANO: six notes of a Yamaha upright from the Versilian Community Sample Library (VCSL, CC0 1.0,
 github.com/sgossner/VCSL, "Chordophones/Zithers/Upright Piano, Yamaha/Sustains"), its loudest layer (vl3), made into
-the percussive dance-hall upright of the montuno: summed to mono, cut short (a montuno does not need the long tail), a
-high-pass at 110 Hz, a little high shelf and bite, a touch less body, a light firmness on the attack, normalised;
+the warm upright of the montuno and the bolero: summed to mono, cut short (a montuno does not need the long tail), a
+high-pass at 80 Hz, its top softened by two high shelves, a little more wood, a light firmness on the attack, normalised;
 written as 16-bit mono WAVs at 44.1 kHz to assets/samples-cc0/PIANO/ (tools/gen_samples.py stores them at 22.05 kHz).
 
     python3 tools/ma_piano.py VCSL_DIR      VCSL_DIR: a checkout of VCSL with that folder (a sparse checkout of it,
@@ -88,10 +88,10 @@ def make(src, keep):
     x = x[max(0, on - 32):]
     x = x[:int(keep * SR)]
     x = x / np.max(np.abs(x))
-    x = shelf_high(x, 2500, 3.0)                    # a little brighter: the montuno has to cut through the horns
-    x = peak_eq(x, 4000, 1.0, 1.5)                  # the hammer's bite
-    x = high_pass(x, 110, 0.7)                      # the low end the tumbao's
-    x = peak_eq(x, 250, 0.9, -1.5)                  # a touch less body: percussive, a dance-hall upright
+    x = shelf_high(x, 3000, -3.0)                   # warm: the top softened, an old upright in a wooden room
+    x = shelf_high(x, 7000, -3.0)
+    x = high_pass(x, 80, 0.7)                       # the low end the bass's
+    x = peak_eq(x, 300, 0.9, 1.0)                   # a little more of its wood
     x = np.tanh(x * 1.2) / np.tanh(1.2)             # just a little firmness on the attack
     n = len(x)
     fade = int(0.12 * SR)                           # a raised-cosine fade over the last 120 ms

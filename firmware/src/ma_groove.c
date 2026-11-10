@@ -127,40 +127,40 @@ enum { SR_FAST, SR_MID, SR_SLOW };
 
 /* name side bpm key scale | heat clave hits | snd[3] | loops | bars swing | piano bass horns perc | claves on |
  * room plate warmth | mute | the three more sounds of PIANO, BASS and HORNS a song picks from.
- * Sounds (ma_sounds.h): PIANO 0 UPRIGHT 1 EPIANO 2 ORGAN 3 TRES 4 HARP 5 ACCORDION 6 BANDONEON 7 GUITAR; BASS 0 BABY
+ * Sounds (ma_sounds.h): PIANO 0 UPRIGHT 1 MALLETS 2 ORGAN 3 TRES 4 HARP 5 ACCORDION 6 BANDONEON 7 GUITAR; BASS 0 BABY
  * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 REQUINTO 3 SAX 4 PANPIPE 5 VIOLINS
  * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
     {"SALSA", MA_SIDE_CALIENTE, 164, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
-     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_AUTO, {{1, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
+     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_AUTO, {{7, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
     {"MAMBO", MA_SIDE_CALIENTE, 170, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
-     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_AUTO, {{1, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
+     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_AUTO, {{2, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
     {"MERENGUE", MA_SIDE_CALIENTE, 138, 2, MA_SC_MAJOR, 80, MA_CLAVE_32, MA_HITS_8, {0, 2, 3}, {2, 0, 9, 3}, 1, 0,
      PF_MERENGUE, BF_MERENGUE, HF_MERENGUE, MA_ST_MERENGUE, 0, 25, 25, 25, MA_MUTE_AUTO,
      {{5, 7, 0}, {0, 6, 4}, {6, 0, 2}}},
     {"CUMBIA", MA_SIDE_CALIENTE, 98, 7, MA_SC_MINOR, 60, MA_CLAVE_32, MA_HITS_16, {5, 6, 6}, {9, 2, 3, 0}, 1, 10,
-     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_AUTO, {{7, 0, 1}, {0, 2, 3}, {4, 3, 2}}},
+     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_AUTO, {{7, 0, 2}, {0, 2, 3}, {4, 3, 2}}},
     {"SAMBA", MA_SIDE_CALIENTE, 102, 0, MA_SC_MAJOR, 85, MA_CLAVE_32, MA_HITS_8, {7, 1, 2}, {7, 0, 8, 1}, 1, 0,
-     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_AUTO, {{3, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
+     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_AUTO, {{3, 0, 7}, {0, 5, 6}, {0, 4, 3}}},
     /* the son of old Havana: the upright's montuno, the acoustic bass, one trumpet, bongo, maracas and claves; laid
      * back, a warm room (a song now and then brings the guitar, the upright beside it) */
     {"SON", MA_SIDE_NOCHE, 100, 2, MA_SC_MINOR, 50, MA_CLAVE_23, MA_HITS_16, {0, 1, 1}, {12, 0, 3, 1}, 1, 0,
      PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 50, 25, 55, MA_MUTE_AUTO, {{0, 7, 0}, {1, 6, 1}, {1, 2, 1}}},
     {"CHA-CHA", MA_SIDE_NOCHE, 120, 5, MA_SC_MAJOR, 55, MA_CLAVE_23, MA_HITS_16, {0, 0, 5}, {11, 0, 1, 2}, 1, 0,
      PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_AUTO,
-     {{1, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
-    {"BOLERO", MA_SIDE_NOCHE, 80, 2, MA_SC_HARMONIC, 35, MA_CLAVE_32, MA_HITS_OFF, {1, 6, 1}, {4, 5, 3, 1}, 1, 0,
-     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_AUTO, {{7, 4, 7}, {1, 5, 0}, {2, 3, 2}}},
+     {{0, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
+    {"BOLERO", MA_SIDE_NOCHE, 80, 2, MA_SC_HARMONIC, 35, MA_CLAVE_32, MA_HITS_OFF, {0, 6, 1}, {4, 5, 3, 1}, 1, 0,
+     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_AUTO, {{0, 0, 0}, {1, 5, 0}, {2, 3, 2}}},
     {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {7, 5, 3}, {7, 8, 1, 6}, 1, 0,
-     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_AUTO, {{1, 7, 0}, {1, 6, 0}, {1, 4, 5}}},
+     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_AUTO, {{0, 7, 0}, {1, 6, 0}, {1, 4, 5}}},
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
-     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_AUTO, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
+     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_AUTO, {{6, 7, 0}, {0, 2, 6}, {0, 7, 5}}},
     /* the guaracha: the son fast and cheeky, a conjunto's (the tres, the bongo, the maracas, a trumpet) */
     {"GUARACHA", MA_SIDE_CALIENTE, 176, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
      PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_AUTO, {{7, 0, 0}, {0, 6, 5}, {0, 1, 2}}},
     /* the danzon: Cuba's ballroom, a charanga's violins over the piano, the pailas' cinquillo, the guiro */
     {"DANZON", MA_SIDE_NOCHE, 112, 5, MA_SC_MAJOR, 45, MA_CLAVE_32, MA_HITS_16, {0, 1, 5}, {2, 11, 0, 7}, 2, 0,
-     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_DANZON, 0, 40, 35, 35, MA_MUTE_AUTO, {{1, 2, 7}, {0, 6, 5}, {4, 5, 3}}},
+     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_DANZON, 0, 40, 35, 35, MA_MUTE_AUTO, {{0, 2, 7}, {0, 6, 5}, {4, 5, 3}}},
 };
 const char *ma_style_name(int i) { return MA_STYLE[clampi(i, 0, MA_STYLES - 1)].name; }
 
