@@ -72,7 +72,7 @@ first. Installing firmware is at your own risk.
 | **MERENGUE** · 138 | fast tambora, the güira's scrape twice a bar, sax riffs | **BOLERO** · 80 | arpeggios, a harmon-muted trumpet, soft bongos |
 | **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | the nylon guitar's bossa, rim clicks, sevenths, a tenor sax |
 | **SAMBA** · 102 | surdo, tamborim, agogô, ganzá, the guitar's partido alto | **TANGO** · 118 | marcato piano, bandoneon, the knocks on the bandoneon's box, the violin's chicharra |
-| **GUARACHA** · 176 | the son fast: tres, bongó, maracas, a trumpet | **DANZON** · 112 | Cuba's ballroom: violins, the pailas' cinquillo, güiro |
+| **GUARACHA** · 140 | the son fast: tres, bongó, maracas, a trumpet | **DANZON** · 112 | Cuba's ballroom: violins, the pailas' cinquillo, güiro |
 
 A style brings its own tempo, sounds, key, chord loop, patterns and percussion; your MIX, PAN 3D, ARC and MENU stay.
 ALGORITHM picks another song in the same style: a new chord loop, riff and melody, the same each time you come back to

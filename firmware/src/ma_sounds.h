@@ -58,12 +58,13 @@ static const preset_t MAS_VLNS = {"VIOLINS", {6, 0, 0, 1, 112, 0, 0, 0}, {6, 70,
 static const preset_t MAS_PANFLUTE = {"PANFLUTE", {2, 0, 0, 44, 62, 40, 0, 100}, {6, 45, 105, 30}, 30, 0, FX(0, 0, 30, 50)};
 /* the guitars, on PHYS's string (Karplus-Strong; three voices): the nylon guitar of the son, the bolero and the bossa,
  * warm, plucked near the middle; the requinto, the bolero trio's lead guitar, small, steel-bright, plucked near the
- * bridge. The PHYS E values: MODEL STRC BRIT DAMP POS ACC BOW EXC. STRC 32 for all three: the string's structure at
+ * bridge; plucked nearer the bridge, ringing longer, no chorus (a real string does not wobble), more of the hall
+ * (mas_track). The PHYS E values: MODEL STRC BRIT DAMP POS ACC BOW EXC. STRC 32 for all three: the string's structure at
  * Rings' neutral point (no curved bridge's buzz below, no stiffness's dispersion above), so they play in tune */
-static const preset_t MAS_GUITAR = {"GUITAR", {1, 32, 58, 100, 30, 110, 0, 0}, {0, 100, 127, 60}, 0, 0, FX(0, 10, 15, 30)};
+static const preset_t MAS_GUITAR = {"GUITAR", {1, 32, 66, 112, 18, 120, 0, 0}, {0, 100, 127, 72}, 0, 0, FX(0, 0, 15, 40)};
 /* the tres: three courses of doubled steel strings, bright and close, the doubling a chorus's shimmer */
 static const preset_t MAS_TRES = {"TRES", {1, 32, 80, 108, 20, 124, 0, 0}, {0, 100, 127, 45}, 0, 0, FX(0, 0, 10, 30)};
-static const preset_t MAS_REQUINTO = {"REQUINTO", {1, 32, 86, 116, 30, 127, 0, 0}, {0, 100, 127, 50}, 0, 0, FX(0, 15, 25, 35)};
+static const preset_t MAS_REQUINTO = {"REQUINTO", {1, 32, 86, 116, 22, 127, 0, 0}, {0, 100, 127, 60}, 0, 0, FX(0, 0, 25, 40)};
 /* a solo trumpet, light: one saw, a breath of noise, the filter swelling open on each note (the lip) (Sill's CORNET) */
 static const preset_t MAS_TRUMPET = {"TRUMPET", {0, 0, 0, 6, 50, 12, 6, 64}, {12, 60, 96, 26}, 42, 0, FX(0, 15, 20, 30)};
 /* the upright bass, sampled (VSCO 2 CE's double bass, plucked: tools/ma_horns.py): set UPBASS, full and round, let
@@ -89,7 +90,7 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         S("HARP", MAS_PHYS, 8, 2, 2),                    /* the Paraguayan and the jarocho harp */
         SO("ACCORD", MAS_ANALOG, 0, MAS_ACCORDION, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),
         SO("BANDO", MAS_ANALOG, 0, MAS_BANDONEON, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -1),
-        SO("GUITAR", MAS_PHYS, 0, MAS_GUITAR, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 5),   /* strums (ma_groove.c GUITAR_PAT) */
+        SO("GUITAR", MAS_PHYS, 0, MAS_GUITAR, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 2),   /* strums (ma_groove.c GUITAR_PAT) */
     },
     {   /* BASS */
         SF("BABY", MA_FM6_FRETLESS, MAS_KEEP, MAS_MONO, -6),   /* the baby bass: round, a soft attack */
@@ -104,7 +105,7 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
     {   /* HORNS: the section and the solo (the solo's mute, bell and place on the TONE, GAIN and PAN slots) */
         SO("TPT+TBN", MAS_SAMPLE, 2, MAS_BRASS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),   /* the sampled brass: set BRASS */
         SO("TPT", MAS_SAMPLE, 3, MAS_TPT, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),         /* its trumpet alone: TRUMPET */
-        SO("REQUINT", MAS_PHYS, 0, MAS_REQUINTO, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 14),   /* the lead guitar's riffs */
+        SO("REQUINT", MAS_PHYS, 0, MAS_REQUINTO, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 13),   /* the lead guitar's riffs */
         SO("SAX", MAS_SAMPLE, MAS_SET_SAX, MAS_SAXS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled tenor */
         SO("PANPIPE", MAS_ANALOG, 0, MAS_PANFLUTE, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -3),
         SO("VIOLINS", MAS_SAMPLE, MAS_SET_VIOLINS, MAS_VLNS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled section */
@@ -174,7 +175,8 @@ static inline int16_t mas_clamp(int v, int lo, int hi) { return (int16_t)(v < lo
 #define MAS_PIANO_CUT 92                  /* the upright's CUT: a little edge off (eng_sample.c's one-pole) */
 
 static int16_t mas_rev_base[MA_TRACKS];
-static int16_t mas_horns_voice = V_POLY;          /* the HORNS sound's own voice mode (the section's) */
+static int16_t mas_horns_voice = V_POLY;
+static bool mas_horns_sung = true;               /* the HORNS sound is blown or bowed (vibrato, slurs), not plucked */          /* the HORNS sound's own voice mode (the section's) */
 #define MAS_SOLO_GLIDE 14                         /* the solo's portamento: a short slide into each note */          /* each track's reverb send from the cards (mas_block adds the solo's) */
 
 /* a part's track from the cards, over its sound's preset: the level, the place, the sends, WARMTH, and the matrix's
@@ -198,6 +200,8 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     /* the sends: ROOM on everything, PLATE more on the piano and the horns */
     static const uint8_t ROOM[MA_PARTS] = {64, 10, 60, 30, 42};   /* (a long hall: the band a little in it) */
     int rev = s->room * 127 / 100 * ROOM[part] / 100 + (part == MA_PIANO || part == MA_HORNS ? s->plate * 50 / 100 : 0);
+    if (snd && snd->engine == MAS_PHYS)    /* (the plucked strings: more of the hall, they ring out in it) */
+        rev += 28;
     t->p[P_REV] = mas_clamp(rev, 0, 127);
     mas_rev_base[part % MA_TRACKS] = t->p[P_REV];
     t->p[P_DLY] = mas_clamp(part == MA_HORNS ? 18 : 0, 0, 127);   /* (a short slap on the horns) */
@@ -243,8 +247,10 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     if (snd->voice >= 0)
         t->p[P_VOICE] = (int16_t)(snd->voice == MAS_UNISON ? V_UNISON : snd->voice == MAS_LEGATO ? V_LEGATO
                                   : snd->voice == MAS_MONO ? V_MONO : V_POLY);
-    if (part == MA_HORNS)
+    if (part == MA_HORNS) {
         mas_horns_voice = t->p[P_VOICE];
+        mas_horns_sung = snd && snd->engine != MAS_PHYS;
+    }
     /* WARMTH: the tape's saturation, a little on every part */
     t->p[P_DIST] = mas_clamp((snd->dist >= 0 ? snd->dist : 0) + s->warmth * 30 / 100, 0, 127);
     t->p[P_ITYPE] = 0;
@@ -271,13 +277,13 @@ static inline void mas_block(const ma_groove *g)
     }
     trk[MA_HORNS].at = g->pan_horns;
     trk[MA_HORNS].p[P_E5] = g->brass ? g->mute_live : 0;   /* the sampled brass's mute filter (eng_sample.c) */
-    trk[MA_HORNS].p[P_LD_PIT] = g->vib ? 1 : 0;  /* a long held note: vibrato (the LFO's least, about +-19 cents) */
+    trk[MA_HORNS].p[P_LD_PIT] = g->vib && mas_horns_sung ? 1 : 0;  /* a long held note: vibrato (the LFO's least, about +-19 cents) */
     /* the solo in a warm, wide hall: more of the reverb on it while it plays (the section drier, punchy) */
     int rv = mas_rev_base[MA_HORNS] + (g->soloing || g->keys ? 46 : 0);
     trk[MA_HORNS].p[P_REV] = (int16_t)(rv > 127 ? 127 : rv);
     /* the solo slurs: one voice, each note gliding up or down from the last a little (a lip, not a sequencer); the
      * section's chords back to their voices */
-    bool solo = g->soloing || g->keys;
+    bool solo = (g->soloing || g->keys) && mas_horns_sung;   /* (a plucked lead neither slurs nor sings) */
     trk[MA_HORNS].p[P_VOICE] = (int16_t)(solo ? V_MONO : mas_horns_voice);
     trk[MA_HORNS].p[P_GLIDE] = (int16_t)(solo ? MAS_SOLO_GLIDE : 0);  /* the tema's held note: vibrato (about +-35 cents, the LFO's) */
 }

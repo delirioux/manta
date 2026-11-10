@@ -156,7 +156,7 @@ const ma_style MA_STYLE[MA_STYLES] = {
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
      PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_AUTO, {{6, 7, 0}, {0, 2, 6}, {0, 7, 5}}},
     /* the guaracha: the son fast and cheeky, a conjunto's (the tres, the bongo, the maracas, a trumpet) */
-    {"GUARACHA", MA_SIDE_CALIENTE, 176, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
+    {"GUARACHA", MA_SIDE_CALIENTE, 140, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
      PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_AUTO, {{7, 0, 0}, {0, 6, 5}, {0, 1, 2}}},
     /* the danzon: Cuba's ballroom, a charanga's violins over the piano, the pailas' cinquillo, the guiro */
     {"DANZON", MA_SIDE_NOCHE, 112, 5, MA_SC_MAJOR, 45, MA_CLAVE_32, MA_HITS_16, {0, 1, 5}, {2, 11, 0, 7}, 2, 0,
