@@ -531,11 +531,18 @@ static void mu_panel_sound(ma_ui *u)
         bool hot = u->hot == i && u->hot_ms > 0;
         cv_text_on(10, y, &AF_S, nm[i], hot ? T_ACCENT : T_MID, T_SURF);
         cv_text_fit(64, y, &AF_S, mas_name(i, g->s.snd[i]), T_TEXT, T_SURF, 164);
-        uint16_t bits = g->playing ? g->hits_last[i] : 0;
+        /* what the part played: this bar so far, the bar before after the step playing; the step playing lit, a
+         * marker under it moving through the bar */
+        int now = g->playing && g->step >= 0 ? g->step : -1;
+        uint32_t mask = now >= 0 ? (2u << now) - 1u : 0u;
+        uint16_t bits = g->playing ? (uint16_t)((g->hits[i] & mask) | (g->hits_last[i] & ~mask)) : 0;
         if (g->playing) {
             for (int k = 0; k < 16; ++k) {
                 bool on = (bits >> k) & 1;
-                cv_rect(64 + k * 10, y + 16, 7, 2, on ? (hot ? T_ACCENT : T_THEME) : T_LINE);
+                uint16_t c = on ? (k == now ? T_ACCENT : hot ? T_ACCENT : T_THEME) : T_LINE;
+                cv_rect(64 + k * 10, y + 16, 7, 2, c);
+                if (k == now)
+                    cv_rect(64 + k * 10, y + 20, 7, 2, T_TEXT);
             }
         } else {
             cv_text_on(64, y + 13, &AF_S, role[i], T_DIM, T_SURF);
