@@ -694,9 +694,13 @@ static const perc_set_t PERC[MA_STYLES] = {
                          {MA_DR_KICK, G_KICK, "x.....x.x.....x.x.....x.x.....x."},
                          {MA_DR_SHAKER_FWD, G_EXTRA, "o.x.o.x.o.x.o.x.o.x.o.x.o.x.o.x."},
                          {MA_DR_TRIANGLE_MUTE, G_OTHER, "..o...o...o...o...o...o...o...o."}}},
-    /* the tango has no drums: the band is the rhythm. A wooden knock on the strong beats when HEAT is up */
-    [MA_ST_TANGO] = {2, {{MA_DR_WOOD, G_OTHER, "x...............x..............."},
-                         {MA_DR_TOM_LO, G_KICK, "o...............o..............."}}},
+    /* the tango's orquesta has no drums: its band is its rhythm. Manta gives it what its players do with their
+     * instruments: the knock on the bandoneon's box (the woodblock) on the marcato's four, the strong ones accented,
+     * the chicharra (the violin's scrape, the guiro) before the bar's last beat, the low tom as the double bass's
+     * slap on the one */
+    [MA_ST_TANGO] = {3, {{MA_DR_WOOD, G_OTHER, "X...x...x...x...X...x...x.x.x..."},
+                         {MA_DR_GUIRO_SHORT, G_EXTRA, "..........x.............x...x..."},
+                         {MA_DR_TOM_LO, G_KICK, "x...............x.........x....."}}},
     /* the guaracha: a conjunto's, the bongo's martillo, the maracas on the eighths (the claves on their own) */
     [MA_ST_GUARACHA] = {6, {L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2,
                             {MA_DR_SHAKER_FWD, G_EXTRA, "x...x...x...x...x...x...x...x..."},
@@ -1104,7 +1108,7 @@ static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
             continue;
         if (l->group == G_KICK && heat < 0.3f && s->snd[3] != MA_ST_SAMBA && s->snd[3] != MA_ST_BOSSA)
             continue;
-        if (s->snd[3] == MA_ST_TANGO && heat < 0.6f)
+        if (s->snd[3] == MA_ST_TANGO && heat < 0.3f)   /* (the tango cool: no knocks at all) */
             continue;
         if (intro_soft && l->group != G_CONGA && l->group != G_EXTRA)
             continue;                              /* (the first bar: the congas and the shakers alone) */
