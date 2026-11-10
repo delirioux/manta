@@ -1372,6 +1372,11 @@ static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf,
         schedule(g, delay, pp, n, clampi(vel, 1, 127), len);
         if (fam != PF_GUAJEO || heat > 0.5f) /* (the tres's line single; hotter, doubled) */
             schedule(g, delay, pp, n + 12, clampi(vel - 8, 1, 127), len);
+        {   /* now and then (four bars in a song's eight, by the bar) the montuno in double octaves, both hands */
+            uint32_t r = (uint32_t)((g->bar < 0 ? 0 : g->bar) / 4) * 2654435761u + (uint32_t)g->s.song * 97u + 1u;
+            if ((xs(&r) >> 9) & 1u)
+                schedule(g, delay, pp, n - 12, clampi(vel - 12, 1, 127), len);
+        }
         break;
     }
     case 't':
