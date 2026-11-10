@@ -5,8 +5,9 @@ The first test build: a Latin band on the FM-1.
 - Ten styles on two sides: CALIENTE (SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA) and NOCHE (SON, CHA-CHA, BOLERO, BOSSA,
   TANGO), every pattern on the clave, 3-2 or 2-3.
 - A sampled percussion section of thirty one-shots (congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
-  shakers, cabasa, triangle, toms, a kick, a washboard), a sampled upright piano and a sampled trumpet and
-  trombone section (VSCO 2 CE), the trombone an octave under the trumpets.
+  shakers, cabasa, triangle, toms, a kick, a washboard), a sampled upright piano, a sampled trumpet and
+  trombone section (VSCO 2 CE), the trombone an octave under the trumpets, a sampled tenor sax and violin section,
+  and pan pipes.
 - The song's form: intro, verso, montuno, mambo, montuno, moña, cierre.
 - REC is BAND HIT (held: a descarga), SEQ is MAMBO, the keys play the solo trumpet with its mutes (filters over the
   real horn), PAN 3D on headphones.

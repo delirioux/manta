@@ -126,7 +126,7 @@ enum { SR_FAST, SR_MID, SR_SLOW };
 /* name side bpm key scale | heat clave hits | snd[3] | loops | bars swing | piano bass horns perc | claves on |
  * room plate warmth | mute | the three more sounds of PIANO, BASS and HORNS a song picks from.
  * Sounds (ma_sounds.h): PIANO 0 UPRIGHT 1 EPIANO 2 ORGAN 3 TRES 4 HARP 5 ACCORDION 6 BANDONEON 7 MARIMBA; BASS 0 BABY
- * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 BRASS 3 SAX 4 FLUTE 5 VIOLINS
+ * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 BRASS 3 SAX 4 PANPIPE 5 VIOLINS
  * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
     {"SALSA", MA_SIDE_CALIENTE, 184, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
@@ -143,12 +143,12 @@ const ma_style MA_STYLE[MA_STYLES] = {
     {"SON", MA_SIDE_NOCHE, 112, 4, MA_SC_DORIAN, 55, MA_CLAVE_32, MA_HITS_16, {3, 1, 1}, {0, 6, 3, 1}, 1, 0,
      PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 35, 30, 30, MA_MUTE_OPEN, {{0, 4, 7}, {0, 6, 5}, {0, 4, 3}}},
     {"CHA-CHA", MA_SIDE_NOCHE, 120, 5, MA_SC_MAJOR, 55, MA_CLAVE_23, MA_HITS_16, {0, 0, 5}, {11, 0, 1, 2}, 1, 0,
-     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_STRAIGHT,
+     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_OPEN,
      {{1, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
     {"BOLERO", MA_SIDE_NOCHE, 80, 2, MA_SC_HARMONIC, 35, MA_CLAVE_32, MA_HITS_OFF, {1, 6, 1}, {4, 5, 3, 1}, 1, 0,
      PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_HARMON, {{0, 4, 2}, {1, 5, 0}, {5, 3, 4}}},
-    {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {1, 5, 4}, {7, 8, 1, 6}, 1, 0,
-     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_CUP, {{0, 2, 4}, {1, 6, 0}, {3, 1, 5}}},
+    {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {1, 5, 3}, {7, 8, 1, 6}, 1, 0,
+     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_OPEN, {{0, 2, 4}, {1, 6, 0}, {1, 4, 5}}},
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
      PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 0, 1}, {0, 2, 6}, {0, 7, 5}}},
 };
@@ -593,8 +593,10 @@ static const lane_t L_SHAKER[2] = {L_SHAKER_0, L_SHAKER_1};
 #define L_CABASA_0 {MA_DR_CABASA, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}
 static const lane_t L_CABASA[1] = {L_CABASA_0};
 /* the washboard: a scrape on the beat, the thimbles tapping the sixteenths between (the guira's way) */
-#define L_WASH_0 {MA_DR_WASH, G_EXTRA, "X...x...X...x...X...x...X...x..."}
-#define L_WASH_1 {MA_DR_WASH_TAP, G_EXTRA, "..oo..oo..oo..oo..oo..oo..oo..oo"}
+/* the washboard: a colour, not a beat: one scrape a bar; now and then, hot, a tap of the thimbles on the half bar
+ * ('h': only with HEAT high, one bar in four) */
+#define L_WASH_0 {MA_DR_WASH, G_EXTRA, "X...............X..............."}
+#define L_WASH_1 {MA_DR_WASH_TAP, G_EXTRA, "........................h......."}
 static const lane_t L_WASH[2] = {L_WASH_0, L_WASH_1};
 
 static const perc_set_t PERC[MA_STYLES] = {
@@ -606,8 +608,8 @@ static const perc_set_t PERC[MA_STYLES] = {
     [MA_ST_MERENGUE] = {7, {{MA_DR_TUMBA, G_CONGA, "X.......x.......X.......x......."},
                             {MA_DR_CONGA_MUTE, G_CONGA, "..o...o.o.o...o...o...o.o.o...o."},
                             {MA_DR_QUINTO, G_CONGA, "....x.......x.x.....x.......x.x."},
-                            {MA_DR_WASH, G_EXTRA, "X...x.x.X...x.x.X...x.x.X...x.x."},   /* the guira */
-                            {MA_DR_WASH_TAP, G_EXTRA, ".oo.o..o.oo.o..o.oo.o..o.oo.o..o"},
+                            {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},   /* the guira's */
+                            {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.oo....o.oo....o.oo....o.oo"},   /* way, on the guiro */
                             {MA_DR_KICK, G_KICK, "x...x...x...x...x...x...x...x..."},
                             {MA_DR_BONGO_MUTE, G_BONGO, "......o.......o.......o.......o."}}},
     [MA_ST_CUMBIA] = {6, {{MA_DR_CONGA, G_CONGA, "....x.......x.......x.......x..."},
@@ -972,11 +974,13 @@ static void play_lanes(ma_groove *g, const lane_t *l, int n, int i, uint32_t del
     int cb = cbar(g, g->bar);
     for (int k = 0; k < n; ++k) {
         char c = l[k].p[cb * 16 + i];
-        if (c != 'x' && c != 'X' && c != 'o')
+        if (c == 'h' && (heat < 0.7f || g->bar % 4 != 3))   /* 'h': hot, one bar in four */
+            continue;
+        if (c != 'x' && c != 'X' && c != 'o' && c != 'h')
             continue;
         if (c == 'o' && heat < 0.25f && (i % 2))   /* cool: the soft sixteenths rest */
             continue;
-        int v = c == 'X' ? 118 : c == 'x' ? 100 : 72;
+        int v = c == 'X' ? 118 : c == 'x' ? 100 : c == 'h' ? 84 : 72;
         v = (int)((float)v * (0.82f + 0.18f * heat)) + (int)(hum * 10.0f);
         schedule(g, delay, MA_PERC, l[k].drum, clampi(v, 1, 127), 0);
     }
@@ -1206,7 +1210,7 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         int low = top - 1;                         /* the second horn: the chord tone below the first */
         while (low % 12 != c->tone[0] && low % 12 != c->tone[1] && low % 12 != c->tone[2])
             --low;
-        if (g->brass)                              /* the sampled brass: the trombone, an octave under the trumpet's */
+        if (g->trombone)                           /* the sampled brass: the trombone, an octave under the trumpet's */
             low -= 12;
         float heat = (float)s->heat / 100.0f;
         int vel = 104 + (g->riff_len[pos] == 1 ? 10 : 0) + (int)(hum * 6.0f) + (int)(heat * 10.0f);
@@ -1514,11 +1518,8 @@ void ma_process(ma_groove *g, int frames)
         g->gain[p] = 0;
     }
     g->pan_horns = 64;
-    g->mute_live = MA_MUTE_OPEN;
-    if (!g->soloing && !g->keys)                   /* the section: open, in the middle */
-        return;
+    /* the horns' MUTE, on the section and the solo alike (one track, one mute: a bolero's horns all muted) */
     g->mute_live = (uint8_t)(g->s.mute % MA_MUTE_COUNT);
-    /* the solo: the MUTE's darkness, the BELL, PAN 3D (behind: duller, as the bell turns away; far: softer, darker) */
     static const float MUTE_TONE[MA_MUTE_COUNT] = {1.0f, 0.72f, 0.55f, 0.46f, 0.6f};
     /* (the sampled brass: the engine's mute filter is the mute; the TONE only takes a little off the cup's top, and
      * the wah's sweep is the filter's) */
@@ -1528,8 +1529,16 @@ void ma_process(ma_groove *g, int frames)
         float beat = g->playing ? ((float)(g->step < 0 ? 0 : g->step) + 1.0f - g->wait / step_frames(g)) / 2.0f : 0.0f;
         t = 0.3f + 0.65f * (0.5f + 0.5f * sin_turns(beat));
     }
+    /* the styles whose horns sit back (the bolero's: a muted trumpet behind the voice that is not there) */
+    static const uint8_t HORNS_BACK[MA_STYLES] = {[MA_ST_BOLERO] = 85};
+    float gn = (float)HORNS_BACK[clampi(g->s.style, 0, MA_STYLES - 1)] / 127.0f;
+    if (!g->soloing && !g->keys) {                 /* the section: its mute, in the middle */
+        g->tone[MA_HORNS] = (uint8_t)clampi((int)(clampf(t, 0.0f, 1.0f) * 127.0f + 0.5f), 0, 127);
+        g->gain[MA_HORNS] = (uint8_t)clampi((int)(gn * 127.0f + 0.5f), 0, 127);
+        return;
+    }
+    /* the solo: the mute, the BELL, PAN 3D (behind: duller, as the bell turns away; far: softer, darker) */
     t *= 0.6f + 0.4f * (float)g->s.bell / 100.0f;
-    float gn = 0.0f;
     float ang = p3_angle_now(g);
     g->p3_angle = ang;
     if (g->s.p3mode != MA_P3_OFF) {
@@ -1538,7 +1547,7 @@ void ma_process(ma_groove *g, int frames)
         t *= 0.88f + 0.24f * (float)g->s.p3height / 100.0f;
         float dist = (float)g->s.p3dist / 100.0f;
         t *= 1.0f - 0.35f * dist;
-        gn = 0.6f * dist;
+        gn += 0.6f * dist;
         g->pan_horns = (uint8_t)clampi(64 + (int)(63.0f * sin_turns(turns) * (0.4f + 0.6f * (float)g->s.width / 100.0f)), 0, 127);
     }
     g->tone[MA_HORNS] = (uint8_t)clampi((int)(clampf(t, 0.0f, 1.0f) * 127.0f + 0.5f), 0, 127);

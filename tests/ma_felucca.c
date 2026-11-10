@@ -88,6 +88,7 @@ int main(int argc, char **argv)
     if (getenv("KIT")) G.s.snd[3] = (uint8_t)env_int("KIT", 0);
     if (getenv("HEAT")) G.s.heat = (uint8_t)env_int("HEAT", 70);
     if (getenv("MUTE")) G.s.mute = (uint8_t)env_int("MUTE", 0);
+    if (getenv("HORNS")) G.s.snd[MA_HORNS] = (uint8_t)env_int("HORNS", 0);
     if (getenv("P3")) G.s.p3mode = (uint8_t)env_int("P3", 0);
     only_part = env_int("PART", -1);
     ma_settings_fix(&G.s);

@@ -70,11 +70,13 @@ TR = 22050                                   # stored sample rate
 # from the web editor). TRANH was removed (66 KB of flash); its index 1 stays, an alias of PIANO
 # ("alias": the set named). PERC (the GM kit) was removed (66 KB); its index 4 stays, an alias of
 # PIANO too (PERC_SLOT; its sounds load as the DRUM engine)
-CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("BRASS", "sus"), ("TRUMPET", "part"), ("DRUMS", "alias")]
+CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("BRASS", "sus"), ("TRUMPET", "part"), ("DRUMS", "alias"),
+            ("SAX", "sus"), ("VIOLINS", "sus")]
 # (Manta: its percussion kit (tools/ma_perc.py, from VCSL's hand percussion, CC0), its montuno upright
-# (tools/ma_piano.py, from VCSL's Yamaha upright, CC0) and its brass (tools/ma_brass.py, from VSCO 2 CE's trumpet and
-# tenor trombone, CC0): BRASS the trombone below the trumpet, TRUMPET its trumpet zones alone ("part": the zones of
-# another set from a root up, no data of its own, SET_PART). Felucca's FLUTE and SAX are left out)
+# (tools/ma_piano.py, from VCSL's Yamaha upright, CC0) and its horns (tools/ma_horns.py: VSCO 2 CE's trumpet, tenor
+# trombone and violin section, VCSL's tenor sax, CC0): BRASS the trombone below the trumpet, TRUMPET its trumpet zones
+# alone ("part": the zones of another set from a root up, no data of its own, SET_PART); SAX and VIOLINS after the
+# PERC slot. Felucca's FLUTE and SAX are left out)
 SET_PART = {"TRUMPET": ("BRASS", 62)}
 PERC_SLOT = 4                                # core.h SMP_SET_PERC: SAMPLE's factory presets end before it
 MEASURED_TUNING = ()                         # sets whose recordings are not at A440 (was TRANH, ~+35 ct)
@@ -108,10 +110,12 @@ ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75
 # shakers (a file name ending in _air) at AIR_RATE: their air lives above 11 kHz, which 22,050 Hz would cut away (the
 # engine plays each zone at its own rate)
 SET_DIR = {}
-SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55}  # (the piano: tools/ma_piano.py cut and faded it already)
+SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55, "SAX": 0.46, "VIOLINS": 0.52}  # (the piano: tools/ma_piano.py cut and faded it already)
 SET_KEEP_BY_ROOT = {}
 SET_FADE = {}
-SET_RATE = {}
+SET_RATE = {"SAX": 16000, "VIOLINS": 16000}      # (Manta: the reed and the bows, at 16 kHz to fit the flash)
+# (Manta) the loop's length range (s): whole periods of the pitch; the violins' over a vibrato cycle or so
+SET_LOOP = {"VIOLINS": (0.17, 0.26)}
 AIR_RATE = 32000
 
 
@@ -189,7 +193,8 @@ def cc0_entries(setname, kind):
         n = len(x)
         if kind == "sus" and setname in SET_KEEP:   # (Manta) a loop of whole periods at the end, crossfaded
             per = rate / (440.0 * 2 ** ((root - 69) / 12))
-            m = min(range(max(1, int(0.09 * rate / per)), int(0.16 * rate / per) + 1),
+            lmin, lmax = SET_LOOP.get(setname, (0.09, 0.16))
+            m = min(range(max(1, int(lmin * rate / per)), int(lmax * rate / per) + 1),
                     key=lambda k: abs(k * per - round(k * per)))
             le = n - 1
             ls = le - int(round(m * per))

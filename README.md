@@ -68,8 +68,8 @@ first. Installing firmware is at your own risk.
 | --- | --- | --- | --- |
 | **SALSA** · 184 | montuno, tumbao, trumpet and trombone, timbales and bells | **SON** · 112 | the tres's guajeo, bongos, maracas, a dorian lilt |
 | **MAMBO** · 192 | big-band riffs, the mambo bell, 2-3 | **CHA-CHA** · 120 | güiro and bell, the cha-cha-chá bass, charanga violins |
-| **MERENGUE** · 152 | fast tambora, the güira (washboard), sax riffs | **BOLERO** · 80 | arpeggios, a harmon-muted trumpet, soft bongos |
-| **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | rim clicks on the bossa clave, sevenths, a flute |
+| **MERENGUE** · 152 | fast tambora, the güira's scrape, sax riffs | **BOLERO** · 80 | arpeggios, a harmon-muted trumpet, soft bongos |
+| **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | rim clicks on the bossa clave, sevenths, a tenor sax |
 | **SAMBA** · 102 | surdo, tamborim, agogô, ganzá, partido alto | **TANGO** · 118 | marcato piano, bandoneon, no drums at all |
 
 A style brings its own tempo, sounds, key, chord loop, patterns and percussion; your MIX, PAN 3D, ARC and MENU stay.
@@ -89,9 +89,9 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
 
 - **The parts**: PIANO (the montuno: the upright, an electric piano, organ, tres, harp, accordion, bandoneon or
   mallets), BASS (the tumbao: a baby bass, an upright, FM, sub, slap, slide, round or tuba), HORNS (the section and the
-  solo: trumpet and trombone, trumpet, brass, sax, flute, violins, accordion or bandoneon) and PERC (a style's
-  percussion set). The percussion, the upright and the trumpet and trombone (TPT+TBN, TPT) are samples; the rest is
-  Felucca's synthesis.
+  solo: trumpet and trombone, trumpet, brass, sax, pan pipes, violins, accordion or bandoneon) and PERC (a style's
+  percussion set). The percussion, the upright, the trumpet and trombone (TPT+TBN, TPT), the tenor sax and the violin
+  section are samples; the rest is Felucca's synthesis.
 - **The form** (ARC): INTRO (the percussion, then the piano, then the bass, the horns), VERSO (the melody), MONTUNO
   (the solo improvising, the bongo and timbal bells), MAMBO (the horn section), MONTUNO, MOÑA (the riff with the solo
   over it), CIERRE (the band's hits), then round again. MAMBO off leaves the mambo and the moña out; ARC off plays the
@@ -113,7 +113,7 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
 ## Credits
 
 Manta is by delirioux and Claude. The percussion is from the [Versilian Community Sample
-Library](https://github.com/sgossner/VCSL) (CC0), and so is the upright; the trumpet and trombone from
-[VSCO 2 CE](https://github.com/sgossner/VSCO-2-CE) (CC0); the rest is Manta's, built on
+Library](https://github.com/sgossner/VCSL) (CC0), and so is the upright; and so is the tenor sax; the trumpet, the trombone and the violins
+from [VSCO 2 CE](https://github.com/sgossner/VSCO-2-CE) (CC0); the rest is Manta's, built on
 [Sill](https://github.com/delirioux/sill), [Tuna](https://github.com/delirioux/tuna) and Felucca by Leo Kuroshita
 (Hügelton Instruments). See [CREDITS.md](CREDITS.md) and [LICENSING.md](LICENSING.md). GPL-3.0-only.

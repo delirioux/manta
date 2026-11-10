@@ -304,19 +304,45 @@ int main(void)
         ma_play(&g, false);
     }
 
+    /* the washboard: a scrape a bar, now and then (hot) a tap; the merengue's guira on the guiro, not on it */
+    {
+        ma_defaults(&g.s);
+        g.s.arc = 0;
+        g.s.heat = 100;
+        g.s.extra = MA_EXTRA_WASH;
+        ma_rebuild(&g);
+        reset_counts();
+        ma_play(&g, true);
+        run_bars(16);
+        ma_play(&g, false);
+        int scrapes = drum_on[MA_DR_WASH], taps = drum_on[MA_DR_WASH_TAP];
+        CHECK(scrapes >= 15 && scrapes <= 17 && taps <= 5, "WASH: a scrape a bar (%d in 16), a tap now and then (%d)",
+              scrapes, taps);
+        ma_defaults(&g.s);
+        ma_style_apply(&g.s, MA_ST_MERENGUE);
+        g.s.arc = 0;
+        ma_rebuild(&g);
+        reset_counts();
+        ma_play(&g, true);
+        run_bars(8);
+        ma_play(&g, false);
+        CHECK(drum_on[MA_DR_WASH] + drum_on[MA_DR_WASH_TAP] == 0 && drum_on[MA_DR_GUIRO_SHORT] > 0,
+              "MERENGUE: the guira on the guiro");
+    }
+
     /* the sampled brass: the section's second horn is the trombone, an octave under the trumpet */
     {
         ma_defaults(&g.s);
         g.s.arc = 0;
         ma_rebuild(&g);
-        g.brass = true;
+        g.brass = g.trombone = true;
         reset_counts();
         ma_play(&g, true);
         ma_mambo(&g);                              /* (arc off: the section's riff from the next bar) */
         run_bars(8);
         ma_play(&g, false);
         int lows = horns_low;
-        g.brass = false;
+        g.brass = g.trombone = false;
         reset_counts();
         ma_play(&g, true);
         ma_mambo(&g);
@@ -352,7 +378,7 @@ int main(void)
         g.soloing = false;
         g.keys = 0;
         ma_process(&g, 32);
-        CHECK(g.mute_live == MA_MUTE_OPEN, "the section: no mute (%d)", g.mute_live);
+        CHECK(g.mute_live == MA_MUTE_HARMON, "the section muted too (%d)", g.mute_live);
         g.brass = false;
         g.soloing = true;
         g.s.mute = MA_MUTE_OPEN;

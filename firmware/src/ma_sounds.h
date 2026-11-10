@@ -43,12 +43,19 @@ static const preset_t MAS_BANDONEON = {"BANDONEON", {4, 7, 64, 0, 76, 14, 16, 64
 /* the sampled brass (tools/ma_brass.py, VSCO 2 CE): the SAMPLE engine's set BRASS (the trombone below the trumpet)
  * and TRUMPET (its trumpet alone), looped; tongued at once, held, let go short as a section does. The SAMPLE E
  * values: SET TUNE BITS LOOP CUT MUTE DRV - (MUTE: Manta's, set by the glue every block) */
+enum { MAS_SET_BRASS = 2, MAS_SET_TRUMPET = 3, MAS_SET_SAX = 5, MAS_SET_VIOLINS = 6 };   /* (gen_samples.py CC0_SETS) */
 static const preset_t MAS_BRASS = {"BRASS", {2, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 20}, 0, 0, FX(0, 0, 0, 30)};
 static const preset_t MAS_TPT = {"TRUMPET", {3, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 24}, 0, 0, FX(0, 0, 0, 34)};
+/* the tenor sax (VCSL, tools/ma_horns.py): set SAX, the reed's buzz; the violin section (VSCO 2 CE): set VIOLINS,
+ * bowed in a little softer, let go longer */
+static const preset_t MAS_SAXS = {"SAX", {5, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 22}, 0, 0, FX(0, 0, 0, 30)};
+static const preset_t MAS_VLNS = {"VIOLINS", {6, 0, 0, 1, 112, 0, 0, 0}, {6, 70, 127, 40}, 0, 0, FX(0, 0, 0, 40)};
+/* the pan flute (the Andes' zampona, the cumbia's flutes): a triangle through a low-pass that keeps little but the
+ * fundamental, a lot of breath through the same resonant filter (the noise sings at the pipe's pitch), a chiff of the
+ * filter's envelope on each note */
+static const preset_t MAS_PANFLUTE = {"PANFLUTE", {2, 0, 0, 44, 62, 40, 0, 100}, {6, 45, 105, 30}, 30, 0, FX(0, 0, 30, 50)};
 /* a solo trumpet, light: one saw, a breath of noise, the filter swelling open on each note (the lip) (Sill's CORNET) */
 static const preset_t MAS_TRUMPET = {"TRUMPET", {0, 0, 0, 6, 50, 12, 6, 64}, {12, 60, 96, 26}, 42, 0, FX(0, 15, 20, 30)};
-/* the tenor sax of the merengue: a square, some breath and growl */
-static const preset_t MAS_SAX = {"SAX", {1, 6, 64, 8, 82, 28, 26, 64}, {6, 70, 100, 24}, 30, 0, FX(8, 10, 15, 30)};
 /* the upright bass: a sine with a pluck of noise, round and short */
 static const preset_t MAS_UPRIGHTB = {"UPRIGHT", {3, 0, 0, 5, 90, 10, 22, 0}, {0, 56, 40, 14}, 22, 1, FX(0, 0, 0, 10)};
 /* a round sine bass, the bolero's and the bossa's */
@@ -87,9 +94,9 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         SO("TPT+TBN", MAS_SAMPLE, 2, MAS_BRASS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),   /* the sampled brass: set BRASS */
         SO("TPT", MAS_SAMPLE, 3, MAS_TPT, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),         /* its trumpet alone: TRUMPET */
         S("BRASS", MAS_ANALOG, 9, 4, 1),
-        SO("SAX", MAS_ANALOG, 0, MAS_SAX, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -2),
-        S("FLUTE", MAS_WHEEL, 3, 3, 2),                 /* SOFT FLUTE: the charanga's */
-        S("VIOLINS", MAS_PHASE, 2, 2, -3),               /* PHASE's STRING: the charanga's and the tango's */
+        SO("SAX", MAS_SAMPLE, MAS_SET_SAX, MAS_SAXS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled tenor */
+        SO("PANPIPE", MAS_ANALOG, 0, MAS_PANFLUTE, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -3),
+        SO("VIOLINS", MAS_SAMPLE, MAS_SET_VIOLINS, MAS_VLNS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled section */
         SO("ACCORD", MAS_ANALOG, 0, MAS_ACCORDION, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -3),
         SO("BANDO", MAS_ANALOG, 0, MAS_BANDONEON, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -1),
     },
@@ -211,10 +218,13 @@ static inline void mas_block(const ma_groove *g)
     trk[MA_HORNS].p[P_E5] = g->brass ? g->mute_live : 0;   /* the sampled brass's mute filter (eng_sample.c) */
 }
 
-/* the groove told whether the HORNS sound is the sampled brass (its mutes, the trombone an octave down), as it loads */
+/* the groove told whether the HORNS sound is the sampled brass (its mutes) and has the trombone (an octave down) */
 static inline void mas_brass(ma_groove *g)
 {
-    g->brass = mas_of(g, MA_HORNS)->engine == MAS_SAMPLE;
+    const mas_sound *h = mas_of(g, MA_HORNS);
+    int set = h->engine == MAS_SAMPLE && h->own ? h->own->e[0] : -1;
+    g->brass = set == MAS_SET_BRASS || set == MAS_SET_TRUMPET;
+    g->trombone = set == MAS_SET_BRASS;
 }
 
 #endif

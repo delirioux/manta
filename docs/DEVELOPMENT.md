@@ -50,7 +50,7 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 | `ma_fw.c` | the glue: the groove on the tracks and MIDI out, loading a part's sound when it changes, the panel and its LEDs, the settings and the sets in flash, the splash |
 | `ma_logo.inc` | the splash logo, made by `tools/ma_logo.py` from the same drawing as `assets/logo.svg` (`tools/draw_logo.py`) |
 | `tools/ma_perc.py` | the thirty one-shots into `assets/samples-cc0/DRUMS/`: VCSL's recordings, trimmed and levelled; the timbales' heads, the kick and the washboard synthesized, seeded. `--fetch DIR` takes VCSL from a clone |
-| `tools/ma_brass.py` | the brass: eleven notes of VSCO 2 CE's tenor trombone (F1 to C3) and trumpet (D#3 to A4), CC0, into `assets/samples-cc0/BRASS/`: the swell evened, an accent on the attack, the sustain levelled |
+| `tools/ma_horns.py` | the sampled horns, CC0, into `assets/samples-cc0/`: BRASS (eleven notes of VSCO 2 CE's tenor trombone, F1 to C3, and trumpet, D#3 to A4), SAX (five of VCSL's tenor sax) and VIOLINS (four of VSCO 2 CE's violin section): the swell evened, an accent on the attack, the sustain levelled |
 | `tools/ma_piano.py` | the UPRIGHT: six notes of VCSL's Yamaha upright (CC0) into `assets/samples-cc0/PIANO/` |
 | `tests/ma_groove_test.c` | the engine: every style plays and ends its notes, in key; the clave's sides; the form's order; a song replays exactly; the style and song on the bar line; BAND HIT tapped and held; the mambo; the keys; the mutes and PAN 3D; a bad record |
 | `tests/ma_ui_test.c` | the screen: the controls, every page in every palette, the layout lint, PNGs and a GIF (`docs/screens/`) |
@@ -73,8 +73,11 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 - **A sampled upright and sampled brass, the rest synthesized.** The montuno lives on the piano's attack; six notes of
   an upright, bright but not hard. A salsa section lives on real brass: eleven notes of a trumpet and a trombone in
   one set (BRASS, the trombone below D#3), and its trumpet zones alone as a second set (TRUMPET, no bytes of its own).
-  Each is cut to 0.55 s and looped over whole periods of its pitch, so a held note holds; about 67 KB, the image
-  about 535 KB of the 581 KB slot. With TPT+TBN the section's second horn goes an octave down, onto the trombone.
+  Each is cut to 0.55 s and looped over whole periods of its pitch, so a held note holds; about 67 KB. A tenor sax
+  (VCSL) and a violin section (VSCO 2 CE) the same way, at 16 kHz to fit (about 35 KB; the violins loop over a
+  vibrato cycle); the image about 570 KB of the 581 KB slot, so the flash is now full. With TPT+TBN the section's
+  second horn goes an octave down, onto the trombone. The pan pipes are synthesized: a triangle filtered to little but
+  its fundamental, breath through the same resonant filter.
   The bass, the other horns and the other keyboards are Felucca's engines: bytes, not kilobytes.
 - **The mutes are filters.** Four mutes as recordings would cost four times the trumpet. On the sampled brass the
   SAMPLE engine runs a state-variable filter after CUT (Manta's, `eng_sample.c`, its E5 set by the glue each block
@@ -84,6 +87,10 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 - **PAN 3D in the matrix, for now.** The solo shares the HORNS track (four tracks only), so PAN 3D moves the horns'
   place, tone and level by the matrix's third slot (AT to PAN): behind you duller, far off softer. Sardine's
   binaural filters need a track of their own.
+- **The washboard is a colour.** One scrape a bar, a tap of the thimbles now and then when hot; the merengue's
+  güira plays on the güiro.
+- **One mute for the HORNS track.** The section and the solo share it; BOLERO's horns are muted and sit back
+  (its GAIN down, about 9 dB under the mix).
 - **BAND HIT is the clave's figure.** A cierre is the whole band on the clave's strokes of the next bar, the cymbal on
   the last; held, the descarga leaves the percussion alone and a timbal roll brings the band back on the bar line.
 - **A small, dry room.** Latin records of the era are close and punchy; ROOM is short, PLATE adds to the horns and the
