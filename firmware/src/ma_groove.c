@@ -929,6 +929,7 @@ static void bar_line(ma_groove *g)
         g->hits_last[p] = g->hits[p];
         g->hits[p] = 0;
     }
+    g->arp_k = 0;                                  /* (the broken montuno's figure the same each bar: an ostinato) */
     for (int d = 0; d < MA_DR_COUNT; ++d) {
         g->dr_last[d] = g->dr_hits[d];
         g->dr_hits[d] = 0;
@@ -1426,22 +1427,64 @@ static int bass_root(const ma_chord *c)
     return root > 43 ? root - 12 : root;
 }
 
+/* the bass never quite the same: each bar, by the song, the round and the bar, it plays its pattern as written
+ * (half the time), or another of its family's rhythms, or hesitates (its first note left out), or, on a chord's last
+ * bar, walks up the scale to the next root (its last two beats); and now and then a fifth becomes the octave or the
+ * third. Always in the key, always going on */
+enum { BV_ASIS, BV_OTHER, BV_HESITATE, BV_WALK };
+static int bass_var(const ma_groove *g)
+{
+    uint32_t r = (uint32_t)(g->bar < 0 ? 0 : g->bar) * 2654435761u ^ ((uint32_t)g->s.song * 40503u + (uint32_t)g->round * 977u + 5u);
+    int k = rnd_n(&r, 20);
+    return k < 10 ? BV_ASIS : k < 15 ? BV_OTHER : k < 17 ? BV_HESITATE : BV_WALK;
+}
+
 static void play_bass(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
     const ma_style *st = &MA_STYLE[g->s.style];
-    const char *pat = BASS_PAT[st->bass][g->s.tumbao & 3];
+    int var = bass_var(g);
+    int bpc = ma_bars_per_chord(&g->s);
+    bool last_bar = ((g->bar < 0 ? 0 : g->bar) % bpc) == bpc - 1;
+    if (var == BV_WALK && !last_bar)
+        var = BV_ASIS;
+    int pv = g->s.tumbao & 3;
+    if (var == BV_OTHER)
+        pv = (pv + 1 + (g->bar & 1)) & 3;
+    const char *pat = BASS_PAT[st->bass][pv];
     int pos = cbar(g, g->bar) * 16 + i;
+    if (var == BV_WALK && i >= 8) {                /* the walk: two scale steps below the next root, then the root */
+        if (i != 8 && i != 12 && i != 14)
+            return;
+        int target = bass_root(chord_after(g, g->bar));
+        int n = i == 14 ? target : ma_snap(&g->s, target - (i == 8 ? 4 : 2));
+        if (n < 30) n += 12;
+        int vel = (i == 14 ? 110 : 98) + (int)(hum * 8.0f);
+        schedule(g, delay, MA_BASS, n, clampi(vel, 1, 127), sf * (i == 14 ? 3.6f : 1.8f));
+        return;
+    }
     char c = pat[pos];
     if (c == '.' || c == '-')
         return;
+    if (var == BV_HESITATE && c != 'n') {          /* the bar's first note held back */
+        bool first = true;
+        for (int k = cbar(g, g->bar) * 16; k < pos; ++k)
+            if (pat[k] != '.' && pat[k] != '-')
+                first = false;
+        if (first)
+            return;
+    }
+    if (c == 'f') {                                /* now and then the fifth's place another chord tone */
+        uint32_t r = (uint32_t)(g->bar * 131 + i * 7 + g->s.song * 17 + 3);
+        int k = rnd_n(&r, 8);
+        if (k == 0) c = 'o';
+        else if (k == 1) c = 't';
+    }
     int len = 1;
     while (pos + len < 32 && pat[pos + len] == '-')
         ++len;
     if (pos + len == 32 && pat[0] == '-')          /* (a note held over into the next clave) */
         ++len;
     const ma_chord *cur = chord_at(g, g->bar);
-    int bpc = ma_bars_per_chord(&g->s);
-    bool last_bar = ((g->bar < 0 ? 0 : g->bar) % bpc) == bpc - 1;
     const ma_chord *nx = last_bar ? chord_after(g, g->bar) : cur;
     int root = bass_root(cur), n = root;
     switch (c) {

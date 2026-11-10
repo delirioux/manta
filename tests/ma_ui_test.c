@@ -211,8 +211,10 @@ int main(int argc, char **argv)
     CHECK(g.sec == MA_SEC_MBO, "SEQ: the mambo (%s)", ma_sec_name(g.sec));
     shot("05_mambo");
     /* PRESETS: the styles, on the bar line */
-    mu_knob(&ui, MU_K_PRESETS, 7);
-    CHECK(g.next_style == MA_ST_BOLERO, "PRESETS +7: BOLERO queued (%d)", g.next_style);
+    mu_knob(&ui, MU_K_PRESETS, 5);
+    CHECK(g.next_style == MA_ST_GUARACHA, "PRESETS +5: GUARACHA, CALIENTE's last (%d)", g.next_style);
+    mu_knob(&ui, MU_K_PRESETS, 3);
+    CHECK(g.next_style == MA_ST_BOLERO, "PRESETS +3 more: BOLERO queued (%d)", g.next_style);
     shot("06_styles");
     all_palettes("styles");
     bars(1);

@@ -111,6 +111,14 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   dancers count them, two bars of 4/4 to a clave (a tempo of 140 to 200), so their pulse is the eighth: their
   piano, guitar, solo and texture keep to the eighths (a sixteenth there would sound as a thirty-second, frantic).
   Their tempos sit at the relaxed end: SALSA 164, MAMBO 170, GUARACHA 176, MERENGUE 138.
+- **A bass that goes on.** The UPRIGHT is a sampled double bass (VSCO 2 CE, plucked, 11.025 kHz, about 12 KB: the
+  triangle and the upright piano's tails a little shorter made the room). Each bar the bass plays its pattern as
+  written about half the time, otherwise another of its family's rhythms, or holds back its first note, or on a
+  chord's last bar walks up the scale to the next root; a fifth now and then becomes the octave or the third.
+- **A long, warm hall for the solo.** Felucca's HALL, longer; the band's sends lower; the solo's send up while it
+  plays; the reverb's top damped.
+- **The SAMPLE engine's rates.** Its step was `(ratio >> 8) * (rate >> 8)`, which lost up to 1 % of a rate not a
+  multiple of 256: the 16 kHz sax and violins 16 cents flat. The product is 64-bit now.
 - **No singing, no empty room.** Manta leaves the singing to whoever sings along, but leaves no gap where a singer
   would be: in the montuno the section plays the coro's refrain (the phrase's first two bars, the same each time, in
   two voices on the chord) four bars, the solo improvises the next four, and so on.

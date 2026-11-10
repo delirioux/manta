@@ -43,7 +43,7 @@ static const preset_t MAS_BANDONEON = {"BANDONEON", {4, 7, 64, 0, 76, 14, 16, 64
 /* the sampled brass (tools/ma_brass.py, VSCO 2 CE): the SAMPLE engine's set BRASS (the trombone below the trumpet)
  * and TRUMPET (its trumpet alone), looped; tongued at once, held, let go short as a section does. The SAMPLE E
  * values: SET TUNE BITS LOOP CUT MUTE DRV - (MUTE: Manta's, set by the glue every block) */
-enum { MAS_SET_BRASS = 2, MAS_SET_TRUMPET = 3, MAS_SET_SAX = 5, MAS_SET_VIOLINS = 6 };   /* (gen_samples.py CC0_SETS) */
+enum { MAS_SET_BRASS = 2, MAS_SET_TRUMPET = 3, MAS_SET_SAX = 5, MAS_SET_VIOLINS = 6, MAS_SET_UPBASS = 8 };   /* (gen_samples.py CC0_SETS) */
 static const preset_t MAS_BRASS = {"BRASS", {2, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 20}, 0, 0, FX(0, 0, 0, 30)};
 static const preset_t MAS_TPT = {"TRUMPET", {3, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 24}, 0, 0, FX(0, 0, 0, 34)};
 /* the tenor sax (VCSL, tools/ma_horns.py): set SAX, the reed's buzz; the violin section (VSCO 2 CE): set VIOLINS,
@@ -64,8 +64,9 @@ static const preset_t MAS_TRES = {"TRES", {1, 32, 92, 108, 20, 124, 0, 0}, {0, 1
 static const preset_t MAS_REQUINTO = {"REQUINTO", {1, 32, 86, 116, 30, 127, 0, 0}, {0, 100, 127, 50}, 0, 0, FX(0, 15, 25, 35)};
 /* a solo trumpet, light: one saw, a breath of noise, the filter swelling open on each note (the lip) (Sill's CORNET) */
 static const preset_t MAS_TRUMPET = {"TRUMPET", {0, 0, 0, 6, 50, 12, 6, 64}, {12, 60, 96, 26}, 42, 0, FX(0, 15, 20, 30)};
-/* the upright bass: a sine with a pluck of noise, round and short */
-static const preset_t MAS_UPRIGHTB = {"UPRIGHT", {3, 0, 0, 5, 90, 10, 22, 0}, {0, 56, 40, 14}, 22, 1, FX(0, 0, 0, 10)};
+/* the upright bass, sampled (VSCO 2 CE's double bass, plucked: tools/ma_horns.py): set UPBASS, full and round, let
+ * go a little slowly as a hand leaves the string */
+static const preset_t MAS_UPBASS = {"UPBASS", {MAS_SET_UPBASS, 0, 0, 0, 120, 0, 0, 0}, {0, 100, 127, 34}, 0, 0, FX(0, 0, 0, 12)};
 /* a round sine bass, the bolero's and the bossa's */
 static const preset_t MAS_ROUND = {"ROUND", {3, 0, 0, 0, 127, 0, 25, 0}, {0, 70, 100, 12}, 0, 1, FX(0, 0, 0, 6)};
 
@@ -90,7 +91,7 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
     },
     {   /* BASS */
         SF("BABY", MA_FM6_FRETLESS, MAS_KEEP, MAS_MONO, -6),   /* the baby bass: round, a soft attack */
-        SO("UPRIGHT", MAS_ANALOG, 0, MAS_UPRIGHTB, MAS_KEEP, MAS_KEEP, MAS_MONO, -1, -4),
+        SO("UPRIGHT", MAS_SAMPLE, 0, MAS_UPBASS, MAS_KEEP, MAS_KEEP, MAS_MONO, 4, -9),   /* the double bass, plucked */
         S("FM BASS", MAS_FM6, 2, 2, -4),
         S("SUB", MAS_ANALOG, 7, 4, -13),
         SF("SLAP", MA_FM6_SLAPBASS, MAS_KEEP, MAS_POLY, 0),
@@ -170,6 +171,8 @@ static inline int mas_gm_note(int drum)
 static inline int16_t mas_clamp(int v, int lo, int hi) { return (int16_t)(v < lo ? lo : v > hi ? hi : v); }
 #define MAS_PIANO_CUT 92                  /* the upright's CUT: a little edge off (eng_sample.c's one-pole) */
 
+static int16_t mas_rev_base[MA_TRACKS];          /* each track's reverb send from the cards (mas_block adds the solo's) */
+
 /* a part's track from the cards, over its sound's preset: the level, the place, the sends, WARMTH, and the matrix's
  * slots for the groove (above). Main loop, the audio held off (or the host) */
 static inline void mas_track(track_t *t, const ma_groove *g, int part)
@@ -186,9 +189,10 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     t->p[P_PAN] = (int16_t)(part == MA_PIANO ? -w * 16 / 100 : part == MA_HORNS ? -64 : 0);
     t->p[P_SPRD] = mas_clamp(part == MA_PERC ? w * 70 / 100 : part == MA_PIANO ? w * 40 / 100 : 0, 0, 127);
     /* the sends: ROOM on everything, PLATE more on the piano and the horns */
-    static const uint8_t ROOM[MA_PARTS] = {70, 20, 80, 60, 70};
+    static const uint8_t ROOM[MA_PARTS] = {42, 10, 60, 30, 42};   /* (a long hall: the band a little in it) */
     int rev = s->room * 127 / 100 * ROOM[part] / 100 + (part == MA_PIANO || part == MA_HORNS ? s->plate * 50 / 100 : 0);
     t->p[P_REV] = mas_clamp(rev, 0, 127);
+    mas_rev_base[part % MA_TRACKS] = t->p[P_REV];
     t->p[P_DLY] = mas_clamp(part == MA_HORNS ? 18 : 0, 0, 127);   /* (a short slap on the horns) */
     /* the matrix: TONE, GAIN, the horns' place */
     t->p[P_M1SRC] = MS_MODW;
@@ -242,9 +246,9 @@ static inline void mas_song(const ma_settings *s)
     song.g[G_DTIME] = 2;                  /* (params.c N_DTIME: 1/16) */
     song.g[G_DFDBK] = 15;
     song.g[G_DMIX] = 100;
-    song.g[G_RSIZE] = (int16_t)(45 + s->room * 30 / 100);
-    song.g[G_RDAMP] = 55;
-    song.g[G_RTYPE] = 0;                  /* (Felucca's ROOM model) */
+    song.g[G_RSIZE] = (int16_t)(72 + s->room * 40 / 100);   /* a long hall, for the solo above all */
+    song.g[G_RDAMP] = 66;                 /* (warm: the reverb's top damped) */
+    song.g[G_RTYPE] = 2;                  /* (Felucca's HALL model: long and wide) */
 }
 
 /* the block's controls into the tracks (the audio ISR, before the mix): the tone, the gain, the horns' place */
@@ -256,7 +260,10 @@ static inline void mas_block(const ma_groove *g)
     }
     trk[MA_HORNS].at = g->pan_horns;
     trk[MA_HORNS].p[P_E5] = g->brass ? g->mute_live : 0;   /* the sampled brass's mute filter (eng_sample.c) */
-    trk[MA_HORNS].p[P_LD_PIT] = g->vib ? 2 : 0;  /* the tema's held note: vibrato (about +-35 cents, the LFO's) */
+    trk[MA_HORNS].p[P_LD_PIT] = g->vib ? 2 : 0;
+    /* the solo in a warm, wide hall: more of the reverb on it while it plays (the section drier, punchy) */
+    int rv = mas_rev_base[MA_HORNS] + (g->soloing || g->keys ? 46 : 0);
+    trk[MA_HORNS].p[P_REV] = (int16_t)(rv > 127 ? 127 : rv);  /* the tema's held note: vibrato (about +-35 cents, the LFO's) */
 }
 
 /* the groove told what the sounds are: the HORNS the sampled brass (its mutes) with the trombone (an octave down);

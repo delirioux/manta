@@ -401,6 +401,29 @@ int main(void)
         g.tres = false;
     }
 
+    /* the bass never quite the same: over sixteen bars of the montuno several rhythms, all in key */
+    {
+        ma_defaults(&g.s);
+        ma_style_apply(&g.s, MA_ST_SON);
+        g.s.arc = 0;
+        ma_rebuild(&g);
+        reset_counts();
+        ma_play(&g, true);
+        uint16_t seen[16];
+        int distinct = 0;
+        for (int b = 0; b < 16; ++b) {
+            run_bars(1);
+            uint16_t h = g.hits_last[MA_BASS];
+            bool dup = false;
+            for (int k = 0; k < distinct; ++k)
+                dup |= seen[k] == h;
+            if (!dup && distinct < 16)
+                seen[distinct++] = h;
+        }
+        ma_play(&g, false);
+        CHECK(distinct >= 4 && bad_pc == 0, "the bass varies its rhythm (%d different bars in 16), in key", distinct);
+    }
+
     /* the washboard: a scrape a bar, now and then (hot) a tap; the merengue's guira on the guiro, not on it */
     {
         ma_defaults(&g.s);

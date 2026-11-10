@@ -21,6 +21,9 @@ SAX: Manta's tenor sax, five notes (00_SAX_D3 .. 04_SAX_G#4, VCSL's names) of VC
 Aerophones/Tenor Saxophone/Non-Vibrato", the vl3 layer); VIOLINS: Manta's violin section, four notes (00_VLN_D3 ..
 03_VLN_B4, VSCO's names) of VSCO 2 CE's violin section ("Strings/Violin Section/susVib", v2); changed by
 tools/ma_horns.py as BRASS is, cut to 0.52 and 0.58 s; stored at 16 kHz. CC0 as their source; Manta keeps them so.
+UPBASS: Manta's acoustic bass, three notes (00_BAS_A#0 .. 02_BAS_A1, VSCO's names) of VSCO 2 CE's double bass, plucked
+("Strings/Solo Contrabass/Pizz"), its body lifted, a little fuller, faded over its last 200 ms, cut to 0.75 s by
+tools/ma_horns.py; stored at 11.025 kHz. CC0 as their source; Manta keeps them so.
 To the extent possible under law, delirioux has waived all copyright and related rights to Manta's own changes and
 sounds: CC0 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/
 Manta uses none of Felucca's other CC0 sample sets; tools/fetch_cc0.py still fetches them for anyone who wants them.

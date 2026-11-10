@@ -200,7 +200,9 @@ static void sample_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, cons
     const smp_zone_t *z = smp_zone((uint32_t)v->s[4]);
     uint32_t i, frac = v->ph[1];
     int32_t d16 = clamp(m->pitch16 + p[P_E1] * 16 - z->root16, -1536, 576);   /* <= 3 octaves up: bounded decode load */
-    uint32_t r = pow2_q16(d16), stepq = (r >> 8) * (z->rate >> 8);   /* Q16 samples per output */
+    /* Q16 samples per output; (Manta) the product in 64 bits: the >> 8 of both lost up to 1 % of a rate that is not
+     * a multiple of 256 (16 kHz: 16 cents flat, 32 kHz: 7) */
+    uint32_t r = pow2_q16(d16), stepq = (uint32_t)(((uint64_t)r * z->rate) >> 16);
     if (m->fine)                                     /* (Manta) the residual below 1/16 semitone: TUNE, a temperament */
         stepq += (uint32_t)((int32_t)(stepq >> 12) * m->fine);
     int32_t bits = p[P_E2], lp = 4000 + ((clamp((p[P_E4] << 8) + m->cutoff, 0, 127 << 8) * 28767) >> 15);

@@ -878,8 +878,15 @@ void mu_knob(ma_ui *u, int k, int d)
         u->changed = true;
         return;
     case MU_K_PRESETS: {
-        int cur = g->next_style >= 0 ? g->next_style : g->s.style;
-        ma_queue_style(g, mu_wrap(cur + d, MA_STYLES));
+        /* in the list's order: down CALIENTE, then down NOCHE (the guaracha and the danzon came after the ten) */
+        static const uint8_t ORD[MA_STYLES] = {MA_ST_SALSA, MA_ST_MAMBO, MA_ST_MERENGUE, MA_ST_CUMBIA, MA_ST_SAMBA,
+                                               MA_ST_GUARACHA, MA_ST_SON, MA_ST_CHACHA, MA_ST_BOLERO, MA_ST_BOSSA,
+                                               MA_ST_TANGO, MA_ST_DANZON};
+        int cur = g->next_style >= 0 ? g->next_style : g->s.style, at = 0;
+        for (int k = 0; k < MA_STYLES; ++k)
+            if (ORD[k] == cur)
+                at = k;
+        ma_queue_style(g, ORD[mu_wrap(at + d, MA_STYLES)]);
         u->browse_ms = 1800;
         u->changed = true;
         return;
