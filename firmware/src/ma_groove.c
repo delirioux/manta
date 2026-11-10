@@ -131,7 +131,7 @@ enum { SR_FAST, SR_MID, SR_SLOW };
  * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 REQUINTO 3 SAX 4 PANPIPE 5 VIOLINS
  * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
-    {"SALSA", MA_SIDE_CALIENTE, 164, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
+    {"SALSA", MA_SIDE_CALIENTE, 130, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
      PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_AUTO, {{7, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
     {"MAMBO", MA_SIDE_CALIENTE, 170, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
      PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_AUTO, {{2, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
@@ -1680,8 +1680,12 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         len = 16 - i;
         g->vib = true;
     }
+    /* a player, not a sequencer: each note a little late or not (up to 20 ms), louder or softer, held its own length */
     int vel = 100 + (i % 4 == 0 ? 8 : 0) + (i % 2 ? 4 : 0) + (int)(hum * 6.0f);   /* (the off-beats leaned on) */
-    schedule(g, delay, MA_HORNS, n, clampi(vel, 1, 127), sf * (float)len * (len >= 4 ? 0.95f : 0.8f));
+    vel += rnd_n(&g->rnd, 21) - 12;
+    uint32_t late = (uint32_t)((float)rnd_n(&g->rnd, 21) * g->sr * 0.001f);
+    float hold = len >= 4 ? 0.82f + 0.03f * (float)rnd_n(&g->rnd, 6) : 0.55f + 0.06f * (float)rnd_n(&g->rnd, 6);
+    schedule(g, delay + late, MA_HORNS, n, clampi(vel, 1, 127), sf * (float)len * hold);
 }
 
 /* the cierre: the whole band hits the clave's figure of the bar together, nothing between (a band hit, the FIN) */
