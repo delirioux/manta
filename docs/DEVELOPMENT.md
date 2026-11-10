@@ -95,6 +95,12 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   the last; held, the descarga leaves the percussion alone and a timbal roll brings the band back on the bar line.
 - **A small, dry room.** Latin records of the era are close and punchy; ROOM is short, PLATE adds to the horns and the
   piano only, no delay but a short slap on the horns.
+- **The guitar is a string model, and it strums.** No CC0 guitar recording was to be had and the flash is full, so
+  GUITAR (the PIANO part) and REQUINT (the HORNS) are Felucca's PHYS string (Karplus-Strong). With the GUITAR the
+  PIANO part leaves its montuno and strums its own patterns (`GUITAR_PAT`, two a style): down-strums 10 ms a string
+  low to high, up-strums high to low, the muted chuck, the thumb's root and fifth, the fingers' pluck, arpeggios.
+  PHYS has three voices a part, so a strum is three strings; the root is the thumb's, alone. A MUTE is a trumpet's:
+  on the other HORNS sounds it does nothing, and BOLERO's pull-back is its trumpets'.
 - **Eight voices for everything.** Felucca shares eight voices across the four tracks; the percussion's one-shots ring
   short and the oldest released note is stolen first. Measured through Felucca's engines, SALSA's busiest moments steal
   released tails, not held notes.

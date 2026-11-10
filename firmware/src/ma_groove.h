@@ -148,6 +148,7 @@ typedef struct {
     /* in, from the glue: the HORNS sound is the sampled trumpet (its mutes are its own filters, the TONE only the bell
      * and PAN 3D), and has the trombone too (the section's second horn an octave down, on it) */
     bool brass, trombone;
+    bool guitar;                                   /* in: the PIANO part is the GUITAR (strums, its own patterns) */
     /* what each part played, a bit per sixteenth: the bar playing and the bar before (the screen) */
     uint16_t hits[MA_PARTS], hits_last[MA_PARTS];
     uint16_t dr_hits[MA_DR_COUNT], dr_last[MA_DR_COUNT];

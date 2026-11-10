@@ -125,32 +125,32 @@ enum { SR_FAST, SR_MID, SR_SLOW };
 
 /* name side bpm key scale | heat clave hits | snd[3] | loops | bars swing | piano bass horns perc | claves on |
  * room plate warmth | mute | the three more sounds of PIANO, BASS and HORNS a song picks from.
- * Sounds (ma_sounds.h): PIANO 0 UPRIGHT 1 EPIANO 2 ORGAN 3 TRES 4 HARP 5 ACCORDION 6 BANDONEON 7 MARIMBA; BASS 0 BABY
- * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 BRASS 3 SAX 4 PANPIPE 5 VIOLINS
+ * Sounds (ma_sounds.h): PIANO 0 UPRIGHT 1 EPIANO 2 ORGAN 3 TRES 4 HARP 5 ACCORDION 6 BANDONEON 7 GUITAR; BASS 0 BABY
+ * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 REQUINTO 3 SAX 4 PANPIPE 5 VIOLINS
  * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
     {"SALSA", MA_SIDE_CALIENTE, 184, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
-     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_OPEN, {{1, 3, 0}, {1, 2, 5}, {1, 2, 0}}},
+     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_OPEN, {{1, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
     {"MAMBO", MA_SIDE_CALIENTE, 192, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
-     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_OPEN, {{1, 0, 7}, {0, 2, 6}, {2, 0, 3}}},
+     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_OPEN, {{1, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
     {"MERENGUE", MA_SIDE_CALIENTE, 152, 2, MA_SC_MAJOR, 80, MA_CLAVE_32, MA_HITS_8, {0, 2, 3}, {2, 0, 9, 3}, 1, 0,
      PF_MERENGUE, BF_MERENGUE, HF_MERENGUE, MA_ST_MERENGUE, 0, 25, 25, 25, MA_MUTE_OPEN,
-     {{5, 1, 0}, {0, 6, 4}, {6, 0, 2}}},
+     {{5, 7, 0}, {0, 6, 4}, {6, 0, 2}}},
     {"CUMBIA", MA_SIDE_CALIENTE, 98, 7, MA_SC_MINOR, 60, MA_CLAVE_32, MA_HITS_16, {5, 6, 6}, {9, 2, 3, 0}, 1, 10,
-     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_OPEN, {{2, 0, 1}, {0, 2, 3}, {4, 3, 0}}},
-    {"SAMBA", MA_SIDE_CALIENTE, 102, 0, MA_SC_MAJOR, 85, MA_CLAVE_32, MA_HITS_8, {3, 1, 2}, {7, 0, 8, 1}, 1, 0,
-     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_OPEN, {{4, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
+     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_OPEN, {{7, 0, 1}, {0, 2, 3}, {4, 3, 2}}},
+    {"SAMBA", MA_SIDE_CALIENTE, 102, 0, MA_SC_MAJOR, 85, MA_CLAVE_32, MA_HITS_8, {7, 1, 2}, {7, 0, 8, 1}, 1, 0,
+     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_OPEN, {{3, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
     {"SON", MA_SIDE_NOCHE, 112, 4, MA_SC_DORIAN, 55, MA_CLAVE_32, MA_HITS_16, {3, 1, 1}, {0, 6, 3, 1}, 1, 0,
      PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 35, 30, 30, MA_MUTE_OPEN, {{0, 4, 7}, {0, 6, 5}, {0, 4, 3}}},
     {"CHA-CHA", MA_SIDE_NOCHE, 120, 5, MA_SC_MAJOR, 55, MA_CLAVE_23, MA_HITS_16, {0, 0, 5}, {11, 0, 1, 2}, 1, 0,
      PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_OPEN,
      {{1, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
     {"BOLERO", MA_SIDE_NOCHE, 80, 2, MA_SC_HARMONIC, 35, MA_CLAVE_32, MA_HITS_OFF, {1, 6, 1}, {4, 5, 3, 1}, 1, 0,
-     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_HARMON, {{0, 4, 2}, {1, 5, 0}, {5, 3, 4}}},
-    {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {1, 5, 3}, {7, 8, 1, 6}, 1, 0,
-     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_OPEN, {{0, 2, 4}, {1, 6, 0}, {1, 4, 5}}},
+     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_HARMON, {{7, 4, 7}, {1, 5, 0}, {2, 3, 2}}},
+    {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {7, 5, 3}, {7, 8, 1, 6}, 1, 0,
+     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_OPEN, {{1, 7, 0}, {1, 6, 0}, {1, 4, 5}}},
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
-     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 0, 1}, {0, 2, 6}, {0, 7, 5}}},
+     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
 };
 const char *ma_style_name(int i) { return MA_STYLE[clampi(i, 0, MA_STYLES - 1)].name; }
 
@@ -531,6 +531,24 @@ static const char *const PIANO_PAT[PF_COUNT][4] = {
                   "..t..t..t...t...t..t..t...t..n..", "t..t...t..t.t...t..t...t..t.n..."},
     [PF_TANGO] = {"B...c...B...c...B...c...B.c.c...", "B..c..B.c...B...B..c..B.c...B...",
                   "B.c.c.c.B.c.c.c.B.c.c.c.B.c.c.c.", "B...c...c...c...B...c...c...c.c."},
+};
+
+/* the guitar, when the PIANO part plays the GUITAR: a style's two comping patterns over two bars (the PIANO card on
+ * GROOVE picks one, 1 and 3 the first). The guitar is Felucca's PHYS string: three voices, so a strum is three
+ * strings. 'D' / 'd' a down-strum, low to high (accented / soft); 'U' / 'u' an up-strum, high to low, softer; 'm' the
+ * muted chuck, damped at once; 'b' the thumb on the root, 'f' on the fifth; 'c' the fingers, the top two at once (the
+ * thumb's note rings on under them); 'a' the arpeggio, a string at a time, up and back */
+static const char *const GUITAR_PAT[MA_STYLES][2] = {
+    [MA_ST_SALSA] = {"D..u..d.m.u.d.u.D..u.d..m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
+    [MA_ST_MAMBO] = {"D..u..d.m.u.d.u.D..u.d..m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
+    [MA_ST_MERENGUE] = {"D.u.m.u.D.u.m.u.D.u.m.u.D.u.m.u.", "a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a."},
+    [MA_ST_CUMBIA] = {"b.u.f.u.b.u.f.u.b.u.f.u.b.u.f.u.", "b...u.u.f...u.u.b...u.u.f...u.u."},
+    [MA_ST_SAMBA] = {"b.cc.c.cf.cc.c.cb.cc.c.cf.c..c.c", "b..c.c.cf..c.c.cb..c.c.cf.c.c.c."},
+    [MA_ST_SON] = {"b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u.", "D..u..u.m.u.D.u.D..u.d.um.u.d.u."},
+    [MA_ST_CHACHA] = {"D...m...D...d.d.D...m...D...d.d.", "b.u.m.u.f.u.d.d.b.u.m.u.f.u.d.d."},
+    [MA_ST_BOLERO] = {"b.a.a.a.f.a.a.a.b.a.a.a.f.a.a.a.", "b...a.a.f...a.a.b...a.a.f.a.a.a."},
+    [MA_ST_BOSSA] = {"b..c..c.f.c..c..b..c..c.f..c..c.", "b.c..c.cf.c..c..b.c..c.cf..c.c.."},
+    [MA_ST_TANGO] = {"D...D...D...D...D...D...D...D...", "D..D..D.D...D...D..D..D.D...D..."},
 };
 /* the bass: '.' rest, 'r' root, 'f' fifth, 'o' octave, 't' third, 'n' the next chord's root (the tumbao's
  * anticipation), 'p' a semitone below the next root (the approach); '-' holds the note before. Four of each family
@@ -1101,8 +1119,71 @@ static int tone_at(const ma_chord *c, int k, int lo)
 }
 
 /* the piano of step i (two bars of its family's pattern, the clave's) */
+/* the guitar's strings for a chord: the thumb's root low (E2 .. D#3) and a triad above it (three strings) */
+static void guitar_strings(const ma_chord *c, int out[4])
+{
+    out[0] = 40 + ((c->root - 40) % 12 + 12) % 12;
+    triad_at(c, out[0] + 7, out + 1);
+}
+
+static void play_guitar(ma_groove *g, int i, uint32_t delay, float sf, float hum)
+{
+    const char *pat = GUITAR_PAT[clampi(g->s.style, 0, MA_STYLES - 1)][g->s.montuno & 1];
+    char ch = pat[cbar(g, g->bar) * 16 + i];
+    if (ch == '.')
+        return;
+    bool acc = ch >= 'A' && ch <= 'Z';
+    char c = acc ? (char)(ch - 'A' + 'a') : ch;
+    float heat = (float)g->s.heat / 100.0f;
+    int vel = (acc ? 108 : c == 'u' ? 78 : 92) + (i % 4 == 0 ? 4 : 0) + (int)(hum * 8.0f);
+    vel = (int)((float)vel * (0.85f + 0.15f * heat));
+    const ma_chord *ch2 = chord_for(g, i >= 14);
+    int str[4];
+    guitar_strings(ch2, str);
+    uint32_t gap = (uint32_t)(g->sr * (c == 'u' ? 0.007f : 0.010f));   /* the strum's spread, string to string */
+    float ring = g->s.style == MA_ST_BOLERO || g->s.style == MA_ST_BOSSA ? sf * 6.0f : sf * 3.0f;
+    switch (c) {
+    case 'd':
+        for (int k = 1; k < 4; ++k)
+            schedule(g, delay + gap * (uint32_t)(k - 1), MA_PIANO, str[k], clampi(vel - (k == 1 ? 4 : 0), 1, 127), ring);
+        break;
+    case 'u':
+        for (int k = 0; k < 3; ++k)
+            schedule(g, delay + gap * (uint32_t)k, MA_PIANO, str[3 - k], clampi(vel - 4 * k, 1, 127), sf * 2.0f);
+        break;
+    case 'm':                                      /* the chuck: the strings damped by the palm as they are struck */
+        for (int k = 1; k < 4; ++k)
+            schedule(g, delay + gap / 2u * (uint32_t)(k - 1), MA_PIANO, str[k], clampi(vel - 30, 1, 127), sf * 0.25f);
+        break;
+    case 'b':
+    case 'f': {
+        int n = str[0];
+        if (c == 'f') {
+            n = str[0] + 7;
+            if (n > 52) n -= 12;
+        }
+        schedule(g, delay, MA_PIANO, n, clampi(vel, 1, 127), ring);
+        break;
+    }
+    case 'c':
+        for (int k = 2; k < 4; ++k)
+            schedule(g, delay, MA_PIANO, str[k], clampi(vel - 10, 1, 127), sf * 2.5f);
+        break;
+    case 'a': {                                    /* up through the top strings, and back */
+        static const uint8_t ARP[8] = {1, 2, 3, 2, 1, 2, 3, 2};
+        schedule(g, delay, MA_PIANO, str[ARP[(i / 2) % 8]], clampi(vel - 8, 1, 127), ring);
+        break;
+    }
+    default: break;
+    }
+}
+
 static void play_piano(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
+    if (g->guitar) {
+        play_guitar(g, i, delay, sf, hum);
+        return;
+    }
     const ma_style *st = &MA_STYLE[g->s.style];
     const char *pat = PIANO_PAT[st->piano][g->s.montuno & 3];
     char ch = pat[cbar(g, g->bar) * 16 + i];
@@ -1518,20 +1599,21 @@ void ma_process(ma_groove *g, int frames)
         g->gain[p] = 0;
     }
     g->pan_horns = 64;
-    /* the horns' MUTE, on the section and the solo alike (one track, one mute: a bolero's horns all muted) */
-    g->mute_live = (uint8_t)(g->s.mute % MA_MUTE_COUNT);
-    static const float MUTE_TONE[MA_MUTE_COUNT] = {1.0f, 0.72f, 0.55f, 0.46f, 0.6f};
+    /* the horns' MUTE, on the section and the solo alike (one track, one mute: a bolero's horns all muted); a mute
+     * is a trumpet's: on the other HORNS sounds (a sax, the violins, a guitar) it does nothing */
+    int mute = g->brass ? g->s.mute % MA_MUTE_COUNT : MA_MUTE_OPEN;
+    g->mute_live = (uint8_t)mute;
     /* (the sampled brass: the engine's mute filter is the mute; the TONE only takes a little off the cup's top, and
      * the wah's sweep is the filter's) */
     static const float MUTE_TONE_BRASS[MA_MUTE_COUNT] = {1.0f, 1.0f, 0.85f, 1.0f, 0.6f};
-    float t = (g->brass ? MUTE_TONE_BRASS : MUTE_TONE)[g->s.mute % MA_MUTE_COUNT];
-    if (g->s.mute == MA_MUTE_WAH) {                /* the wah: the plunger opening and closing on the eighths */
+    float t = MUTE_TONE_BRASS[mute];
+    if (mute == MA_MUTE_WAH) {                /* the wah: the plunger opening and closing on the eighths */
         float beat = g->playing ? ((float)(g->step < 0 ? 0 : g->step) + 1.0f - g->wait / step_frames(g)) / 2.0f : 0.0f;
         t = 0.3f + 0.65f * (0.5f + 0.5f * sin_turns(beat));
     }
     /* the styles whose horns sit back (the bolero's: a muted trumpet behind the voice that is not there) */
     static const uint8_t HORNS_BACK[MA_STYLES] = {[MA_ST_BOLERO] = 85};
-    float gn = (float)HORNS_BACK[clampi(g->s.style, 0, MA_STYLES - 1)] / 127.0f;
+    float gn = g->brass ? (float)HORNS_BACK[clampi(g->s.style, 0, MA_STYLES - 1)] / 127.0f : 0.0f;
     if (!g->soloing && !g->keys) {                 /* the section: its mute, in the middle */
         g->tone[MA_HORNS] = (uint8_t)clampi((int)(clampf(t, 0.0f, 1.0f) * 127.0f + 0.5f), 0, 127);
         g->gain[MA_HORNS] = (uint8_t)clampi((int)(gn * 127.0f + 0.5f), 0, 127);

@@ -69,8 +69,8 @@ first. Installing firmware is at your own risk.
 | **SALSA** · 184 | montuno, tumbao, trumpet and trombone, timbales and bells | **SON** · 112 | the tres's guajeo, bongos, maracas, a dorian lilt |
 | **MAMBO** · 192 | big-band riffs, the mambo bell, 2-3 | **CHA-CHA** · 120 | güiro and bell, the cha-cha-chá bass, charanga violins |
 | **MERENGUE** · 152 | fast tambora, the güira's scrape, sax riffs | **BOLERO** · 80 | arpeggios, a harmon-muted trumpet, soft bongos |
-| **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | rim clicks on the bossa clave, sevenths, a tenor sax |
-| **SAMBA** · 102 | surdo, tamborim, agogô, ganzá, partido alto | **TANGO** · 118 | marcato piano, bandoneon, no drums at all |
+| **CUMBIA** · 98 | accordion, guacharaca, the llamador's offbeat | **BOSSA** · 136 | the nylon guitar's bossa, rim clicks, sevenths, a tenor sax |
+| **SAMBA** · 102 | surdo, tamborim, agogô, ganzá, the guitar's partido alto | **TANGO** · 118 | marcato piano, bandoneon, no drums at all |
 
 A style brings its own tempo, sounds, key, chord loop, patterns and percussion; your MIX, PAN 3D, ARC and MENU stay.
 ALGORITHM picks another song in the same style: a new chord loop, riff and melody, the same each time you come back to
@@ -88,8 +88,8 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
 </p>
 
 - **The parts**: PIANO (the montuno: the upright, an electric piano, organ, tres, harp, accordion, bandoneon or
-  mallets), BASS (the tumbao: a baby bass, an upright, FM, sub, slap, slide, round or tuba), HORNS (the section and the
-  solo: trumpet and trombone, trumpet, brass, sax, pan pipes, violins, accordion or bandoneon) and PERC (a style's
+  a nylon guitar that strums), BASS (the tumbao: a baby bass, an upright, FM, sub, slap, slide, round or tuba), HORNS (the section and the
+  solo: trumpet and trombone, trumpet, a requinto (the lead guitar), sax, pan pipes, violins, accordion or bandoneon) and PERC (a style's
   percussion set). The percussion, the upright, the trumpet and trombone (TPT+TBN, TPT), the tenor sax and the violin
   section are samples; the rest is Felucca's synthesis.
 - **The form** (ARC): INTRO (the percussion, then the piano, then the bass, the horns), VERSO (the melody), MONTUNO

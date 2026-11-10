@@ -7,7 +7,8 @@ The first test build: a Latin band on the FM-1.
 - A sampled percussion section of thirty one-shots (congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
   shakers, cabasa, triangle, toms, a kick, a washboard), a sampled upright piano, a sampled trumpet and
   trombone section (VSCO 2 CE), the trombone an octave under the trumpets, a sampled tenor sax and violin section,
-  and pan pipes.
+  pan pipes, and a nylon guitar that strums each style its own way (the bossa's and the samba's own) and a requinto
+  for lead riffs.
 - The song's form: intro, verso, montuno, mambo, montuno, moña, cierre.
 - REC is BAND HIT (held: a descarga), SEQ is MAMBO, the keys play the solo trumpet with its mutes (filters over the
   real horn), PAN 3D on headphones.

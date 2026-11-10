@@ -304,6 +304,25 @@ int main(void)
         ma_play(&g, false);
     }
 
+    /* the guitar: every style strums, its notes in the guitar's range, all ended */
+    for (int st = 0; st < MA_STYLES; ++st) {
+        ma_defaults(&g.s);
+        ma_style_apply(&g.s, st);
+        g.s.arc = 0;
+        g.guitar = true;
+        ma_rebuild(&g);
+        reset_counts();
+        ma_play(&g, true);
+        run_bars(4);
+        int out = 0;
+        for (int n = 0; n < 128; ++n)
+            if ((n < 40 || n > 76) && sounding[MA_PIANO][n]) out++;
+        ma_play(&g, false);
+        CHECK(on[MA_PIANO] >= 8 && out == 0 && still_sounding(MA_PIANO) == 0 && bad_pc == 0,
+              "%s: the guitar strums (%d notes, %d out of range)", ma_style_name(st), on[MA_PIANO], out);
+        g.guitar = false;
+    }
+
     /* the washboard: a scrape a bar, now and then (hot) a tap; the merengue's guira on the guiro, not on it */
     {
         ma_defaults(&g.s);
@@ -368,8 +387,8 @@ int main(void)
         g.s.mute = MA_MUTE_HARMON;
         ma_process(&g, 32);
         g.soloing = true;
-        CHECK(g.tone[MA_HORNS] < open * 6 / 10, "HARMON: darker (%d)", g.tone[MA_HORNS]);
-        CHECK(g.mute_live == MA_MUTE_HARMON, "the solo's mute live for the engine (%d)", g.mute_live);
+        CHECK(g.tone[MA_HORNS] == open && g.mute_live == MA_MUTE_OPEN, "HARMON on a sax or a guitar: no mute (%d)",
+              g.mute_live);
         g.brass = true;                            /* the sampled brass: the filter is the mute, not the TONE */
         ma_process(&g, 32);
         g.soloing = true;

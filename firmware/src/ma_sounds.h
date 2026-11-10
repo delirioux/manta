@@ -54,6 +54,11 @@ static const preset_t MAS_VLNS = {"VIOLINS", {6, 0, 0, 1, 112, 0, 0, 0}, {6, 70,
  * fundamental, a lot of breath through the same resonant filter (the noise sings at the pipe's pitch), a chiff of the
  * filter's envelope on each note */
 static const preset_t MAS_PANFLUTE = {"PANFLUTE", {2, 0, 0, 44, 62, 40, 0, 100}, {6, 45, 105, 30}, 30, 0, FX(0, 0, 30, 50)};
+/* the guitars, on PHYS's string (Karplus-Strong; three voices): the nylon guitar of the son, the bolero and the bossa,
+ * warm, plucked near the middle; the requinto, the bolero trio's lead guitar, small, steel-bright, plucked near the
+ * bridge. The PHYS E values: MODEL STRC BRIT DAMP POS ACC BOW EXC */
+static const preset_t MAS_GUITAR = {"GUITAR", {1, 36, 58, 100, 30, 110, 0, 0}, {0, 100, 127, 60}, 0, 0, FX(0, 10, 15, 30)};
+static const preset_t MAS_REQUINTO = {"REQUINTO", {1, 30, 86, 116, 30, 127, 0, 0}, {0, 100, 127, 50}, 0, 0, FX(0, 15, 25, 35)};
 /* a solo trumpet, light: one saw, a breath of noise, the filter swelling open on each note (the lip) (Sill's CORNET) */
 static const preset_t MAS_TRUMPET = {"TRUMPET", {0, 0, 0, 6, 50, 12, 6, 64}, {12, 60, 96, 26}, 42, 0, FX(0, 15, 20, 30)};
 /* the upright bass: a sine with a pluck of noise, round and short */
@@ -78,7 +83,7 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         S("HARP", MAS_PHYS, 8, 2, 2),                    /* the Paraguayan and the jarocho harp */
         SO("ACCORD", MAS_ANALOG, 0, MAS_ACCORDION, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 3),
         SO("BANDO", MAS_ANALOG, 0, MAS_BANDONEON, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 0),
-        S("MALLETS", MAS_FM6, 5, 2, 6),                  /* the Guatemalan marimba */
+        SO("GUITAR", MAS_PHYS, 0, MAS_GUITAR, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 5),   /* strums (ma_groove.c GUITAR_PAT) */
     },
     {   /* BASS */
         SF("BABY", MA_FM6_FRETLESS, MAS_KEEP, MAS_MONO, -6),   /* the baby bass: round, a soft attack */
@@ -93,7 +98,7 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
     {   /* HORNS: the section and the solo (the solo's mute, bell and place on the TONE, GAIN and PAN slots) */
         SO("TPT+TBN", MAS_SAMPLE, 2, MAS_BRASS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),   /* the sampled brass: set BRASS */
         SO("TPT", MAS_SAMPLE, 3, MAS_TPT, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),         /* its trumpet alone: TRUMPET */
-        S("BRASS", MAS_ANALOG, 9, 4, 1),
+        SO("REQUINT", MAS_PHYS, 0, MAS_REQUINTO, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 12),   /* the lead guitar's riffs */
         SO("SAX", MAS_SAMPLE, MAS_SET_SAX, MAS_SAXS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled tenor */
         SO("PANPIPE", MAS_ANALOG, 0, MAS_PANFLUTE, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -3),
         SO("VIOLINS", MAS_SAMPLE, MAS_SET_VIOLINS, MAS_VLNS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled section */
@@ -218,9 +223,11 @@ static inline void mas_block(const ma_groove *g)
     trk[MA_HORNS].p[P_E5] = g->brass ? g->mute_live : 0;   /* the sampled brass's mute filter (eng_sample.c) */
 }
 
-/* the groove told whether the HORNS sound is the sampled brass (its mutes) and has the trombone (an octave down) */
-static inline void mas_brass(ma_groove *g)
+/* the groove told what the sounds are: the HORNS the sampled brass (its mutes) with the trombone (an octave down);
+ * the PIANO part the GUITAR (it strums) */
+static inline void mas_flags(ma_groove *g)
 {
+    g->guitar = mas_of(g, MA_PIANO)->own == &MAS_GUITAR;
     const mas_sound *h = mas_of(g, MA_HORNS);
     int set = h->engine == MAS_SAMPLE && h->own ? h->own->e[0] : -1;
     g->brass = set == MAS_SET_BRASS || set == MAS_SET_TRUMPET;
