@@ -210,10 +210,10 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     t->p[P_M3DST] = part == MA_HORNS ? MD_PAN : MD_OFF;
     t->p[P_M3AMT] = 64;
     if (part == MA_HORNS) {             /* the LFO for the vibrato: 5.4 Hz, from each note, eased in */
-        t->p[P_LRATE] = 89;
+        t->p[P_LRATE] = 86;                /* (4.6 Hz) */
         t->p[P_LWAVE] = 0;
         t->p[P_LTRIG] = 0;
-        t->p[P_LFADE] = 40;
+        t->p[P_LFADE] = 75;                /* (eased in late: the note first, then it sings) */
         t->p[P_LD_PIT] = 0;
     }
     if (part == MA_PERC) {
@@ -267,7 +267,7 @@ static inline void mas_block(const ma_groove *g)
     }
     trk[MA_HORNS].at = g->pan_horns;
     trk[MA_HORNS].p[P_E5] = g->brass ? g->mute_live : 0;   /* the sampled brass's mute filter (eng_sample.c) */
-    trk[MA_HORNS].p[P_LD_PIT] = g->vib ? 2 : 0;
+    trk[MA_HORNS].p[P_LD_PIT] = g->vib ? 1 : 0;  /* a long held note: vibrato (the LFO's least, about +-19 cents) */
     /* the solo in a warm, wide hall: more of the reverb on it while it plays (the section drier, punchy) */
     int rv = mas_rev_base[MA_HORNS] + (g->soloing || g->keys ? 46 : 0);
     trk[MA_HORNS].p[P_REV] = (int16_t)(rv > 127 ? 127 : rv);

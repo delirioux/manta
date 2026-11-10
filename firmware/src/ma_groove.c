@@ -1703,7 +1703,8 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
     int n, len;
     if (!solo_note(g, sec_bar(g), i, improv, &n, &len))
         return;
-    g->vib = len >= 6;                             /* a long note sings (the LFO eased in from its start) */
+    /* only a really long note sings (0.7 s and more, whatever the tempo), its vibrato eased in late and light */
+    g->vib = sf * (float)len >= 0.7f * g->sr;
     if (s->arc && sc == MA_SEC_TEMA && g->sec_bar == ma_sec_len(g, sc) - 1 && last_phrase_note(g, i)) {
         n = high_tonic(s);                         /* the theme's end: the tonic, high, held, singing */
         len = 16 - i;

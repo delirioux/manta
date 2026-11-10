@@ -96,7 +96,7 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   beside it on the PERC track (MA_KEYS, `mas_route`), at the PIANO's MIX level. A real fifth track would cost about
   13 KB of RAM (about 17 KB free) and some 300 places in Felucca's code.
 - **A Havana song's form.** After a Havana band's songs: the groove, the trumpet's theme ending high with
-  vibrato (the LFO on the horns' pitch, eased in), a solo where the singer would be (the trumpet's or the piano's, by
+  vibrato (the LFO on the horns' pitch, light and eased in late, on notes of 0.7 s and more), a solo where the singer would be (the trumpet's or the piano's, by
   song and round), the corte (the soloist alone a bar), a trumpet phrase, the piano's montuno solo, then the montuno,
   the mambo, the moña, the cierre. The groove's sections break the montuno up into syncopated arpeggios and add maracas
   and a woodblock.
