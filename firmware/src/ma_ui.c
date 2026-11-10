@@ -444,6 +444,8 @@ static void mu_step_meter(const ma_groove *g, int32_t y, int32_t h)
             uint16_t bits = k <= now ? g->hits[p] : g->hits_last[p];
             n += (bits >> k) & 1u;
         }
+        if (n > 4)
+            n = 4;
         bool cl = ma_clave_hit(g, bar, k);
         int32_t x = 10 + k * 14, bh = n ? 6 + n * (h - 6) / 4 : 2;
         uint16_t c = k == now ? T_ACCENT : cl ? T_THEME : ux_mix(T_SURF, T_THEME, 60);

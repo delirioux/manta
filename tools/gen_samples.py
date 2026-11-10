@@ -71,18 +71,21 @@ TR = 22050                                   # stored sample rate
 # ("alias": the set named). PERC (the GM kit) was removed (66 KB); its index 4 stays, an alias of
 # PIANO too (PERC_SLOT; its sounds load as the DRUM engine)
 CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("BRASS", "sus"), ("TRUMPET", "part"), ("DRUMS", "alias"),
-            ("SAX", "sus"), ("VIOLINS", "sus")]
+            ("SAX", "sus"), ("VIOLINS", "sus"), ("BAND", "join")]
 # (Manta: its percussion kit (tools/ma_perc.py, from VCSL's hand percussion, CC0), its montuno upright
 # (tools/ma_piano.py, from VCSL's Yamaha upright, CC0) and its horns (tools/ma_horns.py: VSCO 2 CE's trumpet, tenor
 # trombone and violin section, VCSL's tenor sax, CC0): BRASS the trombone below the trumpet, TRUMPET its trumpet zones
 # alone ("part": the zones of another set from a root up, no data of its own, SET_PART); SAX and VIOLINS after the
 # PERC slot. Felucca's FLUTE and SAX are left out)
 SET_PART = {"TRUMPET": ("BRASS", 62)}
+# (Manta) a set of two sets' zones, one after the other in SMP_ZONES (no data of its own): BAND, the kit (its keys
+# 98..127, matched first) and the upright under it, so one track plays the percussion and the piano at once
+SET_JOIN = {"BAND": ("DRUMS", "PIANO")}
 PERC_SLOT = 4                                # core.h SMP_SET_PERC: SAMPLE's factory presets end before it
 MEASURED_TUNING = ()                         # sets whose recordings are not at A440 (was TRANH, ~+35 ct)
 
 
-KIT_BASE = 53                     # F3, the lowest FM-1 key
+KIT_BASE = 98                     # (Manta: the top 30 keys, so the upright fits under the kit in BAND)
 
 NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
 
@@ -359,6 +362,15 @@ class Builder:
         self.sets.append((name, first, z0 + nz - first))
         self.kinds[name] = self.kinds[src]
 
+    def join_set(self, name):
+        """SET_JOIN: two sets whose zones follow each other, as one (the first's zones win where both reach)"""
+        a, b = SET_JOIN[name]
+        _, za, na = next(t for t in self.sets if t[0] == a)
+        _, zb, nb = next(t for t in self.sets if t[0] == b)
+        assert zb == za + na, "SET_JOIN: the sets' zones must follow each other"
+        self.sets.append((name, za, na + nb))
+        self.kinds[name] = "kit"
+
     def alias_set(self, name):
         """a retired set's index: the zones of the earlier set `name` (no data of its own)"""
         orig = next(i for i, (n, _, _) in enumerate(self.sets) if n == name)
@@ -494,7 +506,7 @@ def input_key(have_cc0):
 
 def main(out):
     subprocess.run([sys.executable, str(Path(__file__).with_name("gen_waves.py")), str(GENDIR)], check=True)
-    have_cc0 = all(SET_DIR.get(n, CC0 / n).exists() and any(SET_DIR.get(n, CC0 / n).glob("*.wav")) for n, k in CC0_SETS if k not in ("alias", "part"))
+    have_cc0 = all(SET_DIR.get(n, CC0 / n).exists() and any(SET_DIR.get(n, CC0 / n).glob("*.wav")) for n, k in CC0_SETS if k not in ("alias", "part", "join"))
     if not have_cc0:
         print("samples: the drum kit is missing (assets/samples-cc0/DRUMS: python3 tools/ma_perc.py) - no SAMPLE sets")
     key = input_key(have_cc0)
@@ -513,6 +525,8 @@ def main(out):
                 b.alias_set(name)
             elif kind == "part":
                 b.part_set(name)
+            elif kind == "join":
+                b.join_set(name)
             else:
                 b.cc0_set(name, kind)
     if slice_on():                                  # SLICE's BREAK: only when that engine is built

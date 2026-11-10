@@ -128,10 +128,34 @@ static inline const mas_sound *mas_of(const ma_groove *g, int part)
 }
 
 /* ---- the percussion: the kit's keys ---- */
-#define MAS_KIT_BASE 53                   /* the DRUMS set's first key (tools/gen_samples.py KIT_BASE) */
+#define MAS_KIT_BASE 98                   /* the DRUMS set's first key (tools/gen_samples.py KIT_BASE): the top 30 */
+#define MAS_KEYS_GAIN 82                  /* the upright beside the guitar against the kit, % (tests/ma_felucca.sh) */
+#define MAS_SET_BAND 7                    /* the kit and the upright under it, the PERC track's set (gen_samples.py) */
 #define MAS_KIT_TRIM 4                    /* (tests/ma_audition.sh, as the sounds' trims) */
 static inline uint32_t mas_kit_engine(void) { return MAS_SAMPLE; }
 static inline int mas_drum_note(int drum) { return MAS_KIT_BASE + drum; }
+/* where an event plays: its track and its note there. The kit's drums go up to their keys; the upright beside the
+ * guitar (MA_KEYS) plays on the PERC track too, its notes under the kit's (the set BAND); its velocity scaled by the
+ * PIANO's MIX against the PERC's, as if it had a level of its own */
+static inline int mas_route(const ma_groove *g, const ma_event *e, int *note, int *vel)
+{
+    *note = e->note;
+    *vel = e->vel;
+    if (e->part == MA_PERC) {
+        *note = mas_drum_note(e->note);
+        return MA_PERC;
+    }
+    if (e->part == MA_KEYS) {
+        int lp = g->s.lvl[MA_PIANO], lk = g->s.lvl[MA_PERC] ? g->s.lvl[MA_PERC] : 1;
+        int v = e->vel * lp * MAS_KEYS_GAIN / (lk * 100);
+        *vel = v < 1 ? 1 : v > 127 ? 127 : v;
+        if (*note >= MAS_KIT_BASE)
+            *note -= 12;
+        return MA_PERC;
+    }
+    return e->part % MA_TRACKS;
+}
+
 /* the General MIDI percussion a drum is sent as (MIDI out, channel 10) */
 static inline int mas_gm_note(int drum)
 {
@@ -159,7 +183,7 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     t->p[P_PAN] = (int16_t)(part == MA_PIANO ? -w * 16 / 100 : part == MA_HORNS ? -64 : 0);
     t->p[P_SPRD] = mas_clamp(part == MA_PERC ? w * 70 / 100 : part == MA_PIANO ? w * 40 / 100 : 0, 0, 127);
     /* the sends: ROOM on everything, PLATE more on the piano and the horns */
-    static const uint8_t ROOM[MA_PARTS] = {70, 20, 80, 60};
+    static const uint8_t ROOM[MA_PARTS] = {70, 20, 80, 60, 70};
     int rev = s->room * 127 / 100 * ROOM[part] / 100 + (part == MA_PIANO || part == MA_HORNS ? s->plate * 50 / 100 : 0);
     t->p[P_REV] = mas_clamp(rev, 0, 127);
     t->p[P_DLY] = mas_clamp(part == MA_HORNS ? 18 : 0, 0, 127);   /* (a short slap on the horns) */
@@ -216,7 +240,7 @@ static inline void mas_song(const ma_settings *s)
 /* the block's controls into the tracks (the audio ISR, before the mix): the tone, the gain, the horns' place */
 static inline void mas_block(const ma_groove *g)
 {
-    for (int p = 0; p < MA_PARTS; ++p) {
+    for (int p = 0; p < MA_TRACKS; ++p) {
         trk[p].mw = (uint8_t)(127 - g->tone[p]);
         trk[p].ex_off = g->gain[p];
     }

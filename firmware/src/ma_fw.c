@@ -24,21 +24,22 @@ static ma_ui ma_u;
 static ma_settings ma_applied;
 static bool ma_applied_ok;
 static uint8_t ma_loaded_sig = 0xFF;
-static int8_t ma_loaded_snd[MA_PARTS] = {-1, -1, -1, -1};   /* (PERC: the kit, loaded once a style or a set) */
+static int8_t ma_loaded_snd[MA_TRACKS] = {-1, -1, -1, -1};   /* (PERC: the kit, loaded once a style or a set) */
 
 /* ---- the audio ISR --------------------------------------------------------------------------------------------- */
 static void ma_sound(void *ctx, const ma_event *e)
 {
     (void)ctx;
-    uint32_t p = e->part % MA_PARTS;
-    int n = p == MA_PERC ? mas_drum_note(e->note) : e->note;
+    int n, vel;
+    uint32_t p = (uint32_t)mas_route(&ma_g, e, &n, &vel);
     if (e->on)
-        trk_note_on(&trk[p], (uint32_t)n, e->vel);
+        trk_note_on(&trk[p], (uint32_t)n, (uint32_t)vel);
     else
         trk_note_off(&trk[p], (uint32_t)n);
-    /* MIDI out: PIANO on channel 1, BASS 2, HORNS 3, the percussion 10 (General MIDI's) */
-    uint32_t ch = p == MA_PERC ? 9u : p, st = (e->on ? 0x90u : 0x80u) | ch, cin = st >> 4;
-    int mn = p == MA_PERC ? mas_gm_note(e->note) : n;
+    /* MIDI out: PIANO (the guitar) on channel 1, BASS 2, HORNS 3, the upright beside the guitar 4, the percussion 10
+     * (General MIDI's) */
+    uint32_t ch = e->part == MA_PERC ? 9u : e->part == MA_KEYS ? 3u : p, st = (e->on ? 0x90u : 0x80u) | ch, cin = st >> 4;
+    int mn = e->part == MA_PERC ? mas_gm_note(e->note) : e->note;
     midi_out_event(cin | st << 8 | (uint32_t)mn << 16 | (uint32_t)(e->on ? e->vel : 0u) << 24);
 }
 
@@ -150,6 +151,7 @@ static void ma_load_part(uint32_t k)
     if (k == MA_PERC) {                                      /* the kit: the SAMPLE engine's set DRUMS */
         set_engine_of(&trk[k], mas_kit_engine());
         apply_preset_to(&trk[k], 0u);
+        trk[k].p[P_E0] = MAS_SET_BAND;                       /* (the kit and the upright: BAND; beyond the presets) */
         undo_depth--;
         return;
     }
@@ -169,7 +171,7 @@ static void ma_apply(void)
 {
     const ma_settings *s = &ma_g.s;
     bool all = !ma_applied_ok, every = all || ma_loaded_sig != ma_g.sound_sig;   /* (a style or a set: every part) */
-    for (uint32_t k = 0; k < MA_PARTS; ++k)                  /* a sound changed (a card, a style, a set): load it */
+    for (uint32_t k = 0; k < MA_TRACKS; ++k)                 /* a sound changed (a card, a style, a set): load it */
         if (every || (k < MA_PERC && ma_loaded_snd[k] != (int8_t)s->snd[k]) || ma_loaded_snd[k] < 0) {
             ma_load_part(k);
             ma_loaded_snd[k] = (int8_t)(k < MA_PERC ? s->snd[k] : 0);
@@ -179,7 +181,7 @@ static void ma_apply(void)
     mas_flags(&ma_g);
     if (all || memcmp(s, &ma_applied, sizeof *s)) {
         fm1_irq_off();
-        for (uint32_t k = 0; k < MA_PARTS; ++k)
+        for (uint32_t k = 0; k < MA_TRACKS; ++k)
             mas_track(&trk[k], &ma_g, (int)k);
         mas_song(s);
         fm1_irq_on();

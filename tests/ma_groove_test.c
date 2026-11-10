@@ -35,7 +35,7 @@ static void sound(void *ctx, const ma_event *e)
         on[e->part]++;
         if (e->part == MA_PIANO && g.bar == watch_bar) watch_piano++;
         sounding[e->part][e->note]++;
-        if ((e->part == MA_PIANO || e->part == MA_BASS) && !g.keys) {
+        if ((e->part == MA_PIANO || e->part == MA_BASS || e->part == MA_KEYS) && !g.keys) {
             /* in the scale, but for the dominant's third (a major one in minor) and the bass's approach */
             int n = e->note, ok = ma_snap(&g.s, n) == n;
             for (int k = 0; k < g.nloop && !ok; ++k)
@@ -109,7 +109,8 @@ int main(void)
         ma_play(&g, true);
         run_bars(16);
         ma_play(&g, false);
-        for (int p = 0; p < MA_PARTS; ++p) {
+        CHECK(on[MA_KEYS] == 0, "%s: no upright beside a guitar that is not there", ma_style_name(st));
+        for (int p = 0; p < MA_TRACKS; ++p) {
             CHECK(on[p] > 0, "%s: part %d plays", ma_style_name(st), p);
             CHECK(still_sounding(p) == 0, "%s: part %d's notes end (%d left)", ma_style_name(st), p, still_sounding(p));
         }
@@ -337,6 +338,8 @@ int main(void)
         ma_play(&g, false);
         CHECK(on[MA_PIANO] >= 8 && out == 0 && still_sounding(MA_PIANO) == 0 && bad_pc == 0,
               "%s: the guitar strums (%d notes, %d out of range)", ma_style_name(st), on[MA_PIANO], out);
+        CHECK(on[MA_KEYS] >= 8 && still_sounding(MA_KEYS) == 0, "%s: the upright beside it (%d notes)",
+              ma_style_name(st), on[MA_KEYS]);
         g.guitar = false;
     }
 

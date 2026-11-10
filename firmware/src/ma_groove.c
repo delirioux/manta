@@ -967,14 +967,16 @@ static void bar_line(ma_groove *g)
 /* is part p out (the form, the descarga, its level 0) */
 static bool part_out(const ma_groove *g, int p)
 {
-    if (g->s.lvl[p] == 0)
+    if (p == MA_KEYS && !g->guitar)               /* the upright beside the guitar only */
+        return true;
+    if (g->s.lvl[p == MA_KEYS ? MA_PIANO : p] == 0)
         return true;
     if (g->desc)                                   /* the descarga: the percussion alone */
         return p != MA_PERC;
     if (!g->s.arc)
         return false;
     if (g->sec == MA_SEC_IN) {                     /* the percussion, then the piano, then the bass, the horns last */
-        static const uint8_t IN_AT[MA_PARTS] = {1, 2, 3, 0};
+        static const uint8_t IN_AT[MA_PARTS] = {1, 2, 3, 0, 1};
         return g->sec_bar < IN_AT[p];
     }
     return false;
@@ -1198,12 +1200,9 @@ static void play_guitar(ma_groove *g, int i, uint32_t delay, float sf, float hum
     }
 }
 
-static void play_piano(ma_groove *g, int i, uint32_t delay, float sf, float hum)
+/* the piano's patterns, on part pp: the PIANO part's own, or the upright beside the guitar (MA_KEYS) */
+static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf, float hum)
 {
-    if (g->guitar) {
-        play_guitar(g, i, delay, sf, hum);
-        return;
-    }
     const ma_style *st = &MA_STYLE[g->s.style];
     const char *pat = PIANO_PAT[st->piano][g->s.montuno & 3];
     char ch = pat[cbar(g, g->bar) * 16 + i];
@@ -1222,9 +1221,9 @@ static void play_piano(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         static const uint8_t WALK[8] = {0, 1, 2, 1, 0, 2, 1, 0};
         int k = WALK[((g->bar & 1) * 8 + i / 2) % 8];
         int n = tone_at(ch2, k, 64);
-        schedule(g, delay, MA_PIANO, n, clampi(vel, 1, 127), len);
+        schedule(g, delay, pp, n, clampi(vel, 1, 127), len);
         if (st->piano != PF_GUAJEO || heat > 0.5f) /* (the tres's line single; hotter, doubled) */
-            schedule(g, delay, MA_PIANO, n + 12, clampi(vel - 8, 1, 127), len);
+            schedule(g, delay, pp, n + 12, clampi(vel - 8, 1, 127), len);
         break;
     }
     case 't':
@@ -1233,28 +1232,37 @@ static void play_piano(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         int t[3];
         triad_at(ch2, st->piano == PF_BOSSA ? 58 : 62, t);
         for (int k = 0; k < 3; ++k)
-            schedule(g, delay, MA_PIANO, t[k], clampi(vel - (k == 2 ? 0 : 6), 1, 127), c == 'n' ? sf * 3.0f : len);
+            schedule(g, delay, pp, t[k], clampi(vel - (k == 2 ? 0 : 6), 1, 127), c == 'n' ? sf * 3.0f : len);
         break;
     }
     case 'a': {                                    /* the arpeggio: up through the chord, the bolero's */
         const ma_chord *ch2 = chord_at(g, g->bar);
         int k = (i / 2) % 4;
         int n = tone_at(ch2, k == 3 ? 1 : k, 60) + (k == 3 ? 12 : 0);
-        schedule(g, delay, MA_PIANO, n, clampi(vel - 10, 1, 127), sf * 4.0f);
+        schedule(g, delay, pp, n, clampi(vel - 10, 1, 127), sf * 4.0f);
         break;
     }
     case 'b':                                      /* the left hand's root */
-        schedule(g, delay, MA_PIANO, tone_at(chord_at(g, g->bar), 0, 43), clampi(vel, 1, 127), st->piano == PF_TANGO ? sf : sf * 6.0f);
+        schedule(g, delay, pp, tone_at(chord_at(g, g->bar), 0, 43), clampi(vel, 1, 127), st->piano == PF_TANGO ? sf : sf * 6.0f);
         break;
     case 'c': {                                    /* the left hand's chord, low (the tango's marcato) */
         int t[3];
         triad_at(chord_at(g, g->bar), 52, t);
         for (int k = 0; k < 3; ++k)
-            schedule(g, delay, MA_PIANO, t[k], clampi(vel - 6, 1, 127), sf * 0.9f);
+            schedule(g, delay, pp, t[k], clampi(vel - 6, 1, 127), sf * 0.9f);
         break;
     }
     default: break;
     }
+}
+
+/* the PIANO part: the guitar's strums when it is the GUITAR, the piano's patterns otherwise */
+static void play_piano(ma_groove *g, int i, uint32_t delay, float sf, float hum)
+{
+    if (g->guitar)
+        play_guitar(g, i, delay, sf, hum);
+    else
+        play_piano_on(g, MA_PIANO, i, delay, sf, hum);
 }
 
 static int bass_root(const ma_chord *c)
@@ -1473,9 +1481,11 @@ static void do_step(ma_groove *g)
         uint32_t d = delay + (uint32_t)((hum > 0 ? hum : 0.0f) * g->sr * 0.008f);   /* late only, up to 8 ms */
         switch (p) {
         case MA_PIANO: play_piano(g, i, d, sf, hum); break;
+        case MA_KEYS: play_piano_on(g, MA_KEYS, i, d, sf, hum); break;
         case MA_BASS: play_bass(g, i, d, sf, hum); break;
         case MA_HORNS: play_horns(g, i, d, sf, hum); break;
-        default: play_perc(g, i, d, hum); break;
+        case MA_PERC: play_perc(g, i, d, hum); break;
+        default: break;
         }
     }
 }

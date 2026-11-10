@@ -48,6 +48,7 @@ static float audition(int p, const char *dir, const char *name)
     track_t *t = &trk[p];
     if (p == MA_PERC) {
         host_preset(t, mas_kit_engine(), 0);
+        t->p[P_E0] = MAS_SET_BAND;
     } else {
         const mas_sound *snd = mas_of(&G, p);
         host_preset(t, snd->engine, snd->preset);

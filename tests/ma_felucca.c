@@ -19,16 +19,19 @@ static ma_groove G;
 static long n_on, n_off;
 static uint8_t sig_loaded = 0xFF;
 static int only_part = -1;
+static int only_events = -1;                     /* EVENTS=p: only part p's events sound (MA_KEYS: the upright beside the guitar) */
 
 static void sound(void *ctx, const ma_event *e)
 {
     (void)ctx;
-    track_t *t = &trk[e->part % MA_PARTS];
-    int n = e->part == MA_PERC ? mas_drum_note(e->note) : e->note;
+    int n, vel;
+    if (only_events >= 0 && e->part != only_events)
+        return;
+    track_t *t = &trk[mas_route(&G, e, &n, &vel)];
     if (n < 0)
         return;
     if (e->on) {
-        trk_note_on(t, (uint32_t)n, e->vel);
+        trk_note_on(t, (uint32_t)n, (uint32_t)vel);
         n_on++;
     }
     else { trk_note_off(t, (uint32_t)n); n_off++; }
@@ -65,7 +68,8 @@ static void load_parts(void)
         if (snd->fm6) host_fm6(&trk[p], snd->fm6);
     }
     host_preset(&trk[3], mas_kit_engine(), 0);
-    for (int p = 0; p < MA_PARTS; ++p) {
+    trk[3].p[P_E0] = MAS_SET_BAND;
+    for (int p = 0; p < MA_TRACKS; ++p) {
         mas_track(&trk[p], &G, p);
         if (only_part >= 0 && p != only_part) trk[p].p[P_LEVEL] = 0;
     }
@@ -89,6 +93,8 @@ int main(int argc, char **argv)
     if (getenv("HEAT")) G.s.heat = (uint8_t)env_int("HEAT", 70);
     if (getenv("MUTE")) G.s.mute = (uint8_t)env_int("MUTE", 0);
     if (getenv("HORNS")) G.s.snd[MA_HORNS] = (uint8_t)env_int("HORNS", 0);
+    if (getenv("PIANO")) G.s.snd[MA_PIANO] = (uint8_t)env_int("PIANO", 0);
+    only_events = env_int("EVENTS", -1);
     if (getenv("P3")) G.s.p3mode = (uint8_t)env_int("P3", 0);
     only_part = env_int("PART", -1);
     ma_settings_fix(&G.s);

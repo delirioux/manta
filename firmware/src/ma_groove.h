@@ -31,7 +31,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum { MA_PIANO, MA_BASS, MA_HORNS, MA_PERC, MA_PARTS };
+/* the parts: four tracks, and the upright beside the GUITAR (MA_KEYS: its notes go to the PERC track, whose sample set
+ * holds the kit and the upright, ma_sounds.h mas_route) */
+enum { MA_PIANO, MA_BASS, MA_HORNS, MA_PERC, MA_KEYS, MA_PARTS };
+#define MA_TRACKS 4
 enum { MA_SIDE_CALIENTE, MA_SIDE_NOCHE };
 #define MA_STYLES 12
 enum { MA_ST_SALSA, MA_ST_MAMBO, MA_ST_MERENGUE, MA_ST_CUMBIA, MA_ST_SAMBA,
