@@ -4,7 +4,8 @@
 mono, the floor's rumble cut, a little presence for the bite, the swell of the player's ease-in evened and an accent on
 the attack (the tongue, the bow), the sustain levelled, cut to the attack and enough of the steady tone for
 tools/gen_samples.py to loop (whole periods of the pitch; the violins' over their vibrato). Written as 16-bit mono WAVs
-at the source's rate to assets/samples-cc0/SET/ (gen_samples.py stores BRASS at 22.05 kHz, SAX and VIOLINS at 16 kHz).
+at the source's rate to assets/samples-cc0/SET/ (gen_samples.py stores BRASS at 22.05 kHz, SAX and VIOLINS at 16 kHz,
+UPBASS at 11.025 kHz).
 
   BRASS    the trumpet and the trombone of the Versilian Studios Chamber Orchestra 2 Community Edition (VSCO 2 CE,
            CC0 1.0, github.com/sgossner/VSCO-2-CE, "Brass/Trumpet/sus", "Brass/Tenor Trombone/sus"): one set, the
@@ -12,6 +13,7 @@ at the source's rate to assets/samples-cc0/SET/ (gen_samples.py stores BRASS at 
   SAX      the tenor saxophone of the Versilian Community Sample Library (VCSL, CC0 1.0, github.com/sgossner/VCSL,
            "Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato"): the merengue's and the bossa's
   VIOLINS  VSCO 2 CE's violin section ("Strings/Violin Section/susVib"): the charanga's and the tango's
+  UPBASS   VSCO 2 CE's double bass, plucked ("Strings/Solo Contrabass/Pizz"): the son's acoustic bass, full and round
 
     python3 tools/ma_horns.py SRC_DIR      SRC_DIR: checkouts of VSCO 2 CE and VCSL (or any folder holding the files)
 
@@ -49,6 +51,9 @@ SETS = {
                    ("SAX", "BrettTenor_NV_Main_A#3_vl3_rr1.wav", 150, 2.5, "sax"),
                    ("SAX", "BrettTenor_NV_Main_E4_vl3_rr1.wav", 180, 2.0, "sax"),
                    ("SAX", "BrettTenor_NV_Main_G#4_vl3_rr1.wav", 200, 2.0, "sax")]),
+    "UPBASS": (0.75, [("BAS", "BKCtbss_Pizz_A#0_v3_rr1.wav", 28, 0.0, "bass"),
+                       ("BAS", "BKCtbss_Pizz_E1_v3_rr1.wav", 30, 0.0, "bass"),
+                       ("BAS", "BKCtbss_Pizz_A1_v1_rr1.wav", 34, 0.0, "bass")]),
     "VIOLINS": (0.58, [("VLN", "VlnEns_susVib_D3_v2.wav", 180, 2.0, "vln"),
                        ("VLN", "VlnEns_susVib_A3_v2.wav", 220, 2.0, "vln"),
                        ("VLN", "VlnEns_susVib_E4_v2.wav", 260, 1.5, "vln"),
@@ -96,6 +101,15 @@ def make(src, keep, hp, accent_db, voice):
     on = int(np.argmax(np.abs(x) > 0.03 * np.max(np.abs(x))))   # the tongue, the bow: start just before it
     x = x[max(0, on - 64):]
     x = x[:int(keep * sr)]
+    if voice == "bass":                             # the upright plucked: its thump kept, its body fat, its tail faded
+        x = ma_piano.high_pass(x, hp, 0.7)
+        x = ma_piano.peak_eq(x, 90, 0.8, 3.0)       # the body
+        x = ma_piano.peak_eq(x, 700, 1.0, 1.5)      # the finger on the string, so it speaks in the band
+        x = np.tanh(x / np.max(np.abs(x)) * 1.6) / np.tanh(1.6)   # a little fuller, the peak rounded
+        n, fade = len(x), int(0.2 * sr)
+        x[n - fade:] *= 0.5 + 0.5 * np.cos(np.linspace(0, np.pi, fade))
+        x[:int(0.002 * sr)] *= np.linspace(0, 1, int(0.002 * sr))
+        return x / np.max(np.abs(x)) * 0.98, sr
     x = ma_piano.high_pass(x, hp, 0.7)              # the room's rumble and the breath's thump
     x = ma_piano.high_pass(x, hp, 0.7)
     if voice == "tpt":

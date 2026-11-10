@@ -71,7 +71,7 @@ TR = 22050                                   # stored sample rate
 # ("alias": the set named). PERC (the GM kit) was removed (66 KB); its index 4 stays, an alias of
 # PIANO too (PERC_SLOT; its sounds load as the DRUM engine)
 CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("BRASS", "sus"), ("TRUMPET", "part"), ("DRUMS", "alias"),
-            ("SAX", "sus"), ("VIOLINS", "sus"), ("BAND", "join")]
+            ("SAX", "sus"), ("VIOLINS", "sus"), ("BAND", "join"), ("UPBASS", "oneshot")]
 # (Manta: its percussion kit (tools/ma_perc.py, from VCSL's hand percussion, CC0), its montuno upright
 # (tools/ma_piano.py, from VCSL's Yamaha upright, CC0) and its horns (tools/ma_horns.py: VSCO 2 CE's trumpet, tenor
 # trombone and violin section, VCSL's tenor sax, CC0): BRASS the trombone below the trumpet, TRUMPET its trumpet zones
@@ -113,10 +113,10 @@ ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75
 # shakers (a file name ending in _air) at AIR_RATE: their air lives above 11 kHz, which 22,050 Hz would cut away (the
 # engine plays each zone at its own rate)
 SET_DIR = {}
-SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55, "SAX": 0.46, "VIOLINS": 0.52}  # (the piano: tools/ma_piano.py cut and faded it already)
+SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55, "SAX": 0.46, "VIOLINS": 0.52, "UPBASS": 0.75}  # (the piano: tools/ma_piano.py cut and faded it already)
 SET_KEEP_BY_ROOT = {}
 SET_FADE = {}
-SET_RATE = {"SAX": 16000, "VIOLINS": 16000}      # (Manta: the reed and the bows, at 16 kHz to fit the flash)
+SET_RATE = {"SAX": 16000, "VIOLINS": 16000, "UPBASS": 11025}      # (Manta: the reed and the bows, at 16 kHz to fit the flash)
 # (Manta) the loop's length range (s): whole periods of the pitch; the violins' over a vibrato cycle or so
 SET_LOOP = {"VIOLINS": (0.17, 0.26)}
 AIR_RATE = 32000

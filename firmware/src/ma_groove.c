@@ -131,11 +131,11 @@ enum { SR_FAST, SR_MID, SR_SLOW };
  * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 REQUINTO 3 SAX 4 PANPIPE 5 VIOLINS
  * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
-    {"SALSA", MA_SIDE_CALIENTE, 184, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
+    {"SALSA", MA_SIDE_CALIENTE, 164, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
      PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_AUTO, {{1, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
-    {"MAMBO", MA_SIDE_CALIENTE, 192, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
+    {"MAMBO", MA_SIDE_CALIENTE, 170, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
      PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_AUTO, {{1, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
-    {"MERENGUE", MA_SIDE_CALIENTE, 152, 2, MA_SC_MAJOR, 80, MA_CLAVE_32, MA_HITS_8, {0, 2, 3}, {2, 0, 9, 3}, 1, 0,
+    {"MERENGUE", MA_SIDE_CALIENTE, 138, 2, MA_SC_MAJOR, 80, MA_CLAVE_32, MA_HITS_8, {0, 2, 3}, {2, 0, 9, 3}, 1, 0,
      PF_MERENGUE, BF_MERENGUE, HF_MERENGUE, MA_ST_MERENGUE, 0, 25, 25, 25, MA_MUTE_AUTO,
      {{5, 7, 0}, {0, 6, 4}, {6, 0, 2}}},
     {"CUMBIA", MA_SIDE_CALIENTE, 98, 7, MA_SC_MINOR, 60, MA_CLAVE_32, MA_HITS_16, {5, 6, 6}, {9, 2, 3, 0}, 1, 10,
@@ -156,7 +156,7 @@ const ma_style MA_STYLE[MA_STYLES] = {
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
      PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_AUTO, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
     /* the guaracha: the son fast and cheeky, a conjunto's (the tres, the bongo, the maracas, a trumpet) */
-    {"GUARACHA", MA_SIDE_CALIENTE, 200, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
+    {"GUARACHA", MA_SIDE_CALIENTE, 176, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
      PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_AUTO, {{7, 0, 0}, {0, 6, 5}, {0, 1, 2}}},
     /* the danzon: Cuba's ballroom, a charanga's violins over the piano, the pailas' cinquillo, the guiro */
     {"DANZON", MA_SIDE_NOCHE, 112, 5, MA_SC_MAJOR, 45, MA_CLAVE_32, MA_HITS_16, {0, 1, 5}, {2, 11, 0, 7}, 2, 0,
@@ -378,11 +378,12 @@ static void build_chord(ma_chord *c, const ma_settings *s, int deg, int flavour,
 /* the solo's one-bar rhythms, by speed: per step the length in sixteenths of the note starting there (0 none). The
  * fast ones syncopated round the clave, the slow ones sung */
 static const uint8_t SOLO_RHY[3][4][16] = {
-    /* (syncopated: the off sixteenths, the anticipations, the tresillo; a Havana trumpet's line) */
-    [SR_FAST] = {{1, 2, 0, 1, 2, 0, 1, 0, 0, 2, 0, 1, 3, 0, 0, 0},
-                 {0, 0, 2, 0, 1, 2, 0, 1, 0, 2, 0, 2, 0, 1, 2, 0},
-                 {2, 0, 0, 1, 1, 0, 2, 0, 0, 3, 0, 0, 1, 1, 2, 0},
-                 {3, 0, 0, 3, 0, 0, 2, 0, 1, 1, 0, 1, 4, 0, 0, 0}},
+    /* (syncopated: FAST on the eighths' off-beats and anticipations (the fast styles count two bars to the clave, an
+     * eighth is their pulse), MID on the sixteenths' too, the tresillo; a Havana trumpet's line) */
+    [SR_FAST] = {{2, 0, 4, 0, 0, 0, 2, 0, 0, 0, 2, 0, 4, 0, 0, 0},
+                 {0, 0, 2, 0, 4, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0},
+                 {4, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0},
+                 {6, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 0, 4, 0, 0, 0}},
     [SR_MID] = {{3, 0, 0, 3, 0, 0, 2, 0, 0, 2, 0, 1, 4, 0, 0, 0},
                 {0, 0, 2, 0, 1, 3, 0, 0, 2, 0, 0, 1, 4, 0, 0, 0},
                 {2, 0, 1, 2, 0, 1, 2, 0, 0, 0, 2, 0, 4, 0, 0, 0},
@@ -546,6 +547,9 @@ static const char *const PIANO_PAT[PF_COUNT][4] = {
 
 /* the broken montuno of the groove's sections: 'o' the chord tone in octaves on the strong places, 'r' a chord tone
  * at a time, up and back, on the syncopated sixteenths between; 'n' the next chord anticipated */
+static const char *const ARP_PAT8[2] = {   /* (the fast styles': on the eighths) */
+    "o.r.r.r.o.r.r.n.o.r.r.r.o.r.r.n.", "o.r.o.r.r.r.o.n.o.r.o.r.r.r.o.n.",
+};
 static const char *const ARP_PAT[4] = {
     "o.r.rr.ro.r.rr.no.r.rr.ro.rr.r.n", "o..rr.r.o.rr.r.no..rr.r.o.r.rr.n",
     "orr.r.rrorr.r.rnorr.r.rrorr.r.rn", "o.rro.rro.rro.rno.rro.rro.r.o.rn",
@@ -557,8 +561,8 @@ static const char *const ARP_PAT[4] = {
  * muted chuck, damped at once; 'b' the thumb on the root, 'f' on the fifth; 'c' the fingers, the top two at once (the
  * thumb's note rings on under them); 'a' the arpeggio, a string at a time, up and back */
 static const char *const GUITAR_PAT[MA_STYLES][2] = {
-    [MA_ST_SALSA] = {"D..u..d.m.u.d.u.D..u.d..m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
-    [MA_ST_MAMBO] = {"D..u..d.m.u.d.u.D..u.d..m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
+    [MA_ST_SALSA] = {"D.u...d.m.u.d.u.D.u.d...m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
+    [MA_ST_MAMBO] = {"D.u...d.m.u.d.u.D.u.d...m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
     [MA_ST_MERENGUE] = {"D.u.m.u.D.u.m.u.D.u.m.u.D.u.m.u.", "a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a."},
     [MA_ST_CUMBIA] = {"b.u.f.u.b.u.f.u.b.u.f.u.b.u.f.u.", "b...u.u.f...u.u.b...u.u.f...u.u."},
     [MA_ST_SAMBA] = {"b.cc.c.cf.cc.c.cb.cc.c.cf.c..c.c", "b..c.c.cf..c.c.cb..c.c.cf.c.c.c."},
@@ -567,7 +571,7 @@ static const char *const GUITAR_PAT[MA_STYLES][2] = {
     [MA_ST_BOLERO] = {"b.a.a.a.f.a.a.a.b.a.a.a.f.a.a.a.", "b...a.a.f...a.a.b...a.a.f.a.a.a."},
     [MA_ST_BOSSA] = {"b..c..c.f.c..c..b..c..c.f..c..c.", "b.c..c.cf.c..c..b.c..c.cf..c.c.."},
     [MA_ST_TANGO] = {"D...D...D...D...D...D...D...D...", "D..D..D.D...D...D..D..D.D...D..."},
-    [MA_ST_GUARACHA] = {"D..u..d.m.u.d.u.D..u.d..m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
+    [MA_ST_GUARACHA] = {"D.u...d.m.u.d.u.D.u.d...m.u.d.u.", "b.u.m.u.b.u.m.u.b.u.m.u.f.u.m.u."},
     [MA_ST_DANZON] = {"b.a.a.a.f.a.a.a.b.a.a.a.f.a.a.a.", "D...m...D...d.d.D...m...D...d.d."},
 };
 /* the bass: '.' rest, 'r' root, 'f' fifth, 'o' octave, 't' third, 'n' the next chord's root (the tumbao's
@@ -642,6 +646,8 @@ static const lane_t L_WASH[2] = {L_WASH_0, L_WASH_1};
 #define L_TX_0 {MA_DR_SHAKER_FWD, G_EXTRA, "x.oxx.oxx.oxx.oxx.oxx.oxx.oxx.ox"}
 #define L_TX_1 {MA_DR_WOOD, G_OTHER, "..x..x....x..x....x..x.x...x..x."}
 static const lane_t L_TX[2] = {L_TX_0, L_TX_1};
+static const lane_t L_TX8[2] = {{MA_DR_SHAKER_FWD, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
+                                {MA_DR_WOOD, G_OTHER, "..x...x...x.x.......x...x.x...x."}};   /* (fast: on the eighths) */
 
 static const perc_set_t PERC[MA_STYLES] = {
     [MA_ST_SALSA] = {7, {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2, L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2,
@@ -887,6 +893,13 @@ static int sec_next(const ma_groove *g, int sec)
         return MA_SEC_FIN;
     return sec + 1;
 }
+/* a fast style: written two bars to the clave (salsa, mambo, merengue, the guaracha), its pulse the eighth, so its
+ * piano, guitar and solo keep to the eighths (a sixteenth there would be a thirty-second) */
+static bool fast(const ma_groove *g)
+{
+    int st = g->s.style;
+    return st == MA_ST_SALSA || st == MA_ST_MAMBO || st == MA_ST_MERENGUE || st == MA_ST_GUARACHA;
+}
 static int sec_bar(const ma_groove *g) { return g->s.arc ? g->sec_bar : (g->bar < 0 ? 0 : g->bar); }
 static int sec_now(const ma_groove *g) { return g->s.arc ? g->sec : MA_SEC_MON; }
 /* the horns' section plays its riff now (the mambo and the moña; ARC off: SEQ's) */
@@ -1100,7 +1113,7 @@ static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
     bool tx_style = st3 != MA_ST_TANGO && st3 != MA_ST_BOSSA && st3 != MA_ST_BOLERO && st3 != MA_ST_DANZON &&
                     st3 != MA_ST_SAMBA && st3 != MA_ST_SON;   /* (the son: its own maracas and claves, no more) */
     if (tx_sec && tx_style && heat >= 0.35f && s->extra == MA_EXTRA_AUTO && !intro_soft)
-        play_lanes(g, st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? &L_TX[1] : L_TX, st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? 1 : 2,
+        play_lanes(g, (st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? 1 : 0) + (fast(g) ? L_TX8 : L_TX), st3 == MA_ST_GUARACHA || st3 == MA_ST_SON ? 1 : 2,
                    i, delay, hum, heat * 0.85f);   /* (the son's own maracas: the woodblock only) */
     /* the cards' own patterns, and the montuno's bells */
     if (s->conga == MA_CONGA_TUMBAO) play_lanes(g, L_TUMBAO, 3, i, delay, hum, heat);
@@ -1225,8 +1238,8 @@ static void piano_solo(ma_groove *g, int pp, int i, uint32_t delay, float sf, fl
         schedule(g, delay, pp, tone_at(chord_for(g, true), 0, 40), clampi(96, 1, 127), sf * 2.0f);
         return;
     }
-    if (cell[i % 4] != 'x')
-        return;
+    if (fast(g) ? ((i & 1) || cell[(i / 2) % 4] != 'x') : cell[i % 4] != 'x')
+        return;                                    /* (fast: the cells on the eighths) */
     int step = rnd_n(&r, 4) == 0 ? 1 : 2;          /* broken thirds, now and then a step */
     g->pno_deg = (int8_t)(g->pno_deg + g->pno_dir * step);
     if (g->pno_deg > 11) g->pno_dir = -1;
@@ -1336,11 +1349,11 @@ static void play_piano_on(ma_groove *g, int pp, int i, uint32_t delay, float sf,
     int sc = sec_now(g);
     bool arp_sec = g->s.arc && (sc == MA_SEC_IN || sc == MA_SEC_TEMA || sc == MA_SEC_VRS || sc == MA_SEC_FRASE);
     if (arp_sec && fam != PF_BOLERO && fam != PF_BOSSA && fam != PF_TANGO && !(g->tres && pp == MA_PIANO))
-        pat = ARP_PAT[(g->s.montuno + (fam == PF_GUAJEO)) & 3];
+        pat = fast(g) ? ARP_PAT8[g->s.montuno & 1] : ARP_PAT[(g->s.montuno + (fam == PF_GUAJEO)) & 3];
     char ch = pat[cbar(g, g->bar) * 16 + i];
     if (ch == '.' || ch == ' ')
         return;
-    if (pp == MA_KEYS && g->s.bpm >= 170 && (i & 1))   /* (fast, beside the tres or the guitar: the eighths, room left) */
+    if (fast(g) && (i & 1))                       /* (fast: the eighths are the pulse)  */
         return;
     bool acc = ch >= 'A' && ch <= 'Z';
     char c = acc ? (char)(ch - 'A' + 'a') : ch;

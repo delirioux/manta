@@ -22,7 +22,7 @@ SR = 44100
 OUT = Path(__file__).resolve().parents[1] / "assets" / "samples-cc0" / "PIANO"
 FOLDER = "Chordophones/Zithers/Upright Piano, Yamaha/Sustains"
 # the notes (VCSL's names, C3 = middle C) and how long each is kept (s): the montuno's and the solo's range
-NOTES = [("G1", 1.0), ("C2", 1.0), ("G2", 0.95), ("C3", 0.9), ("G3", 0.85), ("C4", 0.8)]
+NOTES = [("G1", 0.85), ("C2", 0.85), ("G2", 0.8), ("C3", 0.75), ("G3", 0.7), ("C4", 0.65)]
 
 
 def read(path):

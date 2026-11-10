@@ -50,7 +50,7 @@ KIT = [
     ("shaker_fwd_air", I + "Shaker, Small/Mid_ShakerHighFaster_Down_rr1.wav", 0.18, 0, -6),
     ("shaker_back_air", I + "Shaker, Small/Mid_ShakerHighFaster_Up_rr1.wav", 0.18, 0, -7),
     ("cabasa_air", I + "Cabasa/Cabasa1_Hit_rr1_Mid.wav", 0.15, 0, -6),
-    ("triangle_air", I + "Triangles/Triangle1_Hit_v1_rr1_Mid.wav", 0.80, 0, -8),
+    ("triangle_air", I + "Triangles/Triangle1_Hit_v1_rr1_Mid.wav", 0.45, 0, -8),
     ("triangle_mute_air", I + "Triangles/Triangle1_HitM_v1_rr2_Mid.wav", 0.18, 0, -8),
     ("tom_hi", M + "Tom 1/Stick/TomH_HitS_v3_rr1_Mid.wav", 0.55, 0, -1),
     ("tom_lo", M + "Tom 2/Stick/TomL_HitS_v3_rr1_Mid.wav", 0.65, 0, -1),

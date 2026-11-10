@@ -107,6 +107,10 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 - **In tune strings.** The PHYS string is Rings': its STRUCTURE below about 0.24 adds a curved bridge's buzz and
   above about 0.26 a stiff string's dispersion, both heard as out of tune. TRES, GUITAR and REQUINT sit at 32
   (0.25), between them: their fundamentals measured within 5 cents.
+- **The fast styles count two bars to the clave.** Salsa, mambo, merengue and the guaracha are written as the
+  dancers count them, two bars of 4/4 to a clave (a tempo of 140 to 200), so their pulse is the eighth: their
+  piano, guitar, solo and texture keep to the eighths (a sixteenth there would sound as a thirty-second, frantic).
+  Their tempos sit at the relaxed end: SALSA 164, MAMBO 170, GUARACHA 176, MERENGUE 138.
 - **No singing, no empty room.** Manta leaves the singing to whoever sings along, but leaves no gap where a singer
   would be: in the montuno the section plays the coro's refrain (the phrase's first two bars, the same each time, in
   two voices on the chord) four bars, the solo improvises the next four, and so on.
