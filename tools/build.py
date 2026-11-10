@@ -50,8 +50,8 @@ SDK_SHA256 = {
     "cfg/eq_cfg_hw.bin": "41167491bffed4651750719c973d2758adeb9021a5670d02d6a53c85ed80ea7d",
 }
 
-PRODUCT = "FM-1_47745500"           # Manta's identity, the same for every build and version (FM-1_900 is
-                                    # Felucca's; 47 is the FM-1 Firmware Hub's range, 745500 SILL00 on a phone's keys)
+PRODUCT = "FM-1_47626820"           # Manta's identity, the same for every build and version (FM-1_900 is
+                                    # Felucca's; 47 is the FM-1 Firmware Hub's range, 626820 MANTA0 on a phone's keys)
 VERSION = None                      # FELUCCA_VERSION for release builds (default: firmware/src/felucca.c)
 # FELUCCA_CPU2 (firmware/src/felucca.c), unset or 1, the default (1.6.1): the second core is built in, its entry and
 # stacks (firmware/hal/fm1_cpu1.S) linked and its waiting loop (.c1_text) checked; MENU > SYSTEM > 2ND CORE starts it

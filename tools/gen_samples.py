@@ -71,20 +71,14 @@ TR = 22050                                   # stored sample rate
 # ("alias": the set named). PERC (the GM kit) was removed (66 KB); its index 4 stays, an alias of
 # PIANO too (PERC_SLOT; its sounds load as the DRUM engine)
 CC0_SETS = [("DRUMS", "kit"), ("PIANO", "oneshot"), ("DRUMS", "alias"), ("DRUMS", "alias"), ("DRUMS", "alias")]
-# (Manta: two sets, its drum kit (tools/ma_drums.py, CC0) and its bright club piano (tools/ma_piano.py, from VCSL's
-# Kawai grand, CC0); the other indexes are aliases of the kit. Felucca's FLUTE and SAX are left out)
+# (Manta: two sets, its percussion kit (tools/ma_perc.py, from VCSL's hand percussion, CC0) and its montuno upright
+# (tools/ma_piano.py, from VCSL's Yamaha upright, CC0); the other indexes are aliases of the kit. Felucca's FLUTE and
+# SAX are left out)
 PERC_SLOT = 4                                # core.h SMP_SET_PERC: SAMPLE's factory presets end before it
 MEASURED_TUNING = ()                         # sets whose recordings are not at A440 (was TRANH, ~+35 ct)
 
 
 KIT_BASE = 53                     # F3, the lowest FM-1 key
-# (Manta) the choir's zones on the DRUMS set: a vowel's note n (CHOIR_LO .. CHOIR_LO + 23) at key n + its offset
-# (firmware/src/ma_sounds.h MAS_CHOIR_KEY and MAS_CHOIR_LO, the same numbers)
-CHOIR_LO = 48
-CHOIR_KEY = {"oh": 16, "ah": 40}
-# (Manta) the kicks (the kit's first two WAVs) again below the kit, pitched: each at its own pitch on its key, six
-# semitones either way (ma_sounds.h MAS_KICK_KEY)
-KICK_KEY = (26, 42)
 
 NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
 
@@ -108,13 +102,21 @@ SLC_GRID, SLC_AUTO = 128, 32                # eng_slice.c slc_src_t
 ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75),
        "oneshot": (0, 127, 127, 70), "sus": (12, 80, 120, 60)}
 
-# Manta: DRUMS keeps its one-shots whole (the crash is a second long) and at 44.1 kHz, not TR: the hats' and the
-# cymbal's air lives above 11 kHz, which 22,050 Hz would cut away (SET_RATE; the engine plays each zone at its rate)
+# Manta: DRUMS keeps its one-shots whole (tools/ma_perc.py cut and faded them); the skins at TR, the metal, wood and
+# shakers (a file name ending in _air) at AIR_RATE: their air lives above 11 kHz, which 22,050 Hz would cut away (the
+# engine plays each zone at its own rate)
 SET_DIR = {}
 SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2}               # (the piano: tools/ma_piano.py cut and faded it already)
 SET_KEEP_BY_ROOT = {}
 SET_FADE = {}
-SET_RATE = {"DRUMS": 44100}
+SET_RATE = {}
+AIR_RATE = 32000
+
+
+def zone_rate(setname, fname):
+    if setname == "DRUMS" and fname.endswith("_air.wav"):
+        return AIR_RATE
+    return SET_RATE.get(setname, TR)
 
 _wavs = {}
 
@@ -174,7 +176,7 @@ def cc0_entries(setname, kind):
                     root = det
         else:
             root = hz_to_midi(detect_hz(x, sr))
-        rate = SET_RATE.get(setname, TR)
+        rate = zone_rate(setname, p.name)
         x = resample(x, sr, rate)
         keep = SET_KEEP.get(setname) or {"oneshot": 1.0, "sus": 0.95, "kit": 0.6}[kind]
         for below, secs in SET_KEEP_BY_ROOT.get(setname, ()):
@@ -192,7 +194,7 @@ def cc0_entries(setname, kind):
         else:
             if setname in SET_FADE:                  # a shortened set: a long raised-cosine fade-out
                 cos_fade(x, int(SET_FADE[setname] * TR))
-            elif kind == "kit":                     # a one-shot made to its length (tools/ma_drums.py): its own tail
+            elif kind == "kit":                     # a one-shot made to its length (tools/ma_perc.py): its own tail
                 pass
             else:
                 fade = int(0.08 * TR)
@@ -339,35 +341,13 @@ class Builder:
 
     def cc0_set(self, name, kind):
         entries = []
-        for k, (_, s, loop, root) in enumerate(cc0_entries(name, kind)):
+        for k, (fname, s, loop, root) in enumerate(cc0_entries(name, kind)):
             ls, le = loop if loop else (len(s), len(s))
             off, st = self.add(s, ls)
-            entries.append(dict(off=off, n=len(s), ls=ls, le=le, looped=bool(loop), sr=SET_RATE.get(name, TR),
+            entries.append(dict(off=off, n=len(s), ls=ls, le=le, looped=bool(loop), sr=zone_rate(name, fname),
                                 root16=int(round(root * 16)), pred=st[0], idx=st[1],
                                 key=KIT_BASE + k if kind == "kit" else None))
-        if name == "DRUMS":
-            entries += self.choir_zones()
-            for k, key in enumerate(KICK_KEY):         # the two kicks again, pitched (no data of their own)
-                z = dict(entries[k], key=None, lo=key - 6, hi=key + 6, root16=key * 16)
-                entries.append(z)
         self.add_set(name, kind, entries)
-
-    def choir_zones(self):
-        """Manta's choir (tools/ma_choir.py) on the DRUMS set, above the kit: each vowel's notes across 24 keys, a
-        note k of the vowel at key k + its offset (ma_sounds.h MAS_CHOIR_KEY), each WAV over the 12 keys nearest it"""
-        out = []
-        for path in sorted((CC0 / "CHOIR").glob("*.wav")):
-            vowel, sung = path.stem.split("_")
-            off = CHOIR_KEY[vowel]
-            sr, x = wav(path)
-            x = resample(x, sr, TR)
-            pk = peak(x)
-            s = [int(v * 30000 / pk) for v in x]
-            o, st = self.add(s, len(s))
-            lo = off + CHOIR_LO + (12 if int(sung) > CHOIR_LO + 11 else 0)
-            out.append(dict(off=o, n=len(s), ls=len(s), le=len(s), looped=False, sr=TR,
-                            root16=(int(sung) + off) * 16, pred=st[0], idx=st[1], key=None, lo=lo, hi=lo + 11))
-        return out
 
     def header(self):
         zones, sets, blob = self.zones, self.sets, self.blob
@@ -490,7 +470,7 @@ def main(out):
     subprocess.run([sys.executable, str(Path(__file__).with_name("gen_waves.py")), str(GENDIR)], check=True)
     have_cc0 = all(SET_DIR.get(n, CC0 / n).exists() and any(SET_DIR.get(n, CC0 / n).glob("*.wav")) for n, k in CC0_SETS if k != "alias")
     if not have_cc0:
-        print("samples: the drum kit is missing (assets/samples-cc0/DRUMS: python3 tools/ma_drums.py) - no SAMPLE sets")
+        print("samples: the drum kit is missing (assets/samples-cc0/DRUMS: python3 tools/ma_perc.py) - no SAMPLE sets")
     key = input_key(have_cc0)
     try:
         ck, summary, text = CACHE.read_text().split("\n", 2)

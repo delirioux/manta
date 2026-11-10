@@ -20,7 +20,7 @@ MA_EMU_DIR names it (default build/ma_emu); MA_SITE_TRY=0 leaves try/ out.
 VERSION is the build's (the commit); Manta's own (X.Y) is MA_VERSION in firmware/src/ma_version.h.
 
 The package must be one made by tools/fm1pkg_make.py (Felucca's own loader, no vendor files); its identity
-(FM-1_47745500, Manta's) is what the FM-1 must report after the install.
+(FM-1_47626820, Manta's) is what the FM-1 must report after the install.
 """
 import json
 import os

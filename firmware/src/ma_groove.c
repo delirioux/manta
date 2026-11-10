@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* MANTA groove engine (see ma_groove.h). The styles, the chord loops, the parts' rhythm families, the hook, the form;
- * in time, sixteenth by sixteenth, with swing and a human feel; the lift and the pump every block. */
+/* MANTA groove engine (see ma_groove.h). The styles, the chord loops, the parts' patterns on the clave, the solo's
+ * phrase and the horns' riff, the form; in time, sixteenth by sixteenth, with swing and a human feel; the horns' tone,
+ * gain and place every block. The frame (the clock, the notes held and pending, the keys) is Sill's. */
 #include "ma_groove.h"
 
 #include "tuna_sys.h"   /* memcpy and memset: the FM-1 has no C library (TUNA_FREESTANDING) */
@@ -29,24 +30,42 @@ static void cpy(char *d, const char *s, int n)
     d[i] = 0;
 }
 
+/* sin and cos without libm: a parabola refined (abs error under 0.001), x in turns (1.0 a whole circle) */
+static float sin_turns(float x)
+{
+    x -= (float)(int)x;
+    if (x < 0.0f)
+        x += 1.0f;
+    float y = x < 0.5f ? x * 2.0f : (x - 0.5f) * 2.0f;   /* 0..1 over a half circle */
+    float s = 4.0f * y * (1.0f - y);
+    s = s * (0.775f + 0.225f * s);
+    return x < 0.5f ? s : -s;
+}
+static float cos_turns(float x) { return sin_turns(x + 0.25f); }
+
 /* ---- names ------------------------------------------------------------------------------------------------ */
 static const char *const NOTE_NAMES[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const char *ma_note_name(int pc) { return NOTE_NAMES[((pc % 12) + 12) % 12]; }
 static const char *const SCALE_NAMES[MA_SCALES] = {"MIN", "MAJ", "DOR", "HARM"};
 const char *ma_scale_name(int i) { return SCALE_NAMES[clampi(i, 0, MA_SCALES - 1)]; }
-static const char *const SEC_NAMES[MA_SECS] = {"INTRO", "VERSE", "PRE", "CHORUS", "BREAK", "CHORUS"};
-static const char *const SEC_SHORT[MA_SECS] = {"IN", "VRS", "PRE", "CHO", "BRK", "CHO"};
+/* (the screen's font is ASCII: the moña is written MONA) */
+static const char *const SEC_NAMES[MA_SECS] = {"INTRO", "VERSO", "MONTUNO", "MAMBO", "MONTUNO", "MONA", "CIERRE"};
+static const char *const SEC_SHORT[MA_SECS] = {"IN", "VRS", "MON", "MBO", "MON", "MOA", "FIN"};
 const char *ma_sec_name(int s) { return SEC_NAMES[clampi(s, 0, MA_SECS - 1)]; }
 const char *ma_sec_short(int s) { return SEC_SHORT[clampi(s, 0, MA_SECS - 1)]; }
+static const char *const DR_NAMES[MA_DR_COUNT] = {
+    "QUINTO", "CONGA", "CONGA M", "TUMBA", "BONGO H", "BONGO L", "BONGO M", "TIMBAL H", "TIMBAL L", "RIM", "PAILA",
+    "BELL", "BONGO BELL", "BELL M", "AGOGO H", "AGOGO L", "CLAVE", "WOOD", "GUIRO", "GUIRO L", "SHAKER", "SHAKER B",
+    "CABASA", "TRIANGLE", "TRI M", "TOM H", "TOM L", "KICK", "WASHBOARD", "WASH TAP"};
+const char *ma_drum_name(int d) { return DR_NAMES[clampi(d, 0, MA_DR_COUNT - 1)]; }
 
 /* the scales, as semitones from the key */
 static const uint8_t SCALE[MA_SCALES][7] = {
-    {0, 2, 3, 5, 7, 8, 10},   /* MINOR (aeolian): the genre's home */
+    {0, 2, 3, 5, 7, 8, 10},   /* MINOR (aeolian) */
     {0, 2, 4, 5, 7, 9, 11},   /* MAJOR */
-    {0, 2, 3, 5, 7, 9, 10},   /* DORIAN */
-    {0, 2, 3, 5, 7, 8, 11},   /* HARMONIC MINOR */
+    {0, 2, 3, 5, 7, 9, 10},   /* DORIAN: the son montuno's minor */
+    {0, 2, 3, 5, 7, 8, 11},   /* HARMONIC MINOR: the bolero's and the tango's */
 };
-/* scale step k (any integer, 7 an octave up) of scale sc from MIDI note base (the key's tonic) */
 static int step_note(int sc, int base, int k)
 {
     int o = k >= 0 ? k / 7 : -((-k + 6) / 7);
@@ -58,7 +77,7 @@ int ma_snap(const ma_settings *s, int note)
 {
     int sc = clampi(s->scale, 0, MA_SCALES - 1), pc = ((note - s->key) % 12 + 12) % 12, best = 0, bd = 99;
     for (int i = 0; i < 7; ++i) {
-        int d = SCALE[sc][i] - pc;                /* ties go down: the step below first */
+        int d = SCALE[sc][i] - pc;
         int ad = d < 0 ? -d : d;
         if (ad < bd || (ad == bd && d < 0)) {
             bd = ad;
@@ -68,22 +87,23 @@ int ma_snap(const ma_settings *s, int note)
     return note + best;
 }
 
-/* ---- the chord loops: scale degrees (0 = the key's chord), a flavour (3 triads, 7 sevenths, 9 sevenths with the
- * ninth) and whether the fifth degree takes a major third (the dominant in minor) ---- */
+/* ---- the chord loops: scale degrees, a flavour (3 triads, 7 sevenths, 9 with the ninth), the dominant's major
+ * third in minor. The Latin turnarounds: the son's I IV V, the montuno's ii V I, the minor descent of the bolero and
+ * the tango, the bossa's sevenths ---- */
 typedef struct { uint8_t n, deg[4], flavour, dom; } ma_loopdef;
 static const ma_loopdef MA_LOOP[MA_LOOPS] = {
-    {4, {0, 5, 2, 6}, 3, 0},   /* 1  i VI III VII: the anthem */
-    {4, {0, 5, 6, 0}, 3, 0},   /* 2  i VI VII i */
-    {4, {5, 6, 0, 0}, 3, 0},   /* 3  VI VII i i: the lift into the tonic */
-    {4, {0, 6, 5, 6}, 3, 0},   /* 4  i VII VI VII */
-    {4, {0, 3, 5, 4}, 3, 1},   /* 5  i iv VI V */
-    {4, {0, 2, 6, 5}, 3, 0},   /* 6  i III VII VI */
-    {4, {0, 4, 5, 3}, 3, 0},   /* 7  I V vi IV */
-    {4, {0, 5, 3, 4}, 3, 0},   /* 8  I vi IV V */
-    {4, {0, 5, 3, 4}, 3, 1},   /* 9  i VI iv V: the drama */
-    {4, {0, 5, 2, 6}, 7, 0},   /* 10 i7 VImaj7 IIImaj7 VII7: the piano's sevenths */
-    {4, {0, 3, 6, 2}, 3, 0},   /* 11 i iv VII III */
-    {4, {0, 6, 5, 4}, 3, 1},   /* 12 i VII VI V: the descent */
+    {4, {0, 3, 4, 3}, 3, 1},   /* 1  I IV V IV: the son's guajeo */
+    {4, {1, 4, 0, 0}, 7, 1},   /* 2  ii7 V7 I I: the montuno's turn */
+    {4, {0, 4, 0, 4}, 3, 1},   /* 3  I V I V: merengue, cumbia */
+    {4, {0, 3, 4, 0}, 3, 1},   /* 4  i iv V i: the minor salsa */
+    {4, {0, 5, 3, 4}, 7, 1},   /* 5  i VI iv V7: the bolero's drama */
+    {4, {0, 6, 5, 4}, 3, 1},   /* 6  i VII VI V: the Andalusian descent (tango, son) */
+    {4, {0, 3, 6, 2}, 7, 0},   /* 7  i7 iv7 VII7 IIImaj7: the montuno in minor */
+    {4, {0, 1, 4, 0}, 7, 1},   /* 8  Imaj7 ii7 V7 Imaj7: the bossa's */
+    {4, {1, 4, 2, 5}, 9, 1},   /* 9  ii9 V9 iii vi: the bossa's sevenths walking */
+    {4, {0, 4, 4, 0}, 3, 1},   /* 10 I V V I: the cumbia's two chords */
+    {4, {0, 3, 0, 4}, 7, 1},   /* 11 i iv i V7: the tango's */
+    {4, {0, 2, 3, 4}, 3, 1},   /* 12 I iii IV V: the cha-cha's climb */
 };
 void ma_loop_name(const ma_settings *s, int loop, char *out, int max)
 {
@@ -96,109 +116,77 @@ void ma_loop_name(const ma_settings *s, int loop, char *out, int max)
     cpy(out, b, max);
 }
 
-/* ---- the styles ------------------------------------------------------------------------------------------- */
-/* the rhythm families */
-enum { STAB_EURO, STAB_PIANO, STAB_PAD, STAB_SKANK, STAB_RAVE, STAB_BOUNCE, STAB_COUNT };
-enum { HOOK_MELODY, HOOK_ARP };
-enum { DRUMS_EURO, DRUMS_SKANK, DRUMS_BALLAD, DRUMS_RAVE, DRUMS_HOUSE, DRUMS_ITALO, DRUMS_COUNT };
-#define P(x) (1u << (x))
+/* ---- the families: each style's piano, bass, horns and percussion -------------------------------------------- */
+enum { PF_MONTUNO, PF_CHACHA, PF_MERENGUE, PF_CUMBIA, PF_SAMBA, PF_GUAJEO, PF_BOLERO, PF_BOSSA, PF_TANGO, PF_COUNT };
+enum { BF_TUMBAO, BF_CHACHA, BF_MERENGUE, BF_CUMBIA, BF_SAMBA, BF_BOLERO, BF_BOSSA, BF_TANGO, BF_COUNT };
+enum { HF_SALSA, HF_MAMBO, HF_MERENGUE, HF_CUMBIA, HF_SAMBA, HF_SON, HF_CHACHA, HF_BOLERO, HF_BOSSA, HF_TANGO, HF_COUNT };
+/* the solo's speed */
+enum { SR_FAST, SR_MID, SR_SLOW };
 
-/* name side bpm key scale | lift pump vox energy | snd[4] | loops | bars swing hats fills bassline |
- * kick clap crash choir | stab hook drums | speed range gate repeat | lift parts | reverb delay dtime |
- * reso drive ensemble | the three more sounds of STABS, BASS and HOOK a song picks from (ma_song_sounds; never ORCH:
- * an effect, picked by hand).
- * Sounds (ma_sounds.h): STABS 0 PIANO 1 ORGAN 2 SUPER 3 STRINGS 4 PWM 5 PLUCK 6 HOOVER 7 ORCH 8 EPIANO 9 PAD
- * 10 HOUSE 11 DEEP 12 KEYS 13 CHOIR 14 VIOLINS 15 TRANCE; BASS 0 FM 1 SQUARE 2 SUB 3 FAT 4 ACID
- * 5 REESE 6 SLAP 7 SLIDE 8 OCTAVE 9 WOW 10 ORGAN 11 SYNTH 12 SINE 13 TRANCE 14 DX 15 GROWL; HOOK 0 SUPER 1 SAW
- * 2 PLUCK 3 POP 4 PIANO 5 HOOVER 6 OOH 7 SYNC 8 FLUTE 9 PAD 10 REEDS 11 ANTHEM 12 CHOIR 13 WHISTLE 14 TRANCE
- * 15 CORNET; the kit 0 EURO 1 SESSION 2 MACHINE */
+/* name side bpm key scale | heat clave hits | snd[3] | loops | bars swing | piano bass horns perc | claves on |
+ * room plate warmth | mute | the three more sounds of PIANO, BASS and HORNS a song picks from.
+ * Sounds (ma_sounds.h): PIANO 0 UPRIGHT 1 EPIANO 2 ORGAN 3 TRES 4 HARP 5 ACCORDION 6 BANDONEON 7 MARIMBA; BASS 0 BABY
+ * 1 UPRIGHT 2 FM BASS 3 SUB 4 SLAP 5 FRETLESS 6 ROUND 7 TUBA; HORNS 0 TPT+TBN 1 TRUMPET 2 BRASS 3 SAX 4 FLUTE 5 VIOLINS
+ * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
-    {"EUROSTOMP", MA_SIDE_CLUB, 136, 9, MA_SC_MINOR, 85, 55, MA_VOX_CHORUS, 80, {2, 3, 0, 0}, {0, 1, 3, 5}, 1,
-     0, MA_HATS_OFFBEAT, MA_FILLS_8, MA_BL_OFFBEAT, MA_KICK_PUNCH, MA_CLAP_CLAP, MA_CRASH_SECTION, MA_CHOIR_MIX,
-     STAB_EURO, HOOK_MELODY, DRUMS_EURO, MA_SPEED_FAST, 1, 80, 2, P(MA_STABS) | P(MA_HOOK), 25, 25, MA_DTIME_3_16,
-     30, 8, 45, {{10, 11, 15}, {11, 8, 10}, {11, 14, 13}}},
-    {"VIKING", MA_SIDE_CLUB, 138, 4, MA_SC_HARMONIC, 80, 50, MA_VOX_CHORUS, 85, {14, 3, 1, 0}, {8, 4, 0, 3}, 1,
-     0, MA_HATS_16THS, MA_FILLS_4, MA_BL_OCTAVE, MA_KICK_PUNCH, MA_CLAP_BOTH, MA_CRASH_SECTION, MA_CHOIR_OH,
-     STAB_EURO, HOOK_MELODY, DRUMS_EURO, MA_SPEED_MID, 2, 90, 2, P(MA_STABS) | P(MA_HOOK), 35, 20, MA_DTIME_8,
-     25, 10, 35, {{4, 13, 3}, {8, 15, 11}, {11, 12, 0}}},
-    {"BUBBLEGUM", MA_SIDE_CLUB, 130, 2, MA_SC_MAJOR, 90, 45, MA_VOX_CHORUS, 75, {5, 1, 3, 0}, {6, 7, 0, 1}, 1,
-     0, MA_HATS_OFFBEAT, MA_FILLS_8, MA_BL_BOUNCE, MA_KICK_PUNCH, MA_CLAP_CLAP, MA_CRASH_SECTION, MA_CHOIR_AH,
-     STAB_BOUNCE, HOOK_MELODY, DRUMS_EURO, MA_SPEED_MID, 1, 50, 2, P(MA_STABS), 20, 20, MA_DTIME_8,
-     20, 5, 30, {{8, 10, 0}, {11, 14, 8}, {13, 7, 2}}},
-    {"HEARTACHE", MA_SIDE_CLUB, 134, 2, MA_SC_MINOR, 80, 50, MA_VOX_CHORUS, 70, {0, 0, 6, 0}, {2, 0, 5, 3}, 1,
-     0, MA_HATS_OFFBEAT, MA_FILLS_8, MA_BL_OFFBEAT, MA_KICK_ROUND, MA_CLAP_CLAP, MA_CRASH_SECTION, MA_CHOIR_AH,
-     STAB_PIANO, HOOK_MELODY, DRUMS_EURO, MA_SPEED_SLOW, 1, 95, 4, P(MA_STABS), 40, 25, MA_DTIME_3_16,
-     20, 5, 40, {{0, 11, 13}, {10, 12, 11}, {12, 11, 13}}},
-    {"RAVE", MA_SIDE_CLUB, 140, 6, MA_SC_MINOR, 80, 60, MA_VOX_CHORUS, 90, {6, 4, 5, 0}, {3, 0, 4, 1}, 1,
-     0, MA_HATS_16THS, MA_FILLS_4, MA_BL_ROLLING, MA_KICK_PUNCH, MA_CLAP_BOTH, MA_CRASH_8, MA_CHOIR_OH,
-     STAB_RAVE, HOOK_MELODY, DRUMS_RAVE, MA_SPEED_FAST, 1, 60, 1, P(MA_STABS) | P(MA_HOOK), 25, 20, MA_DTIME_8,
-     45, 18, 10, {{15, 11, 2}, {5, 13, 15}, {14, 0, 7}}},
-    {"SKANK", MA_SIDE_RADIO, 95, 1, MA_SC_MINOR, 75, 15, MA_VOX_CHORUS, 55, {1, 2, 8, 0}, {10, 3, 0, 5}, 1,
-     15, MA_HATS_8THS, MA_FILLS_8, MA_BL_REGGAE, MA_KICK_ROUND, MA_CLAP_SNARE, MA_CRASH_OFF, MA_CHOIR_AH,
-     STAB_SKANK, HOOK_MELODY, DRUMS_SKANK, MA_SPEED_MID, 1, 70, 2, P(MA_STABS), 30, 30, MA_DTIME_3_16,
-     15, 10, 30, {{5, 10, 0}, {7, 12, 10}, {15, 13, 3}}},
-    {"PIANOHOUSE", MA_SIDE_RADIO, 125, 7, MA_SC_DORIAN, 85, 40, MA_VOX_CHORUS, 70, {0, 0, 9, 0}, {9, 0, 5, 1}, 1,
-     10, MA_HATS_OPEN, MA_FILLS_8, MA_BL_OFFBEAT, MA_KICK_ROUND, MA_CLAP_CLAP, MA_CRASH_SECTION, MA_CHOIR_OH,
-     STAB_PIANO, HOOK_MELODY, DRUMS_HOUSE, MA_SPEED_PAD, 2, 60, 2, P(MA_STABS), 30, 20, MA_DTIME_3_16,
-     15, 10, 25, {{0, 0, 10}, {10, 12, 11}, {9, 9, 9}}},
-    {"PARTY", MA_SIDE_RADIO, 140, 7, MA_SC_MAJOR, 90, 50, MA_VOX_ALL, 85, {2, 8, 7, 0}, {6, 7, 1, 0}, 1,
-     0, MA_HATS_OFFBEAT, MA_FILLS_4, MA_BL_BOUNCE, MA_KICK_PUNCH, MA_CLAP_CLAP, MA_CRASH_SECTION, MA_CHOIR_MIX,
-     STAB_BOUNCE, HOOK_MELODY, DRUMS_EURO, MA_SPEED_FAST, 1, 55, 1, P(MA_STABS) | P(MA_HOOK), 20, 15, MA_DTIME_8,
-     20, 10, 30, {{12, 10, 5}, {11, 14, 1}, {15, 2, 11}}},
-    {"BALLAD", MA_SIDE_RADIO, 100, 4, MA_SC_MINOR, 90, 0, MA_VOX_OFF, 35, {9, 7, 4, 0}, {2, 0, 6, 5}, 2,
-     0, MA_HATS_8THS, MA_FILLS_OFF, MA_BL_LONG, MA_KICK_ROUND, MA_CLAP_SNARE, MA_CRASH_SECTION, MA_CHOIR_AH,
-     STAB_PAD, HOOK_MELODY, DRUMS_BALLAD, MA_SPEED_SLOW, 2, 95, 4, P(MA_STABS), 50, 25, MA_DTIME_4,
-     10, 0, 50, {{14, 0, 13}, {12, 2, 0}, {12, 6, 10}}},
-    {"ITALO", MA_SIDE_RADIO, 120, 9, MA_SC_MINOR, 80, 35, MA_VOX_CHORUS, 65, {3, 8, 6, 0}, {11, 0, 3, 4}, 1,
-     0, MA_HATS_8THS, MA_FILLS_8, MA_BL_OCTAVE, MA_KICK_ROUND, MA_CLAP_SNARE, MA_CRASH_SECTION, MA_CHOIR_OH,
-     STAB_PAD, HOOK_ARP, DRUMS_ITALO, MA_SPEED_MID, 2, 60, 2, P(MA_STABS), 35, 30, MA_DTIME_3_16,
-     20, 10, 45, {{4, 11, 15}, {11, 13, 1}, {2, 14, 7}}},
+    {"SALSA", MA_SIDE_CALIENTE, 184, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
+     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_OPEN, {{1, 3, 0}, {1, 2, 5}, {1, 2, 0}}},
+    {"MAMBO", MA_SIDE_CALIENTE, 192, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
+     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_OPEN, {{1, 0, 7}, {0, 2, 6}, {2, 0, 3}}},
+    {"MERENGUE", MA_SIDE_CALIENTE, 152, 2, MA_SC_MAJOR, 80, MA_CLAVE_32, MA_HITS_8, {0, 2, 3}, {2, 0, 9, 3}, 1, 0,
+     PF_MERENGUE, BF_MERENGUE, HF_MERENGUE, MA_ST_MERENGUE, 0, 25, 25, 25, MA_MUTE_OPEN,
+     {{5, 1, 0}, {0, 6, 4}, {6, 0, 2}}},
+    {"CUMBIA", MA_SIDE_CALIENTE, 98, 7, MA_SC_MINOR, 60, MA_CLAVE_32, MA_HITS_16, {5, 6, 6}, {9, 2, 3, 0}, 1, 10,
+     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_OPEN, {{2, 0, 1}, {0, 2, 3}, {4, 3, 0}}},
+    {"SAMBA", MA_SIDE_CALIENTE, 102, 0, MA_SC_MAJOR, 85, MA_CLAVE_32, MA_HITS_8, {3, 1, 2}, {7, 0, 8, 1}, 1, 0,
+     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_OPEN, {{4, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
+    {"SON", MA_SIDE_NOCHE, 112, 4, MA_SC_DORIAN, 55, MA_CLAVE_32, MA_HITS_16, {3, 1, 1}, {0, 6, 3, 1}, 1, 0,
+     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 35, 30, 30, MA_MUTE_OPEN, {{0, 4, 7}, {0, 6, 5}, {0, 4, 3}}},
+    {"CHA-CHA", MA_SIDE_NOCHE, 120, 5, MA_SC_MAJOR, 55, MA_CLAVE_23, MA_HITS_16, {0, 0, 5}, {11, 0, 1, 2}, 1, 0,
+     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_STRAIGHT,
+     {{1, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
+    {"BOLERO", MA_SIDE_NOCHE, 80, 2, MA_SC_HARMONIC, 35, MA_CLAVE_32, MA_HITS_OFF, {1, 6, 1}, {4, 5, 3, 1}, 1, 0,
+     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_HARMON, {{0, 4, 2}, {1, 5, 0}, {5, 3, 4}}},
+    {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {1, 5, 4}, {7, 8, 1, 6}, 1, 0,
+     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_CUP, {{0, 2, 4}, {1, 6, 0}, {3, 1, 5}}},
+    {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
+     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 0, 1}, {0, 2, 6}, {0, 7, 5}}},
 };
 const char *ma_style_name(int i) { return MA_STYLE[clampi(i, 0, MA_STYLES - 1)].name; }
 
+static const uint8_t SOLO_SPEED[HF_COUNT] = {SR_FAST, SR_FAST, SR_FAST, SR_MID, SR_FAST, SR_MID, SR_MID, SR_SLOW,
+                                             SR_SLOW, SR_MID};
+
 int ma_bars_per_chord(const ma_settings *s) { return s->bars >= 4 ? 4 : s->bars >= 2 ? 2 : 1; }
-int ma_repeat_bars(const ma_settings *s) { return s->repeat >= 4 ? 4 : s->repeat >= 2 ? 2 : 1; }
 
 /* ---- settings --------------------------------------------------------------------------------------------- */
 void ma_style_apply(ma_settings *s, int style)
 {
     const ma_style *st = &MA_STYLE[clampi(style, 0, MA_STYLES - 1)];
     s->style = (uint8_t)clampi(style, 0, MA_STYLES - 1);
-    s->lift = st->lift;
-    s->pump = st->pump;
-    s->vox = st->vox;
-    s->energy = st->energy;
-    for (int i = 0; i < 4; ++i)
+    s->heat = st->heat;
+    s->clave = st->clave;
+    s->hits = st->hits;
+    s->solo = MA_SOLO_PHRASE;
+    for (int i = 0; i < 3; ++i)
         s->snd[i] = st->snd[i];
-    s->reso = st->reso;
-    s->drive = st->drive;
-    s->ensemble = st->ensemble;
-    s->crush = 0;
-    s->vowels = MA_VOWELS_OO_AH;
-    s->choir = st->choir;
-    s->glide = 20;
-    s->shift = 0;
+    s->snd[3] = s->style;
+    s->mute = st->mute;
+    s->phrase = MA_PHR_GEN;
+    s->bell = 70;
     s->key = st->key;
     s->scale = st->scale;
     s->chords = st->loops[0];
     s->bars = st->bars;
     s->swing = st->swing;
-    s->human = 10;
-    s->hats = st->hats;
-    s->fills = st->fills;
-    s->bassline = st->bassline;
-    s->kick = st->kick;
-    s->clap = st->clap;
-    s->snap = 80;
-    s->crash = st->crash;
-    s->reverb = st->reverb;
-    s->delay = st->delay;
-    s->dtime = st->dtime;
-    s->width = 70;
-    s->speed = st->speed;
-    s->range = st->range;
-    s->gate = st->gate;
-    s->repeat = st->repeat;
+    s->montuno = 0;
+    s->tumbao = 0;
+    s->fills = MA_FILLS_8;
+    s->conga = s->bongo = s->timbal = s->extra = 1;   /* AUTO: the style's own */
+    s->room = st->room;
+    s->plate = st->plate;
+    s->warmth = st->warmth;
+    s->human = 12;
     s->bpm = st->bpm;
     s->song = 0;
 }
@@ -208,7 +196,7 @@ void ma_song_sounds(ma_settings *s)
     const ma_style *st = &MA_STYLE[clampi(s->style, 0, MA_STYLES - 1)];
     uint32_t r = (uint32_t)s->song * 2654435761u + (uint32_t)s->style * 40503u + 7u;
     for (int p = 0; p < 3; ++p) {
-        int k = s->song ? rnd_n(&r, 4) : 0;        /* 0: the style's own */
+        int k = s->song ? rnd_n(&r, 4) : 0;
         s->snd[p] = k ? st->alt[p][k - 1] : st->snd[p];
     }
 }
@@ -216,82 +204,96 @@ void ma_song_sounds(ma_settings *s)
 void ma_defaults(ma_settings *s)
 {
     memset(s, 0, sizeof *s);
-    ma_style_apply(s, MA_ST_EUROSTOMP);
-    s->lvl[MA_STABS] = 85;                         /* (the sounds are evened out: ma_sounds.h trims) */
-    s->lvl[MA_BASS] = 95;
-    s->lvl[MA_HOOK] = 85;
-    s->lvl[MA_DRUMS] = 85;
+    ma_style_apply(s, MA_ST_SALSA);
+    s->lvl[MA_PIANO] = 85;
+    s->lvl[MA_BASS] = 90;
+    s->lvl[MA_HORNS] = 85;
+    s->lvl[MA_PERC] = 85;
+    s->width = 70;
+    s->p3mode = MA_P3_OFF;
+    s->p3angle = 3;                                /* (30 degrees to the right) */
+    s->p3height = 50;
+    s->p3dist = 20;
     s->arc = 1;
     s->verse = 8;
-    s->chorus = 8;
-    s->keyup = 1;
-    s->palette = 10;                               /* LASER (ui_palettes.h UI_LASER_INDEX) */
+    s->mbars = 8;
+    s->mambo = 1;
+    s->palette = 10;                               /* HAVANA (ui_palettes.h UI_LASER_INDEX: the slot Sill's took) */
     s->look = 0;
-    s->keysnap = 0;                                /* (the keys as pressed) */
+    s->keysnap = 0;
 }
 
 void ma_settings_fix(ma_settings *s)
 {
     s->style = (uint8_t)clampi(s->style, 0, MA_STYLES - 1);
-    s->lift = (uint8_t)clampi(s->lift, 0, 100);
-    s->pump = (uint8_t)clampi(s->pump, 0, 100);
-    s->vox = (uint8_t)clampi(s->vox, 0, MA_VOX_COUNT - 1);
-    s->energy = (uint8_t)clampi(s->energy, 0, 100);
+    s->heat = (uint8_t)clampi(s->heat, 0, 100);
+    s->clave = (uint8_t)clampi(s->clave, 0, MA_CLAVE_COUNT - 1);
+    s->solo = (uint8_t)clampi(s->solo, 0, MA_SOLO_COUNT - 1);
+    s->hits = (uint8_t)clampi(s->hits, 0, MA_HITS_COUNT - 1);
     for (int i = 0; i < 3; ++i)
         s->snd[i] = (uint8_t)clampi(s->snd[i], 0, MA_SOUNDS - 1);
-    s->snd[3] = (uint8_t)clampi(s->snd[3], 0, MA_KIT_COUNT - 1);
-    s->reso = (uint8_t)clampi(s->reso, 0, 100);
-    s->drive = (uint8_t)clampi(s->drive, 0, 100);
-    s->ensemble = (uint8_t)clampi(s->ensemble, 0, 100);
-    s->crush = (uint8_t)clampi(s->crush, 0, 100);
-    s->vowels = (uint8_t)clampi(s->vowels, 0, MA_VOWELS_COUNT - 1);
-    s->choir = (uint8_t)clampi(s->choir, 0, MA_CHOIR_COUNT - 1);
-    s->glide = (uint8_t)clampi(s->glide, 0, 100);
-    s->shift = (int8_t)clampi(s->shift, -12, 12);
+    s->snd[3] = (uint8_t)clampi(s->snd[3], 0, MA_STYLES - 1);
+    s->mute = (uint8_t)clampi(s->mute, 0, MA_MUTE_COUNT - 1);
+    s->phrase = (uint8_t)clampi(s->phrase, 0, MA_PHR_COUNT - 1);
+    s->bell = (uint8_t)clampi(s->bell, 0, 100);
+    s->p3mode = (uint8_t)clampi(s->p3mode, 0, MA_P3_COUNT - 1);
+    s->p3angle = (uint8_t)clampi(s->p3angle, 0, 35);
+    s->p3height = (uint8_t)clampi(s->p3height, 0, 100);
+    s->p3dist = (uint8_t)clampi(s->p3dist, 0, 100);
     s->key = (uint8_t)clampi(s->key, 0, 11);
     s->scale = (uint8_t)clampi(s->scale, 0, MA_SCALES - 1);
     s->chords = (uint8_t)clampi(s->chords, 0, MA_LOOPS - 1);
     s->bars = (uint8_t)(s->bars >= 4 ? 4 : s->bars >= 2 ? 2 : 1);
     s->swing = (uint8_t)clampi(s->swing, 0, 60);
-    s->human = (uint8_t)clampi(s->human, 0, 100);
-    s->hats = (uint8_t)clampi(s->hats, 0, MA_HATS_COUNT - 1);
+    s->montuno = (uint8_t)clampi(s->montuno, 0, 3);
+    s->tumbao = (uint8_t)clampi(s->tumbao, 0, 3);
     s->fills = (uint8_t)clampi(s->fills, 0, MA_FILLS_COUNT - 1);
-    s->bassline = (uint8_t)clampi(s->bassline, 0, MA_BL_COUNT - 1);
-    s->kick = (uint8_t)clampi(s->kick, 0, MA_KICK_COUNT - 1);
-    s->clap = (uint8_t)clampi(s->clap, 0, MA_CLAP_COUNT - 1);
-    s->snap = (uint8_t)clampi(s->snap, 0, 100);
-    s->crash = (uint8_t)clampi(s->crash, 0, MA_CRASH_COUNT - 1);
+    s->conga = (uint8_t)clampi(s->conga, 0, MA_CONGA_COUNT - 1);
+    s->bongo = (uint8_t)clampi(s->bongo, 0, MA_BONGO_COUNT - 1);
+    s->timbal = (uint8_t)clampi(s->timbal, 0, MA_TIMBAL_COUNT - 1);
+    s->extra = (uint8_t)clampi(s->extra, 0, MA_EXTRA_COUNT - 1);
     for (int i = 0; i < 4; ++i)
         s->lvl[i] = (uint8_t)clampi(s->lvl[i], 0, 100);
-    s->reverb = (uint8_t)clampi(s->reverb, 0, 100);
-    s->delay = (uint8_t)clampi(s->delay, 0, 100);
-    s->dtime = (uint8_t)clampi(s->dtime, 0, MA_DTIME_COUNT - 1);
+    s->room = (uint8_t)clampi(s->room, 0, 100);
+    s->plate = (uint8_t)clampi(s->plate, 0, 100);
+    s->warmth = (uint8_t)clampi(s->warmth, 0, 100);
     s->width = (uint8_t)clampi(s->width, 0, 100);
     s->arc = (uint8_t)(s->arc ? 1 : 0);
     s->verse = (uint8_t)(s->verse >= 16 ? 16 : 8);
-    s->chorus = (uint8_t)(s->chorus >= 16 ? 16 : 8);
-    s->keyup = (uint8_t)clampi(s->keyup, 0, 2);
-    s->speed = (uint8_t)clampi(s->speed, 0, MA_SPEED_COUNT - 1);
-    s->range = (uint8_t)clampi(s->range, 1, 2);
-    s->gate = (uint8_t)clampi(s->gate, 10, 100);
-    s->repeat = (uint8_t)(s->repeat >= 4 ? 4 : s->repeat >= 2 ? 2 : 1);
-    s->bpm = (uint8_t)clampi(s->bpm ? s->bpm : 136, 60, 200);
+    s->mbars = (uint8_t)(s->mbars >= 16 ? 16 : 8);
+    s->mambo = (uint8_t)(s->mambo ? 1 : 0);
+    s->bpm = (uint8_t)clampi(s->bpm ? s->bpm : 184, 60, 220);
     s->look = (uint8_t)(s->look ? 1 : 0);
-    s->keysnap = (uint8_t)(s->keysnap == 1);       /* (an old record's padding: OFF) */
+    s->keysnap = (uint8_t)(s->keysnap == 1);
+    s->human = (uint8_t)clampi(s->human, 0, 100);
     if (s->song > 999)
         s->song = 0;
 }
 
-/* ---- the song: the chords, the patterns, the hook --------------------------------------------------------- */
-static void chord_name(ma_chord *c, int tr, int third, int fifth, int seventh, bool ninth)
+/* ---- the clave: (bar, step) of the pattern, the sides by CLAVE ----------------------------------------------- */
+/* the son clave 3-2 on two bars of sixteenths: 1, 2-and, 4 | 2, 3. BOSSA's: its second side 2, 3-and; the rumba's
+ * third stroke late (the CUMBIA and SAMBA play none: their sticks rest) */
+static const uint8_t CLAVE_SON[2][16] = {{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+                                         {0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0}};
+static const uint8_t CLAVE_BOSSA[2][16] = {{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+                                           {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}};
+/* the bar of the 3-2 pattern bar b plays (0 the three side): 2-3 starts on the two side */
+static int cbar(const ma_groove *g, int b) { return ((b < 0 ? 0 : b) + (g->s.clave == MA_CLAVE_23 ? 1 : 0)) & 1; }
+int ma_clave_side(const ma_groove *g, int bar) { return cbar(g, bar) == 0 ? 3 : 2; }
+bool ma_clave_hit(const ma_groove *g, int bar, int step)
+{
+    const uint8_t (*c)[16] = g->s.style == MA_ST_BOSSA ? CLAVE_BOSSA : CLAVE_SON;
+    return c[cbar(g, bar)][step & 15] != 0;
+}
+
+/* ---- the song: the chords, the phrase, the riff -------------------------------------------------------------- */
+static void chord_name(ma_chord *c, int third, int fifth, int seventh, bool ninth)
 {
     const char *q;
     if (third == 3 && fifth == 6)
-        q = seventh == 9 ? "DIM7" : seventh ? "M7B5" : "DIM";
+        q = seventh ? "M7B5" : "DIM";
     else if (third == 3)
         q = !seventh ? "MIN" : ninth ? "MIN9" : "MIN7";
-    else if (fifth == 8)
-        q = "AUG";
     else if (seventh == 10)
         q = ninth ? "9" : "7";
     else if (seventh == 11)
@@ -299,7 +301,7 @@ static void chord_name(ma_chord *c, int tr, int third, int fifth, int seventh, b
     else
         q = "";
     char b[10];
-    cpy(b, NOTE_NAMES[(c->root + tr) % 12], sizeof b);
+    cpy(b, NOTE_NAMES[c->root % 12], sizeof b);
     int k = 0;
     while (b[k]) k++;
     for (int i = 0; q[i] && k < 7; ++i)
@@ -308,36 +310,34 @@ static void chord_name(ma_chord *c, int tr, int third, int fifth, int seventh, b
     cpy(c->name, b, sizeof c->name);
 }
 
-/* the chord on scale degree deg: its tones and a voicing near center (MIDI), the voice leading of a player's hand:
- * of the chord's inversions, the one whose middle is closest. Its name with the key up (tr) in it; its notes without
- * (the key up is added as each note sounds) */
-static void build_chord(ma_chord *c, const ma_settings *s, int tr, int deg, int flavour, bool dom, int *center)
+/* the chord on scale degree deg: its tones and a four-note voicing near center, of its inversions the one whose middle
+ * is closest (a pianist's hand leading the voices) */
+static void build_chord(ma_chord *c, const ma_settings *s, int deg, int flavour, bool dom, int *center)
 {
     int sc = clampi(s->scale, 0, MA_SCALES - 1);
     int r = SCALE[sc][deg % 7];
     int iv[5];
-    for (int k = 0; k < 5; ++k) {                  /* root, third, fifth, seventh, ninth: stacked thirds */
+    for (int k = 0; k < 5; ++k) {
         int d = deg + 2 * k;
         iv[k] = SCALE[sc][d % 7] + 12 * (d / 7) - r;
     }
-    if (dom && deg % 7 == 4) {                     /* the dominant in minor: a major third, a minor seventh */
+    if (dom && deg % 7 == 4) {                     /* the dominant: a major third, a minor seventh (in minor too) */
         iv[1] = 4;
         iv[3] = 10;
     }
-    int third = iv[1], fifth = iv[2], seventh = flavour >= 7 ? iv[3] : 0;
+    int third = iv[1], fifth = iv[2], seventh = flavour >= 7 ? iv[3] : (dom && deg % 7 == 4 ? 10 : 0);
     bool ninth = flavour == 9 && (iv[4] == 14) && seventh;
     c->root = (uint8_t)((s->key + r) % 12);
     c->tone[0] = c->root;
     c->tone[1] = (uint8_t)((c->root + third) % 12);
     c->tone[2] = (uint8_t)((c->root + fifth) % 12);
     c->tone[3] = (uint8_t)((c->root + (seventh ? seventh : 12)) % 12);
-    chord_name(c, tr, third, fifth, seventh, ninth);
-    /* the voicing: four notes, close (a triad doubles its root on top); with a ninth it takes the root's place */
+    chord_name(c, third, fifth, seventh, ninth);
     int pcs[4] = {ninth ? (c->root + 14) % 12 : c->root, c->tone[1], c->tone[2], seventh ? c->tone[3] : (c->root + 12) % 12};
     int best_d = 1 << 20;
     int bestv[4] = {60, 64, 67, 72};
-    for (int inv = 0; inv < 4; ++inv) {            /* each inversion: its lowest note, the others above in order */
-        for (int base = 50; base <= 68; ++base) {
+    for (int inv = 0; inv < 4; ++inv) {
+        for (int base = 52; base <= 68; ++base) {
             if ((base % 12) != pcs[inv])
                 continue;
             int v[4], p = base;
@@ -365,24 +365,26 @@ static void build_chord(ma_chord *c, const ma_settings *s, int tr, int deg, int 
     *center = (bestv[0] + bestv[3]) / 2;
 }
 
-/* the hook's one-bar rhythms, by SPEED: per step the length in sixteenths of the note starting there (0 none) */
-static const uint8_t HOOK_RHY[MA_SPEED_PAD][4][16] = {   /* (PAD has no rhythm: the chords, held) */
-    [MA_SPEED_SLOW] = {{4, 0, 0, 0, 2, 0, 4, 0, 0, 0, 2, 0, 4, 0, 0, 0},
-                       {6, 0, 0, 0, 0, 0, 2, 0, 8, 0, 0, 0, 0, 0, 0, 0},
-                       {3, 0, 0, 3, 0, 0, 2, 0, 6, 0, 0, 0, 0, 0, 2, 0},
-                       {2, 0, 4, 0, 0, 0, 2, 0, 4, 0, 0, 0, 4, 0, 0, 0}},
-    [MA_SPEED_MID] = {{2, 0, 2, 0, 2, 0, 2, 0, 1, 0, 1, 0, 2, 0, 2, 0},
-                      {1, 0, 1, 0, 1, 0, 3, 0, 0, 1, 0, 1, 0, 2, 0, 0},
-                      {2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 2, 0, 4, 0, 0, 0},
-                      {1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 3, 0, 0, 1}},
-    [MA_SPEED_FAST] = {{2, 0, 0, 2, 0, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0},   /* the 3-3-2 syncopated riff */
-                       {1, 0, 1, 2, 0, 0, 1, 1, 2, 0, 0, 2, 0, 0, 2, 0},
-                       {3, 0, 0, 3, 0, 0, 2, 0, 3, 0, 0, 3, 0, 0, 2, 0},
-                       {1, 1, 2, 0, 1, 0, 2, 0, 1, 1, 2, 0, 1, 0, 2, 0}},
+/* the solo's one-bar rhythms, by speed: per step the length in sixteenths of the note starting there (0 none). The
+ * fast ones syncopated round the clave, the slow ones sung */
+static const uint8_t SOLO_RHY[3][4][16] = {
+    [SR_FAST] = {{2, 0, 0, 2, 0, 0, 2, 0, 0, 0, 2, 0, 2, 0, 2, 0},
+                 {0, 0, 2, 0, 2, 0, 0, 2, 0, 0, 2, 0, 4, 0, 0, 0},
+                 {1, 0, 1, 0, 2, 0, 0, 2, 0, 0, 1, 1, 2, 0, 0, 0},
+                 {3, 0, 0, 3, 0, 0, 2, 0, 2, 0, 2, 0, 4, 0, 0, 0}},
+    [SR_MID] = {{4, 0, 0, 0, 2, 0, 2, 0, 3, 0, 0, 1, 4, 0, 0, 0},
+                {2, 0, 2, 0, 4, 0, 0, 0, 2, 0, 2, 0, 4, 0, 0, 0},
+                {0, 0, 2, 0, 2, 0, 4, 0, 0, 0, 2, 0, 4, 0, 0, 0},
+                {3, 0, 0, 3, 0, 0, 2, 0, 6, 0, 0, 0, 0, 0, 2, 0}},
+    [SR_SLOW] = {{6, 0, 0, 0, 0, 0, 2, 0, 8, 0, 0, 0, 0, 0, 0, 0},
+                 {4, 0, 0, 0, 4, 0, 0, 0, 6, 0, 0, 0, 0, 0, 2, 0},
+                 {3, 0, 0, 3, 0, 0, 2, 0, 8, 0, 0, 0, 0, 0, 0, 0},
+                 {8, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 4, 0, 0, 0}},
 };
 
-/* a bar of the hook into dst (16 steps) from rhythm rhy, its pitches a walk from *note within lo..hi */
-static void hook_bar(int8_t *dst, uint8_t *len, const uint8_t *rhy, uint32_t *r, int *note, int lo, int hi)
+/* a bar of the phrase into dst from rhythm rhy, its pitches a walk from *note within lo..hi: repeats, steps, now and
+ * then a leap (a singer's line: mostly steps) */
+static void phrase_bar(int8_t *dst, uint8_t *len, const uint8_t *rhy, uint32_t *r, int *note, int lo, int hi)
 {
     for (int i = 0; i < 16; ++i) {
         dst[i] = -128;
@@ -391,8 +393,8 @@ static void hook_bar(int8_t *dst, uint8_t *len, const uint8_t *rhy, uint32_t *r,
             continue;
         dst[i] = (int8_t)*note;
         len[i] = rhy[i];
-        int roll = rnd_n(r, 10), mv;                /* repeated notes, steps, now and then a leap */
-        if (roll < 3) mv = 0;
+        int roll = rnd_n(r, 10), mv;
+        if (roll < 2) mv = 0;
         else if (roll < 7) mv = rnd_n(r, 2) ? 1 : -1;
         else if (roll < 9) mv = rnd_n(r, 2) ? 2 : -2;
         else mv = rnd_n(r, 2) ? 4 : -3;
@@ -403,81 +405,91 @@ static void hook_bar(int8_t *dst, uint8_t *len, const uint8_t *rhy, uint32_t *r,
     }
 }
 
-/* the hook: a one-bar motif (A), repeated over REPEAT bars as a phrase: A A' (2), A A' A A'' (4), A' and A'' its
- * answers (the first half again, a new second half landing on the tonic or the fifth). Scale steps from the tonic */
-static void make_hook(ma_groove *g, uint32_t seed)
+/* the phrase: four bars, A A' A A'' (a motif and its answers, the last landing home), in the style's speed. Scale
+ * steps from the tonic. (TRAD: the old songs' phrases come with their transcriptions; until then GEN's) */
+static void make_phrase(ma_groove *g, uint32_t seed)
 {
-    const ma_settings *s = &g->s;
+    const ma_style *st = &MA_STYLE[g->s.style];
     uint32_t r = seed * 2654435761u + 0x51ED27u;
-    int sp = clampi(s->speed, 0, MA_SPEED_PAD - 1);  /* (PAD: the MID tune is made but not played) */
-    int lo = s->range >= 2 ? -3 : 0, hi = s->range >= 2 ? 10 : 7;
-    for (int i = 0; i < MA_HOOK_LEN; ++i) {
-        g->hook[i] = -128;
-        g->hook_len[i] = 0;
-        g->hook_tup[i] = 0;
-    }
-    int note = rnd_n(&r, 3) * 2;                   /* starts on the tonic, the third or the fifth */
-    const uint8_t *rhy = HOOK_RHY[sp][rnd_n(&r, 4)];
-    int8_t a[16], b[16];
-    uint8_t al[16], bl[16];
-    hook_bar(a, al, rhy, &r, &note, lo, hi);
-    /* now and then a tuplet in the motif's second half (more often the faster the hook): an arpeggio of 3, 4, 5 or 6
-     * notes in the space of 4 or 6 sixteenths, from the note the walk reached; the answers keep their plain rhythm */
-    uint8_t at[16] = {0};
-    {
-        static const uint8_t CHANCE[MA_SPEED_PAD] = {20, 40, 55};   /* % a song: SLOW MID FAST */
-        if (rnd_n(&r, 100) < CHANCE[sp]) {
-            static const uint8_t KINDS[4] = {3, 4, 5, 6};
-            int n = KINDS[rnd_n(&r, 4)], span = ma_tuplet_span(n);
-            int pos = span == 6 ? (rnd_n(&r, 2) ? 8 : 10) : (rnd_n(&r, 2) ? 8 : 12);
-            int start = -128;
-            for (int k = pos; k >= 0 && start == -128; --k)
-                start = a[k];
-            if (start == -128)
-                start = 2;
-            for (int k = pos; k < pos + span && k < 16; ++k) {
-                a[k] = -128;
-                al[k] = 0;
-            }
-            a[pos] = (int8_t)clampi(start, lo + 1, hi - 1);
-            al[pos] = (uint8_t)span;
-            at[pos] = (uint8_t)n;
-        }
-    }
-    /* the answer: A's first half, a new second half; its last note on the tonic or the fifth, held */
+    int sp = SOLO_SPEED[st->horns];
+    int lo = -2, hi = 9;
+    int note = rnd_n(&r, 3) * 2;
+    const uint8_t *rhy = SOLO_RHY[sp][rnd_n(&r, 4)];
+    int8_t a[16], b[16], c[16];
+    uint8_t al[16], bl[16], cl[16];
+    phrase_bar(a, al, rhy, &r, &note, lo, hi);
     memcpy(b, a, sizeof b);
     memcpy(bl, al, sizeof bl);
-    note = a[0] != -128 ? a[0] : 0;
-    {
-        int8_t t[16];
-        uint8_t tl[16];
-        hook_bar(t, tl, rhy, &r, &note, lo, hi);
-        for (int i = 8; i < 16; ++i) {
-            b[i] = t[i];
-            bl[i] = tl[i];
-        }
+    memcpy(c, a, sizeof c);
+    memcpy(cl, al, sizeof cl);
+    int8_t t[16];
+    uint8_t tl[16];
+    note = a[0] != -128 ? a[0] : 2;
+    phrase_bar(t, tl, rhy, &r, &note, lo, hi);
+    for (int i = 8; i < 16; ++i) {
+        b[i] = t[i];
+        bl[i] = tl[i];
+    }
+    phrase_bar(t, tl, SOLO_RHY[sp][rnd_n(&r, 4)], &r, &note, lo, hi);
+    for (int i = 6; i < 16; ++i) {
+        c[i] = t[i];
+        cl[i] = tl[i];
     }
     for (int i = 15; i >= 8; --i)
         if (b[i] != -128) {
-            b[i] = (int8_t)(rnd_n(&r, 2) ? 0 : 4);
+            b[i] = (int8_t)(rnd_n(&r, 2) ? 4 : 2);  /* the answer rests on the fifth or the third */
             break;
         }
-    int rep = ma_repeat_bars(s);
-    for (int bar = 0; bar < rep; ++bar) {
-        bool answer = bar % 2 == 1;
-        for (int i = 0; i < 16; ++i) {
-            g->hook[bar * 16 + i] = answer ? b[i] : a[i];
-            g->hook_len[bar * 16 + i] = answer ? bl[i] : al[i];
-            g->hook_tup[bar * 16 + i] = answer ? 0 : at[i];
+    for (int i = 15; i >= 0; --i)
+        if (c[i] != -128) {
+            c[i] = 0;                               /* the last lands home */
+            cl[i] = (uint8_t)(16 - i);
+            break;
         }
+    for (int i = 0; i < 16; ++i) {
+        g->phr[i] = a[i];
+        g->phr_len[i] = al[i];
+        g->phr[16 + i] = b[i];
+        g->phr_len[16 + i] = bl[i];
+        g->phr[32 + i] = a[i];
+        g->phr_len[32 + i] = al[i];
+        g->phr[48 + i] = c[i];
+        g->phr_len[48 + i] = cl[i];
     }
-    if (rep == 4) {                                /* the phrase's last bar: lands home, long */
-        for (int i = 63; i >= 56; --i)
-            if (g->hook[i] != -128) {
-                g->hook[i] = 0;
-                g->hook_len[i] = (uint8_t)(64 - i);
-                break;
-            }
+}
+
+/* the horns' riff rhythms: two bars (the clave's), per step a hit (1 short, 2 long, 3 held). Written on 3-2 */
+static const char *const RIFF_RHY[HF_COUNT][2] = {
+    [HF_SALSA] = {"1..1..2...1.2.......1.1.2..1.3..", "2.....1..1..1...1..1..2.....3..."},
+    [HF_MAMBO] = {"1.1..1.1..2.1...1..1..1.1.1.3...", "2..2..2...1.2...1.1.1.1.2...3..."},
+    [HF_MERENGUE] = {"1.11.11.1.11.11.1.11.11.2...2...", "11.11.11.1.1.1..11.11.11.2...3.."},
+    [HF_CUMBIA] = {"2...1.1.2...1.1.2...1.1.3.......", "1.1.2...1.1.2...1.1.1.1.3......."},
+    [HF_SAMBA] = {"1..1..1...1..1..1..1..2...3.....", "..1..1.1..1..1.1..1..1.12...3..."},
+    [HF_SON] = {"2...1.1.2...2...1.1.2...3.......", "....2...1.1.2...2...1.1.3......."},
+    [HF_CHACHA] = {"2.......1.1.2...2.......1.1.3...", "1.1.2...1.1.2...2.......1.1.3..."},
+    [HF_BOLERO] = {"3...............2.......2.......", "2.......2.......3..............."},
+    [HF_BOSSA] = {"2.....2.....2...3...............", "..2...2...2.....3..............."},
+    [HF_TANGO] = {"1...1...1...1...1.1.1.1.3.......", "1..1..1.2.......1...1...3......."},
+};
+
+/* the riff: the rhythm of the family (one of two), its notes a walk over the chord's tones (0 root .. 5 the fifth an
+ * octave up), each hit voiced as two horns a chord tone apart (ma_groove.c play_horns) */
+static void make_riff(ma_groove *g, uint32_t seed)
+{
+    const ma_style *st = &MA_STYLE[g->s.style];
+    uint32_t r = seed * 2246822519u + 0x2C1B3C6Du;
+    const char *rhy = RIFF_RHY[st->horns][rnd_n(&r, 2)];
+    int t = 3 + rnd_n(&r, 2);
+    for (int i = 0; i < MA_RIFF_LEN; ++i) {
+        g->riff[i] = -128;
+        g->riff_len[i] = 0;
+        char ch = rhy[i];
+        if (ch < '1' || ch > '3')
+            continue;
+        g->riff[i] = (int8_t)t;
+        g->riff_len[i] = (uint8_t)(ch == '1' ? 1 : ch == '2' ? 2 : 6);
+        int mv = rnd_n(&r, 5) - 2;                  /* a step or two along the chord, or the same */
+        t = clampi(t + mv, 2, 5);
     }
 }
 
@@ -488,92 +500,164 @@ void ma_rebuild(ma_groove *g)
     int center = 64;
     g->nloop = L->n;
     for (int i = 0; i < L->n; ++i)
-        build_chord(&g->loop[i], s, g->tr, L->deg[i], L->flavour, L->dom != 0, &center);
+        build_chord(&g->loop[i], s, L->deg[i], L->flavour, L->dom != 0, &center);
     uint32_t seed = (uint32_t)s->style * 7919u + (uint32_t)s->song * 104729u + 17u;
     uint32_t r = seed;
-    g->stab_pat = (uint8_t)rnd_n(&r, 4);
-    g->bass_pat = (uint8_t)rnd_n(&r, 2);
-    g->drum_var = (uint8_t)rnd_n(&r, 4);
-    make_hook(g, seed + (uint32_t)g->hook_var * 31u);
+    g->pat = (uint8_t)rnd_n(&r, 4);
+    make_phrase(g, seed + (uint32_t)g->phr_var * 31u);
+    make_riff(g, seed + (uint32_t)g->riff_var * 57u);
 }
 
-/* ---- the parts' rhythms ------------------------------------------------------------------------------------ */
-/* a pattern: 16 steps, the length in sixteenths of the chord starting there (0 none) */
-static const uint8_t STAB_PATS[STAB_COUNT][4][16] = {
-    [STAB_EURO] = {{2, 0, 0, 2, 0, 0, 2, 0, 0, 0, 2, 0, 2, 0, 0, 0},
-                   {3, 0, 0, 3, 0, 0, 2, 0, 3, 0, 0, 3, 0, 0, 2, 0},
-                   {0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0},
-                   {2, 0, 0, 1, 0, 1, 0, 0, 2, 0, 0, 1, 0, 1, 2, 0}},
-    [STAB_PIANO] = {{0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0},   /* the offbeat piano: every "and" */
-                    {0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 2, 0, 0},   /* the last one early */
-                    {0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0},   /* the second and the last early */
-                    {0, 0, 2, 0, 0, 0, 2, 1, 0, 0, 2, 0, 0, 0, 2, 1}},  /* with a sixteenth after */
-    [STAB_PAD] = {{16}, {16}, {16}, {16}},
-    [STAB_SKANK] = {{0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0},
-                    {0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0},
-                    {0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1},
-                    {0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0}},
-    [STAB_RAVE] = {{3, 0, 0, 3, 0, 0, 4, 0, 0, 0, 3, 0, 0, 3, 0, 0},
-                   {1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0},
-                   {2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0},
-                   {1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0}},
-    [STAB_BOUNCE] = {{0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0},
-                     {2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0},
-                     {1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0},
-                     {0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0}},
+/* ---- the patterns: two bars (a clave, written 3-2), per step a character ------------------------------------- */
+/* the piano: '.' rest, 'o' a chord tone in octaves, 't' the triad, 'n' the next chord's triad (the anticipation on the
+ * last offbeat), 'a' an arpeggio's note, 'b' the low root (the left hand), 'c' the chord low (the left hand's);
+ * upper case accented. Four of each family (GROOVE's MONTUNO) */
+static const char *const PIANO_PAT[PF_COUNT][4] = {
+    [PF_MONTUNO] = {"o...t.o...t.o.n.o.t...t.o.t...n.", "o..to..to..to.n.o..to..to.t.o.n.",
+                    "O...t.o...t.o.t.o.t.o...o.t.o.n.", "o.t...t.o.t.o.n.o.t.o.t...t.o.n."},
+    [PF_CHACHA] = {"t...t...t.t.t...t...t...t.t.n...", "o.t.o.t.o.t.t...o.t.o.t.o.t.n...",
+                   "T.....t...t.t...T.....t...t.n...", "t.t.t...t.t.t...t.t.t...t.t.n..."},
+    [PF_MERENGUE] = {"o.t.o.t.o.t.o.t.o.t.o.t.o.t.o.n.", "o.to.to.o.to.to.o.to.to.o.to.tn.",
+                     "O.t.o.t.O.t.o.t.O.t.o.t.O.t.o.n.", "o.t.t.o.t.t.o.t.o.t.t.o.t.t.o.n."},
+    [PF_CUMBIA] = {"..t...t...t...t...t...t...t...t.", "..t...t...t..tt...t...t...t..tn.",
+                   "..T...t...T...t...T...t...T...t.", "..t.t.t...t.t.t...t.t.t...t.t.n."},
+    [PF_SAMBA] = {"..t.t..t.t..t.t...t.t..t.t..t.n.", "t..t..t...t..t..t..t..t...t..n..",
+                  "..t.t..t..t.t.t...t.t..t..t.t.n.", "t.t..t.t..t..t.tt.t..t.t..t..n.."},
+    [PF_GUAJEO] = {"o.o.o.o.o.o.o.n.o.o.o.o.o.o.o.n.", "o..oo..oo..oo.n.o..oo..oo..oo.n.",
+                   "o.o.o...o.o.o.n.o.o.o...o.o.o.n.", "O.o.o.o.O.o.o.n.O.o.o.o.O.o.o.n."},
+    [PF_BOLERO] = {"b.a.a.a.b.a.a.a.b.a.a.a.b.a.a.a.", "b...t...a.a.t...b...t...a.a.t...",
+                   "b.a.t...b.a.t...b.a.t...b.a.n...", "B...a.a.a.a.a.a.B...a.a.a.a.a.a."},
+    [PF_BOSSA] = {"t..t..t...t..t..t..t..t...t..n..", "t...t..t..t...t.t...t..t..t...n.",
+                  "..t..t..t...t...t..t..t...t..n..", "t..t...t..t.t...t..t...t..t.n..."},
+    [PF_TANGO] = {"B...c...B...c...B...c...B.c.c...", "B..c..B.c...B...B..c..B.c...B...",
+                  "B.c.c.c.B.c.c.c.B.c.c.c.B.c.c.c.", "B...c...c...c...B...c...c...c.c."},
 };
-/* the bass: per step a tone (0 none, 1 root, 2 octave, 3 fifth, 4 seventh, 5 approach to the next chord's root,
- * 6 the scale step above the root) and its length */
-enum { BR_NONE, BR_ROOT, BR_OCT, BR_FIFTH, BR_SEV, BR_APP, BR_PASS };
-typedef struct { uint8_t tone[16], len[16]; } bass_pat_t;
-static const bass_pat_t BASS_PATS[MA_BL_COUNT][2] = {
-    [MA_BL_OFFBEAT] = {{{0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0}, {0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0}},
-                       {{0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0}, {0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0}}},
-    [MA_BL_OCTAVE] = {{{1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0}, {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}},
-                      {{1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 3, 0, 2, 5}, {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1}}},
-    [MA_BL_ROLLING] = {{{1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1}, {1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1}},
-                       {{1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 2, 1}, {1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1}}},
-    [MA_BL_REGGAE] = {{{1, 0, 0, 0, 0, 0, 3, 0, 1, 0, 0, 2, 0, 0, 5, 0}, {3, 0, 0, 0, 0, 0, 2, 0, 3, 0, 0, 1, 0, 0, 2, 0}},
-                      {{1, 0, 0, 1, 0, 0, 3, 0, 0, 0, 1, 0, 3, 0, 2, 0}, {2, 0, 0, 2, 0, 0, 3, 0, 0, 0, 2, 0, 2, 0, 1, 0}}},
-    [MA_BL_LONG] = {{{1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0}, {8, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0}},
-                    {{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0}, {12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0}}},
-    [MA_BL_BOUNCE] = {{{1, 1, 2, 0, 1, 1, 2, 0, 1, 1, 2, 0, 1, 1, 2, 0}, {1, 1, 2, 0, 1, 1, 2, 0, 1, 1, 2, 0, 1, 1, 2, 0}},
-                      {{1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 5}, {1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1}}},
+/* the bass: '.' rest, 'r' root, 'f' fifth, 'o' octave, 't' third, 'n' the next chord's root (the tumbao's
+ * anticipation), 'p' a semitone below the next root (the approach); '-' holds the note before. Four of each family
+ * (GROOVE's TUMBAO) */
+static const char *const BASS_PAT[BF_COUNT][4] = {
+    [BF_TUMBAO] = {"......f-----n-------f-----n-----", "......f-----n-----......f---n---",
+                   "r-....f-----n-------f-----n-----", "......f-----n---....f-f---n-----"},
+    [BF_CHACHA] = {"r-------f-----r-r-------f---r-r-", "r-------f---f-r-r-------f---r-p-",
+                   "r-----r-f-----r-r-----r-f-----n-", "r-------f-------r-------f---r-p-"},
+    [BF_MERENGUE] = {"r-..f-..r-..f-p-r-..f-..r-..f-p-", "r-.rf-..r-.rf-..r-.rf-..r-.rf-p-",
+                     "r-..f-..o-..f-..r-..f-..o-..f-p-", "r-..r-..f-..f-..r-..r-..f-..f-p-"},
+    [BF_CUMBIA] = {"r---f-..r---f-p-r---f-..r---f-p-", "r-..f-..r-..f-..r-..f-..r-..f-p-",
+                   "r---o---f---o---r---o---f---n---", "r-.rf---r-.rf-p-r-.rf---r-.rf-p-"},
+    [BF_SAMBA] = {"r-.r--f-r-.r--f-r-.r--f-r-.r--p-", "r--rf---r--rf---r--rf---r--rf-p-",
+                  "r-..f---r-..f---r-..f---r-..f-n-", "r-.rf-.fr-.rf-.fr-.rf-.fr-.rf-p-"},
+    [BF_BOLERO] = {"r-------f-------r-------f-----p-", "r-----r-f-------r-----r-f-----p-",
+                   "r-------t-------f-------o-------", "r-------f---r---r-------f---p---"},
+    [BF_BOSSA] = {"r-----f-f-----n-r-----f-f-----n-", "r-------f-------r-------f-----p-",
+                  "r-----f-f-------r-----f-f-----p-", "r-..r-f-f-----n-r-..r-f-f-----p-"},
+    [BF_TANGO] = {"r-..f-..r-..f-..r-..f-..r-p-n-..", "r-....r-..r-....r-....r-..p-....",
+                  "r-..t-..f-..o-..r-..f-..t-..p-..", "r-....f-..r-....r-....f-..p-...."},
 };
-/* the drums: per drum the velocity at each step (0 none); KICK SNARE CLAP HAT OPEN (HATS overrides the hats) */
-typedef struct { uint8_t v[5][16]; } drum_pat_t;
-static const drum_pat_t DRUM_PATS[DRUMS_COUNT] = {
-    [DRUMS_EURO] = {{{122, 0, 0, 0, 122, 0, 0, 0, 122, 0, 0, 0, 122, 0, 0, 0},
-                     {0},
-                     {0, 0, 0, 0, 118, 0, 0, 0, 0, 0, 0, 0, 118, 0, 0, 0},
-                     {70, 40, 0, 45, 70, 40, 0, 45, 70, 40, 0, 45, 70, 40, 0, 45},
-                     {0, 0, 95, 0, 0, 0, 95, 0, 0, 0, 95, 0, 0, 0, 95, 0}}},
-    [DRUMS_SKANK] = {{{118, 0, 0, 0, 0, 0, 0, 0, 112, 0, 70, 0, 0, 0, 0, 0},
-                      {0, 0, 0, 0, 112, 0, 0, 0, 0, 0, 0, 0, 112, 0, 0, 0},
-                      {0},
-                      {70, 0, 50, 0, 70, 0, 50, 0, 70, 0, 50, 0, 70, 0, 50, 0},
-                      {0}}},
-    [DRUMS_BALLAD] = {{{110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0},
-                       {0, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 0, 0, 0},
-                       {0},
-                       {65, 0, 45, 0, 65, 0, 45, 0, 65, 0, 45, 0, 65, 0, 45, 0},
-                       {0}}},
-    [DRUMS_RAVE] = {{{124, 0, 0, 0, 124, 0, 0, 0, 124, 0, 0, 0, 124, 0, 0, 0},
-                     {0, 0, 0, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 35, 0, 45},
-                     {0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0},
-                     {80, 50, 65, 50, 80, 50, 65, 50, 80, 50, 65, 50, 80, 50, 65, 50},
-                     {0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0, 100, 0}}},
-    [DRUMS_HOUSE] = {{{118, 0, 0, 0, 118, 0, 0, 0, 118, 0, 0, 0, 118, 0, 0, 0},
-                      {0},
-                      {0, 0, 0, 0, 112, 0, 0, 0, 0, 0, 0, 0, 112, 0, 0, 0},
-                      {55, 35, 0, 35, 55, 35, 0, 35, 55, 35, 0, 35, 55, 35, 0, 35},
-                      {0, 0, 92, 0, 0, 0, 92, 0, 0, 0, 92, 0, 0, 0, 92, 0}}},
-    [DRUMS_ITALO] = {{{118, 0, 0, 0, 118, 0, 0, 0, 118, 0, 0, 0, 118, 0, 0, 0},
-                      {0, 0, 0, 0, 115, 0, 0, 0, 0, 0, 0, 0, 115, 0, 0, 0},
-                      {0},
-                      {75, 0, 55, 0, 75, 0, 55, 0, 75, 0, 55, 0, 75, 0, 55, 0},
-                      {0}}},
+
+/* the percussion: per style, lanes of two bars each, a drum, its PERC page group and its pattern ('.' rest, 'o' soft,
+ * 'x' a hit, 'X' accented). The montuno's and the mambo's (and the moña's) bongo bell and timbal bell are the
+ * switch of the AUTO lanes there (perc_step) */
+enum { G_CONGA, G_BONGO, G_TIMBAL, G_EXTRA, G_CLAVE, G_KICK, G_OTHER, G_COUNT };
+typedef struct { uint8_t drum, group; const char *p; } lane_t;
+#define LANES_MAX 9
+typedef struct { uint8_t n; lane_t l[LANES_MAX]; } perc_set_t;
+/* the generic lanes the PERC cards pick (TUMBAO MARCHA BOLERO, MARTILLO BELL, CASCARA BELL, GUIRO SHAKER CABASA) */
+static const lane_t L_TUMBAO[3] = {{MA_DR_CONGA_MUTE, G_CONGA, "o.o.X.o.o.o...o.o.o.X.o.o.o...o."},
+                                   {MA_DR_CONGA, G_CONGA, "............x.x.............x.x."},
+                                   {MA_DR_TUMBA, G_CONGA, "..............x...............x."}};
+static const lane_t L_MARCHA[3] = {{MA_DR_CONGA_MUTE, G_CONGA, "o...X...o...o...o...X...o...o..."},
+                                   {MA_DR_CONGA, G_CONGA, "..o.......o.x.x...o.......o.x.x."},
+                                   {MA_DR_QUINTO, G_CONGA, "......x...............x........."}};
+static const lane_t L_CBOLERO[2] = {{MA_DR_CONGA_MUTE, G_CONGA, "o.......X.......o.......X......."},
+                                    {MA_DR_TUMBA, G_CONGA, "............x.x.............x.x."}};
+static const lane_t L_MARTILLO[3] = {{MA_DR_BONGO_HI, G_BONGO, "X...x...X...x...X...x...X...x..."},
+                                     {MA_DR_BONGO_MUTE, G_BONGO, "..o...o...o.......o...o...o....."},
+                                     {MA_DR_BONGO_LO, G_BONGO, "..............x...............x."}};
+static const lane_t L_BBELL[1] = {{MA_DR_BELL_BONGO, G_BONGO, "X...x...X...x...X...x...X...x.x."}};
+static const lane_t L_CASCARA[1] = {{MA_DR_PAILA, G_TIMBAL, "x...x...x.x...x.x...x.x...x...x."}};
+static const lane_t L_TBELL[2] = {{MA_DR_BELL_MAMBO, G_TIMBAL, "X...x...X...x...X...x.x.X...x..."},
+                                  {MA_DR_BELL_MUTE, G_TIMBAL, "..o...o...o...o...o.......o...o."}};
+static const lane_t L_GUIRO[2] = {{MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},
+                                  {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.o.....o.o.....o.o.....o.o."}};
+static const lane_t L_SHAKER[2] = {{MA_DR_SHAKER_FWD, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
+                                   {MA_DR_SHAKER_BACK, G_EXTRA, ".o.o.o.o.o.o.o.o.o.o.o.o.o.o.o.o"}};
+static const lane_t L_CABASA[1] = {{MA_DR_CABASA, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}};
+/* the washboard: a scrape on the beat, the thimbles tapping the sixteenths between (the guira's way) */
+static const lane_t L_WASH[2] = {{MA_DR_WASH, G_EXTRA, "X...x...X...x...X...x...X...x..."},
+                                 {MA_DR_WASH_TAP, G_EXTRA, "..oo..oo..oo..oo..oo..oo..oo..oo"}};
+
+static const perc_set_t PERC[MA_STYLES] = {
+    [MA_ST_SALSA] = {7, {L_TUMBAO[0], L_TUMBAO[1], L_TUMBAO[2], L_MARTILLO[0], L_MARTILLO[1], L_MARTILLO[2],
+                         L_CASCARA[0]}},
+    [MA_ST_MAMBO] = {8, {L_TUMBAO[0], L_TUMBAO[1], L_TUMBAO[2], L_MARTILLO[0], L_MARTILLO[1], L_CASCARA[0],
+                         {MA_DR_GUIRO_SHORT, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
+                         {MA_DR_TIMBAL_LO, G_OTHER, "..............................x."}}},
+    [MA_ST_MERENGUE] = {7, {{MA_DR_TUMBA, G_CONGA, "X.......x.......X.......x......."},
+                            {MA_DR_CONGA_MUTE, G_CONGA, "..o...o.o.o...o...o...o.o.o...o."},
+                            {MA_DR_QUINTO, G_CONGA, "....x.......x.x.....x.......x.x."},
+                            {MA_DR_WASH, G_EXTRA, "X...x.x.X...x.x.X...x.x.X...x.x."},   /* the guira */
+                            {MA_DR_WASH_TAP, G_EXTRA, ".oo.o..o.oo.o..o.oo.o..o.oo.o..o"},
+                            {MA_DR_KICK, G_KICK, "x...x...x...x...x...x...x...x..."},
+                            {MA_DR_BONGO_MUTE, G_BONGO, "......o.......o.......o.......o."}}},
+    [MA_ST_CUMBIA] = {6, {{MA_DR_CONGA, G_CONGA, "....x.......x.......x.......x..."},
+                          {MA_DR_CONGA_MUTE, G_CONGA, "..o.....o.o...o...o.....o.o...o."},
+                          {MA_DR_QUINTO, G_CONGA, "...........x...x...........x.x.."},
+                          {MA_DR_GUIRO_LONG, G_EXTRA, "x...x...x...x...x...x...x...x..."},
+                          {MA_DR_GUIRO_SHORT, G_EXTRA, "..oo..oo..oo..oo..oo..oo..oo..oo"},
+                          {MA_DR_SHAKER_FWD, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}}},
+    [MA_ST_SAMBA] = {7, {{MA_DR_KICK, G_KICK, "o.......o.......o.......o......."},
+                         {MA_DR_TOM_LO, G_KICK, "....X.......X.......X.......X..."},
+                         {MA_DR_BONGO_MUTE, G_BONGO, "x.x..x.x.x..x.x.x.x..x.x.x..x.x."},
+                         {MA_DR_AGOGO_LO, G_TIMBAL, "x.....x...x.....x.....x...x....."},
+                         {MA_DR_AGOGO_HI, G_TIMBAL, "..x.x...x...x.x...x.x...x...x.x."},
+                         {MA_DR_SHAKER_FWD, G_EXTRA, "o.oxo.oxo.oxo.oxo.oxo.oxo.oxo.ox"},
+                         {MA_DR_CONGA_MUTE, G_CONGA, "......o.......o.......o.......o."}}},
+    [MA_ST_SON] = {6, {L_MARTILLO[0], L_MARTILLO[1], L_MARTILLO[2], {MA_DR_TUMBA, G_CONGA, "..............x...............x."},
+                       {MA_DR_SHAKER_FWD, G_EXTRA, "x...x...x...x...x...x...x...x..."},
+                       {MA_DR_SHAKER_BACK, G_EXTRA, "..o...o...o...o...o...o...o...o."}}},
+    [MA_ST_CHACHA] = {7, {L_GUIRO[0], {MA_DR_GUIRO_LONG, G_EXTRA, "....x.......x.......x.......x..."},
+                          {MA_DR_BELL_MAMBO, G_TIMBAL, "X...o...X...o...X...o...X...o..."},
+                          {MA_DR_BELL_MUTE, G_TIMBAL, "....x.......x.......x.......x..."},
+                          {MA_DR_CONGA_MUTE, G_CONGA, "o...X...o...o...o...X...o...o..."},
+                          {MA_DR_CONGA, G_CONGA, "............x.x.............x.x."},
+                          {MA_DR_TIMBAL_LO, G_OTHER, "............................x.x."}}},
+    [MA_ST_BOLERO] = {5, {{MA_DR_BONGO_HI, G_BONGO, "x.......o.o.o...x.......o.o.o..."},
+                          {MA_DR_BONGO_LO, G_BONGO, "......o.......x.......o.......x."},
+                          L_CBOLERO[0], L_CBOLERO[1],
+                          {MA_DR_SHAKER_FWD, G_EXTRA, "o...o...o...o...o...o...o...o..."}}},
+    [MA_ST_BOSSA] = {4, {{MA_DR_TIMBAL_RIM, G_TIMBAL, "x..x..x...x..x..x..x..x...x..x.."},
+                         {MA_DR_KICK, G_KICK, "o.....o.o.....o.o.....o.o.....o."},
+                         {MA_DR_SHAKER_FWD, G_EXTRA, "xoooxoooxoooxoooxoooxoooxoooxooo"},
+                         {MA_DR_TRIANGLE_MUTE, G_OTHER, "..o...o...o...o...o...o...o...o."}}},
+    /* the tango has no drums: the band is the rhythm. A wooden knock on the strong beats when HEAT is up */
+    [MA_ST_TANGO] = {2, {{MA_DR_WOOD, G_OTHER, "x...............x..............."},
+                         {MA_DR_TOM_LO, G_KICK, "o...............o..............."}}},
 };
+
+/* the lanes for the PERC panel: CONGA BONGO TIMBAL EXTRA CLAVE and the rest */
+uint32_t ma_lane_bits(const ma_groove *g, int lane, int bar)
+{
+    const perc_set_t *ps = &PERC[clampi(g->s.snd[3], 0, MA_STYLES - 1)];
+    uint32_t bits = 0;
+    int cb = cbar(g, bar);
+    if (lane == G_CLAVE) {
+        for (int i = 0; i < 16; ++i)
+            if (ma_clave_hit(g, bar, i))
+                bits |= 1u << i;
+        return bits;
+    }
+    for (int k = 0; k < ps->n; ++k) {
+        const lane_t *l = &ps->l[k];
+        if (l->group != lane && !(lane == G_OTHER && l->group == G_KICK))
+            continue;
+        for (int i = 0; i < 16; ++i) {
+            char c = l->p[cb * 16 + i];
+            if (c == 'x' || c == 'X' || c == 'o')
+                bits |= 1u << i;
+        }
+    }
+    return bits;
+}
 
 /* ---- the engine ------------------------------------------------------------------------------------------- */
 void ma_init(ma_groove *g, float sample_rate)
@@ -583,11 +667,14 @@ void ma_init(ma_groove *g, float sample_rate)
     ma_defaults(&g->s);
     g->step = -1;
     g->next_style = g->next_song = -1;
-    g->perf_next = -1;
+    g->hit_bar = -1;
+    g->desc_end = -1;
+    g->solo_note = -1;
     for (int k = 0; k < 27; ++k)
         g->key_note[k] = -1;
     for (int p = 0; p < MA_PARTS; ++p)
-        g->cut[p] = 127;
+        g->tone[p] = 127;
+    g->pan_horns = 64;
     ma_rebuild(g);
 }
 
@@ -638,21 +725,16 @@ static void note_off_now(ma_groove *g, int i)
     g->held[i] = g->held[--g->nheld];
 }
 
-/* a note now (the key up added to a pitched part's), its note-off after len frames; a note of the part still
- * sounding at that pitch is cut first */
+/* how long each one-shot rings (s): then its voice is free again (tools/ma_perc.py's lengths) */
+static const float RING[MA_DR_COUNT] = {0.40f, 0.45f, 0.22f, 0.60f, 0.28f, 0.32f, 0.16f, 0.45f, 0.50f, 0.30f, 0.12f,
+                                        0.45f, 0.35f, 0.14f, 0.45f, 0.45f, 0.22f, 0.14f, 0.22f, 0.55f, 0.18f, 0.18f,
+                                        0.15f, 0.80f, 0.18f, 0.55f, 0.65f, 0.45f, 0.30f, 0.10f};
+
+/* a note now, its note-off after len frames; a note of the part still sounding at that pitch is cut first */
 static void note(ma_groove *g, int part, int n, int vel, float len_frames)
 {
-    if (part == MA_DRUMS) {                        /* a drum rings for its own length: then its voice is free again */
-        static const float RING[MA_DR_COUNT] = {0.80f, 0.24f, 0.30f, 0.09f, 0.45f, 1.0f, 0.75f, 0.75f};
-        int d = ma_drum_of(n);
-        len_frames = RING[d] * g->sr;
-        if (d >= MA_DR_OH) {
-            g->choir_clock = g->clock;
-            g->choir_last = (uint8_t)d;
-        }
-    } else {
-        n += g->tr;
-    }
+    if (part == MA_PERC)
+        len_frames = RING[clampi(n, 0, MA_DR_COUNT - 1)] * g->sr;
     for (int i = 0; i < g->nheld; ++i)
         if (g->held[i].part == part && g->held[i].note == n) {
             note_off_now(g, i);
@@ -668,13 +750,15 @@ static void note(ma_groove *g, int part, int n, int vel, float len_frames)
     emit(g, 1, part, n, vel);
     feed(g, part, n, vel);
     if (g->step >= 0) {
-        if (part == MA_DRUMS)
-            g->drum_hits[ma_drum_of(n)] |= (uint16_t)(1u << g->step);
+        if (part == MA_PERC)
+            g->dr_hits[clampi(n, 0, MA_DR_COUNT - 1)] |= (uint16_t)(1u << g->step);
         else
             g->hits[part] |= (uint16_t)(1u << g->step);
     }
-    if (part == MA_HOOK)
-        g->hook_on_clock = g->clock;
+    if (part == MA_HORNS && g->soloing) {
+        g->solo_on_clock = g->clock;
+        g->solo_note = n;
+    }
     g->held[g->nheld].note = (uint8_t)n;
     g->held[g->nheld].part = (uint8_t)part;
     g->held[g->nheld].off = g->clock + (uint32_t)(len_frames > 1.0f ? len_frames : 1.0f);
@@ -701,10 +785,7 @@ static int npend;
 static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, float len)
 {
     if (delay == 0 || npend >= MA_PEND) {
-        if (part == MA_DRUMS && (n & 0x80))       /* a choke: the open hat's note-off */
-            emit(g, 0, MA_DRUMS, n & 0x7F, 0);
-        else
-            note(g, part, n, vel, len);
+        note(g, part, n, vel, len);
         return;
     }
     pend[npend].at = g->clock + delay;
@@ -715,42 +796,41 @@ static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, flo
     npend++;
 }
 
-static float step_frames(const ma_groove *g) { return g->sr * 60.0f / (float)clampi(g->s.bpm, 60, 200) / 4.0f; }
+static float step_frames(const ma_groove *g) { return g->sr * 60.0f / (float)clampi(g->s.bpm, 60, 220) / 4.0f; }
 
 /* ---- the form ---------------------------------------------------------------------------------------------- */
 int ma_sec_len(const ma_groove *g, int sec)
 {
     switch (sec) {
-    case MA_SEC_INTRO: return 8;
-    case MA_SEC_VERSE: return g->s.verse >= 16 ? 16 : 8;
-    case MA_SEC_PRE: return 4;
-    case MA_SEC_BREAK: return 8;
-    default: return g->s.chorus >= 16 ? 16 : 8;
+    case MA_SEC_IN: return 4;
+    case MA_SEC_VRS: return g->s.verse >= 16 ? 16 : 8;
+    case MA_SEC_MON:
+    case MA_SEC_MON2: return g->s.mbars >= 16 ? 16 : 8;
+    case MA_SEC_FIN: return 4;
+    default: return 8;                             /* the mambo, the moña */
     }
 }
-static int sec_next(int sec) { return sec == MA_SEC_CHORUS2 ? MA_SEC_VERSE : sec + 1; }
-bool ma_in_chorus(const ma_groove *g)
+static int sec_next(const ma_groove *g, int sec)
 {
-    return !g->s.arc || g->sec == MA_SEC_CHORUS || g->sec == MA_SEC_CHORUS2;
+    if (sec == MA_SEC_FIN)
+        return MA_SEC_VRS;
+    if (sec == MA_SEC_MON && !g->s.mambo)          /* no mambo: the montuno goes to the cierre */
+        return MA_SEC_FIN;
+    return sec + 1;
 }
-/* bars into the section (ARC off: since PLAY), for the phrases and the choir */
 static int sec_bar(const ma_groove *g) { return g->s.arc ? g->sec_bar : (g->bar < 0 ? 0 : g->bar); }
-
-/* the key up sounding: the arc's last chorus and SEQ's; a change cuts the held chords and hook (their old key) */
-static void key_line(ma_groove *g)
+static int sec_now(const ma_groove *g) { return g->s.arc ? g->sec : MA_SEC_MON; }
+/* the horns' section plays its riff now (the mambo and the moña; ARC off: SEQ's) */
+static bool riff_now(const ma_groove *g)
 {
-    if (g->perf_next >= 0) {
-        g->perf_up = g->perf_next;
-        g->perf_next = -1;
-    }
-    int tr = g->perf_up + (g->s.arc && g->sec == MA_SEC_CHORUS2 ? g->s.keyup : 0);
-    if (tr != g->tr) {
-        part_off(g, MA_STABS);
-        part_off(g, MA_HOOK);
-        part_off(g, MA_BASS);
-        g->tr = tr;
-        ma_rebuild(g);                             /* (the chords' names: the key up in them) */
-    }
+    int sc = sec_now(g);
+    if (!g->s.arc)
+        return g->mambo_live;
+    if (sc == MA_SEC_MBO)
+        return true;
+    if (sc == MA_SEC_MONA)                         /* the moña: the riff, the solo over it every other two bars */
+        return (g->sec_bar / 2) % 2 == 0;
+    return false;
 }
 
 /* a new bar: what waited for the bar line comes in, the form moves on */
@@ -761,19 +841,24 @@ static void bar_line(ma_groove *g)
         g->hits[p] = 0;
     }
     for (int d = 0; d < MA_DR_COUNT; ++d) {
-        g->drum_last[d] = g->drum_hits[d];
-        g->drum_hits[d] = 0;
+        g->dr_last[d] = g->dr_hits[d];
+        g->dr_hits[d] = 0;
     }
     if (g->next_style >= 0) {
         int keep_song = g->next_song;
         ma_settings old = g->s;
         ma_style_apply(&g->s, g->next_style);
-        for (int i = 0; i < 4; ++i)                /* MIX ARC MENU stay the player's */
+        for (int i = 0; i < 4; ++i)                /* MIX, PAN 3D, ARC and MENU stay the player's */
             g->s.lvl[i] = old.lvl[i];
+        g->s.width = old.width;
+        g->s.p3mode = old.p3mode;
+        g->s.p3angle = old.p3angle;
+        g->s.p3height = old.p3height;
+        g->s.p3dist = old.p3dist;
         g->s.arc = old.arc;
         g->s.verse = old.verse;
-        g->s.chorus = old.chorus;
-        g->s.keyup = old.keyup;
+        g->s.mbars = old.mbars;
+        g->s.mambo = old.mambo;
         g->s.palette = old.palette;
         g->s.look = old.look;
         g->s.keysnap = old.keysnap;
@@ -783,8 +868,6 @@ static void bar_line(ma_groove *g)
         }
         g->next_style = -1;
         g->next_song = -1;
-        g->perf_up = 0;
-        g->perf_next = -1;
         g->sound_sig++;
         ma_all_off(g);
         ma_rebuild(g);
@@ -792,277 +875,197 @@ static void bar_line(ma_groove *g)
         g->s.song = (uint16_t)g->next_song;
         uint32_t r = (uint32_t)g->s.song * 2246822519u + (uint32_t)g->s.style;
         g->s.chords = MA_STYLE[g->s.style].loops[rnd_n(&r, 4)];
-        ma_song_sounds(&g->s);                     /* each song its own sounds from the style's pool */
+        ma_song_sounds(&g->s);
         g->sound_sig++;
         g->next_song = -1;
-        g->perf_up = 0;
-        g->perf_next = -1;
         ma_rebuild(g);
     }
-    if (g->brk && !g->brk_held && g->bar >= g->brk_end) {   /* the break over: the chorus, a crash */
-        g->brk = false;
-        g->crash_next = g->s.crash != MA_CRASH_OFF;
+    if (g->hit_wait) {                             /* BAND HIT tapped: its cierre this bar */
+        g->hit_wait = false;
+        g->hit_bar = g->bar;
+    }
+    if (g->desc && !g->desc_held && g->desc_end >= 0 && g->bar >= g->desc_end) {
+        g->desc = false;                           /* the descarga over: the band back on the bar line */
+        g->desc_end = -1;
+    }
+    if (g->mambo_next) {                           /* SEQ: the mambo now */
+        g->mambo_next = false;
         if (g->s.arc) {
-            g->sec = g->sec == MA_SEC_CHORUS2 ? MA_SEC_CHORUS2 : MA_SEC_CHORUS;
+            g->sec = MA_SEC_MBO;
             g->sec_bar = -1;                       /* (bar 0 below) */
+            g->riff_var++;
+            ma_rebuild(g);
+        } else {
+            g->mambo_live = !g->mambo_live;
         }
     }
     if (g->s.arc) {
         if (++g->sec_bar >= ma_sec_len(g, g->sec)) {
-            int nx = sec_next(g->sec);
-            if (g->sec == MA_SEC_CHORUS2) {        /* round again: a new hook */
+            int nx = sec_next(g, g->sec);
+            if (g->sec == MA_SEC_FIN) {            /* round again: a new melody, a new riff */
                 g->round++;
-                g->hook_var++;
+                g->phr_var++;
+                g->riff_var++;
                 ma_rebuild(g);
             }
-            if (g->s.crash != MA_CRASH_OFF && (nx == MA_SEC_VERSE || nx == MA_SEC_CHORUS || nx == MA_SEC_CHORUS2))
-                g->crash_next = true;
             g->sec = nx;
             g->sec_bar = 0;
         }
     }
-    if (g->s.crash == MA_CRASH_8 && ma_in_chorus(g) && sec_bar(g) % 8 == 0 && sec_bar(g) > 0)
-        g->crash_next = true;
-    key_line(g);
 }
 
-/* is part p out (the form, a break, its level 0) */
+/* is part p out (the form, the descarga, its level 0) */
 static bool part_out(const ma_groove *g, int p)
 {
     if (g->s.lvl[p] == 0)
         return true;
-    if (g->brk)                                    /* BREAK: the stabs; the drums for the roll in its last bar */
-        return p == MA_STABS ? false : p == MA_DRUMS ? !(!g->brk_held && g->bar == g->brk_end - 1) : true;
+    if (g->desc)                                   /* the descarga: the percussion alone */
+        return p != MA_PERC;
     if (!g->s.arc)
         return false;
-    switch (g->sec) {
-    case MA_SEC_INTRO: {                           /* the parts come in one by one: drums, bass, the stabs */
-        static const uint8_t IN_AT[MA_PARTS] = {4, 2, 99, 0};
-        if (p == MA_HOOK && g->s.speed == MA_SPEED_PAD)   /* a pad comes in with the stabs */
-            return g->sec_bar < 4;
+    if (g->sec == MA_SEC_IN) {                     /* the percussion, then the piano, then the bass, the horns last */
+        static const uint8_t IN_AT[MA_PARTS] = {1, 2, 3, 0};
         return g->sec_bar < IN_AT[p];
     }
-    case MA_SEC_VERSE:                             /* the verse: room for the rap (a pad stays: it fills) */
-    case MA_SEC_PRE: return p == MA_HOOK && g->s.speed != MA_SPEED_PAD;
-    case MA_SEC_BREAK:                             /* the break: the stabs and the hook; the drums for the roll */
-        return p == MA_BASS || (p == MA_DRUMS && g->sec_bar < 6);
-    default: return false;
+    return false;
+}
+
+/* the timbal roll: the fill over the last beat, rising (or the whole bar before the band comes back) */
+static void timbal_roll(ma_groove *g, int i, uint32_t delay, bool whole)
+{
+    if (!whole && i < 12)
+        return;
+    int v = 60 + (i - (whole ? 0 : 12)) * (whole ? 4 : 14);
+    int d = (i % 4 < 2) ? MA_DR_TIMBAL_HI : MA_DR_TIMBAL_LO;
+    if (whole && i < 8 && (i % 2))
+        return;                                    /* (eighths first, then sixteenths) */
+    schedule(g, delay, MA_PERC, d, clampi(v, 40, 125), 0);
+    if (i == 15)
+        schedule(g, delay + (uint32_t)(step_frames(g) * 0.5f), MA_PERC, MA_DR_TIMBAL_RIM, 110, 0);
+}
+
+/* a lane's choice by its PERC card: -1 the style's own, else which generic lanes */
+static bool lane_group_on(const ma_settings *s, int group)
+{
+    switch (group) {
+    case G_CONGA: return s->conga != MA_CONGA_OFF;
+    case G_BONGO: return s->bongo != MA_BONGO_OFF;
+    case G_TIMBAL: return s->timbal != MA_TIMBAL_OFF;
+    case G_EXTRA: return s->extra != MA_EXTRA_OFF;
+    default: return true;
     }
 }
 
-/* the snare roll: quarters, then eighths, then sixteenths over span bars, rising; b the bar into it */
-static int roll_vel(int i, int b, int span)
+static void play_lanes(ma_groove *g, const lane_t *l, int n, int i, uint32_t delay, float hum, float heat)
 {
-    int every = b < span / 2 ? 4 : b < span - span / 4 ? 2 : 1;
-    if (span <= 2)
-        every = b == 0 ? 2 : 1;
-    if (i % every)
-        return 0;
-    return 55 + ((b * 16 + i) * 60) / (span * 16);
-}
-
-/* the choir: a chord sung on OH or AH (CHOIR) at the top of each bar of the chorus, with ENERGY high at the half bar
- * of every other bar too; in the verse with VOX ALL, softer, as each chord comes in. The chord's triad near the
- * stabs' voicing, folded into the choir's range, the key up in it, but for its root (eight voices are few: the bass and
- * the stabs have the root); MIX sings OH, then AH the bar after */
-static void triad(const ma_chord *c, int out[3]);
-static const ma_chord *chord_at(const ma_groove *g, int b);
-static void play_choir(ma_groove *g, int i, uint32_t delay)
-{
-    if (g->s.vox == MA_VOX_OFF || g->brk)
-        return;
-    bool chorus = ma_in_chorus(g), verse = g->s.arc && g->sec == MA_SEC_VERSE;
-    if (!chorus && !(verse && g->s.vox == MA_VOX_ALL))
-        return;
-    int b = sec_bar(g), bpc = ma_bars_per_chord(&g->s);
-    float e = (float)g->s.energy / 100.0f;
-    bool hit = chorus ? i == 0 || (i == 8 && e > 0.7f && b % 2 == 1) : i == 0 && g->bar % bpc == 0;
-    if (!hit)
-        return;
-    int v = g->s.choir == MA_CHOIR_MIX ? b % 2 : g->s.choir == MA_CHOIR_AH, t[3];
-    triad(chord_at(g, g->bar), t);
-    float sf = step_frames(g);
-    for (int k = 0; k < 3; ++k) {                  /* the third and the fifth: the root is the bass's and the stabs' */
-        if (t[k] % 12 == chord_at(g, g->bar)->root)
+    int cb = cbar(g, g->bar);
+    for (int k = 0; k < n; ++k) {
+        char c = l[k].p[cb * 16 + i];
+        if (c != 'x' && c != 'X' && c != 'o')
             continue;
-        int p = t[k] + g->tr;
-        while (p > MA_CHOIR_LO + 23)
-            p -= 12;
-        while (p < MA_CHOIR_LO + 7)
-            p += 12;
-        schedule(g, delay + (uint32_t)((float)k * sf * 0.02f), MA_DRUMS, MA_CHOIR_NOTE(v, p),
-                 chorus ? (i == 0 ? 100 : 88) : 80, 0);
-    }
-}
-
-/* the drums of step i, with ENERGY, HATS, CLAP, the fills, the form */
-static void play_drums(ma_groove *g, int i, uint32_t delay, float hum)
-{
-    const ma_style *st = &MA_STYLE[g->s.style];
-    const drum_pat_t *dp = &DRUM_PATS[st->drums];
-    float e = (float)g->s.energy / 100.0f;
-    int vel[MA_DR_COUNT] = {0};
-    int back_d = g->s.clap == MA_CLAP_CLAP ? MA_DR_CLAP : MA_DR_SNARE;
-    bool roll_only = g->brk || (g->s.arc && g->sec == MA_SEC_BREAK);
-    if (roll_only) {                               /* the break's last bars: the roll back in, nothing else */
-        int span = g->brk ? 1 : 2, b = g->brk ? 0 : g->sec_bar - 6;
-        vel[back_d] = roll_vel(i, b, span);
-        if (g->s.clap == MA_CLAP_BOTH && vel[back_d] && i >= 8)
-            vel[MA_DR_CLAP] = vel[back_d];
-    } else {
-        vel[MA_DR_KICK] = dp->v[0][i];
-        vel[MA_DR_SNARE] = dp->v[1][i];
-        vel[MA_DR_CLAP] = dp->v[2][i];
-        int back = dp->v[1][i] > dp->v[2][i] ? dp->v[1][i] : dp->v[2][i];   /* the backbeat, as CLAP has it */
-        if (back >= 90) {
-            vel[MA_DR_SNARE] = g->s.clap == MA_CLAP_CLAP ? 0 : back;
-            vel[MA_DR_CLAP] = g->s.clap == MA_CLAP_SNARE ? 0 : back;
-        }
-        int h = dp->v[3][i], o = dp->v[4][i];
-        switch (g->s.hats) {
-        case MA_HATS_8THS: h = (i % 2 == 0) ? (i % 4 == 0 ? 75 : 60) : 0; o = 0; break;
-        case MA_HATS_16THS: h = i % 4 == 0 ? 80 : i % 2 == 0 ? 60 : 42; o = i == 14 && (g->drum_var & 1) ? 85 : 0; break;
-        case MA_HATS_OFFBEAT: h = i % 4 == 2 ? 0 : (i % 2 ? 40 : 60); o = i % 4 == 2 ? 95 : 0; break;
-        default: h = i % 2 ? 45 : 0; o = i % 2 == 0 ? (i % 4 == 2 ? 100 : 70) : 0; break;
-        }
-        if (e < 0.35f && (i % 2))                  /* low ENERGY: no sixteenth hats */
-            h = 0;
-        if (e < 0.2f)
-            o = 0;
-        if (g->s.arc && g->sec == MA_SEC_VERSE) {  /* the verse a little lighter */
-            h = h * 85 / 100;
-            o = o * 80 / 100;
-        }
-        if (e > 0.8f && st->drums != DRUMS_BALLAD && st->drums != DRUMS_SKANK && i == 15 && (g->drum_var & 2))
-            vel[MA_DR_KICK] = vel[MA_DR_KICK] ? vel[MA_DR_KICK] : 80;   /* high: a pickup kick */
-        vel[MA_DR_HAT] = h;
-        vel[MA_DR_OPEN] = o;
-        static const uint8_t EVERY[MA_FILLS_COUNT] = {0, 8, 4, 2};
-        int ev = EVERY[g->s.fills], b = sec_bar(g);
-        bool pre = g->s.arc && g->sec == MA_SEC_PRE;
-        int fill_kind = (int)(((uint32_t)b * 2654435761u + (uint32_t)g->s.song * 40503u) >> 13) % 3;
-        if (!pre && ev && (b % ev) == ev - 1 && i >= 12 && fill_kind > 0) {
-            /* a fill as a tuplet over the last beat: a snare triplet (3 in the space of 4 sixteenths) or a sextuplet
-             * roll (6 in 4), rising */
-            if (i == 12) {
-                int tn = fill_kind == 1 ? 3 : 6;
-                vel[back_d] = 0;                   /* (the tuplet's first hit is the beat's)*/
-                float each = step_frames(g) * 4.0f / (float)tn;
-                for (int k = 0; k < tn; ++k)
-                    schedule(g, delay + (uint32_t)(each * (float)k), MA_DRUMS, back_d, clampi(72 + k * 40 / tn, 1, 127), 0);
-            }
-            vel[MA_DR_OPEN] = i == 15 ? 100 : 0;
-            if (i >= 13)
-                vel[MA_DR_HAT] = 0;
-        } else if (!pre && ev && (b % ev) == ev - 1 && i >= 12) {   /* a fill: the backbeat drum on the sixteenths, rising */
-            if ((g->drum_var & 2) ? (i % 2 == 0 || i >= 14) : (i == 13 || i == 14 || i == 15))
-                vel[back_d] = 70 + (i - 12) * 12;
-            vel[MA_DR_OPEN] = i == 15 ? 100 : 0;
-            if (i == 15)
-                vel[MA_DR_HAT] = 0;
-        }
-        if (pre) {                                 /* the pre-chorus: the roll builds; the last beat, the roll alone */
-            int span = ma_sec_len(g, MA_SEC_PRE), r = roll_vel(i, g->sec_bar, span);
-            if (r)
-                vel[back_d] = r > vel[back_d] ? r : vel[back_d];
-            if (g->sec_bar == span - 1 && i >= 12)
-                vel[MA_DR_KICK] = vel[MA_DR_HAT] = vel[MA_DR_OPEN] = 0;
-        }
-        if (g->s.arc && g->sec == MA_SEC_INTRO && g->sec_bar < 2)   /* the first bars: the kick alone */
-            vel[MA_DR_SNARE] = vel[MA_DR_CLAP] = vel[MA_DR_HAT] = vel[MA_DR_OPEN] = 0;
-    }
-    if (i == 0 && g->crash_next) {
-        vel[MA_DR_CRASH] = 110;
-        g->crash_next = false;
-    }
-    for (int d = 0; d <= MA_DR_CRASH; ++d) {
-        if (!vel[d])
+        if (c == 'o' && heat < 0.25f && (i % 2))   /* cool: the soft sixteenths rest */
             continue;
-        int v = vel[d];
-        if (d != MA_DR_KICK && d != MA_DR_CRASH)
-            v = (int)((float)v * (0.75f + 0.25f * e));
-        v += (int)(hum * 10.0f * (float)g->s.human / 100.0f);
-        if (d == MA_DR_KICK)
-            g->beat_ph = 0;                        /* (the pump follows the kick: ma_process) */
-        if (d == MA_DR_HAT && g->s.hats != MA_HATS_OPEN)   /* a closed hat chokes the open one */
-            schedule(g, delay, MA_DRUMS, 0x80 | MA_DR_OPEN, 1, 0);
-        int n = d;
-        if (d == MA_DR_KICK) {                     /* the kick tuned to the chord's root (the key up in it), the
-                                                    * nearest way from its own pitch: it walks with the bass */
-            int sh = ((chord_at(g, g->bar)->root + g->tr - MA_KICK_PC[g->s.kick == MA_KICK_ROUND]) % 12 + 12) % 12;
-            n = MA_KICK_NOTE(sh > 5 ? sh - 12 : sh);
-        }
-        schedule(g, delay, MA_DRUMS, n, clampi(v, 1, 127), 0);
+        int v = c == 'X' ? 118 : c == 'x' ? 100 : 72;
+        v = (int)((float)v * (0.82f + 0.18f * heat)) + (int)(hum * 10.0f);
+        schedule(g, delay, MA_PERC, l[k].drum, clampi(v, 1, 127), 0);
     }
-    play_choir(g, i, delay);
 }
 
-/* the chord sounding at bar b */
+/* the percussion of step i: the style's lanes (or the PERC cards'), the clave, the bells in the montuno and the
+ * mambo, the fills */
+static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
+{
+    const ma_settings *s = &g->s;
+    const perc_set_t *ps = &PERC[clampi(s->snd[3], 0, MA_STYLES - 1)];
+    float heat = (float)s->heat / 100.0f;
+    int sc = sec_now(g);
+    bool bells = sc == MA_SEC_MON || sc == MA_SEC_MON2 || sc == MA_SEC_MBO || sc == MA_SEC_MONA;
+    bool salsa_like = s->snd[3] == MA_ST_SALSA || s->snd[3] == MA_ST_MAMBO || s->snd[3] == MA_ST_SON;
+    bool intro_soft = s->arc && g->sec == MA_SEC_IN && g->sec_bar == 0;
+    /* the style's lanes, but for the groups a card has set to its own pattern (or OFF) */
+    for (int k = 0; k < ps->n; ++k) {
+        const lane_t *l = &ps->l[k];
+        if (!lane_group_on(s, l->group))
+            continue;
+        if (l->group == G_CONGA && s->conga > MA_CONGA_AUTO)
+            continue;
+        if (l->group == G_BONGO && (s->bongo > MA_BONGO_AUTO || (salsa_like && bells && s->bongo == MA_BONGO_AUTO)))
+            continue;                              /* (AUTO in the montuno: the bongo bell, below) */
+        if (l->group == G_TIMBAL && (s->timbal > MA_TIMBAL_AUTO || (salsa_like && bells && s->timbal == MA_TIMBAL_AUTO)))
+            continue;
+        if (l->group == G_EXTRA && s->extra > MA_EXTRA_AUTO)
+            continue;
+        if (l->group == G_KICK && heat < 0.3f && s->snd[3] != MA_ST_SAMBA && s->snd[3] != MA_ST_BOSSA)
+            continue;
+        if (s->snd[3] == MA_ST_TANGO && heat < 0.6f)
+            continue;
+        if (intro_soft && l->group != G_CONGA && l->group != G_EXTRA)
+            continue;                              /* (the first bar: the congas and the shakers alone) */
+        play_lanes(g, l, 1, i, delay, hum, heat);
+    }
+    /* the cards' own patterns, and the montuno's bells */
+    if (s->conga == MA_CONGA_TUMBAO) play_lanes(g, L_TUMBAO, 3, i, delay, hum, heat);
+    if (s->conga == MA_CONGA_MARCHA) play_lanes(g, L_MARCHA, 3, i, delay, hum, heat);
+    if (s->conga == MA_CONGA_BOLERO) play_lanes(g, L_CBOLERO, 2, i, delay, hum, heat);
+    if (s->bongo == MA_BONGO_MARTILLO) play_lanes(g, L_MARTILLO, 3, i, delay, hum, heat);
+    if (s->bongo == MA_BONGO_BELL || (s->bongo == MA_BONGO_AUTO && salsa_like && bells))
+        play_lanes(g, L_BBELL, 1, i, delay, hum, heat);
+    if (s->timbal == MA_TIMBAL_CASCARA) play_lanes(g, L_CASCARA, 1, i, delay, hum, heat);
+    if (s->timbal == MA_TIMBAL_BELL || (s->timbal == MA_TIMBAL_AUTO && salsa_like && bells && s->snd[3] != MA_ST_SON))
+        play_lanes(g, L_TBELL, 2, i, delay, hum, heat);
+    if (s->extra == MA_EXTRA_GUIRO) play_lanes(g, L_GUIRO, 2, i, delay, hum, heat);
+    if (s->extra == MA_EXTRA_SHAKER) play_lanes(g, L_SHAKER, 2, i, delay, hum, heat);
+    if (s->extra == MA_EXTRA_CABASA) play_lanes(g, L_CABASA, 1, i, delay, hum, heat);
+    if (s->extra == MA_EXTRA_WASH) play_lanes(g, L_WASH, 2, i, delay, hum, heat);
+    /* the clave: the sticks (the styles that have it on) */
+    if (MA_STYLE[s->snd[3]].clave_on && ma_clave_hit(g, g->bar, i))
+        schedule(g, delay, MA_PERC, MA_DR_CLAVE, clampi(96 + (int)(hum * 6.0f), 1, 127), 0);
+    /* the fills: a timbal roll over the last beat every FILLS bars, and before each new section */
+    static const uint8_t EVERY[MA_FILLS_COUNT] = {0, 8, 4, 2};
+    int ev = EVERY[s->fills], b = sec_bar(g);
+    bool sec_end = s->arc && g->sec_bar == ma_sec_len(g, g->sec) - 1 && g->sec != MA_SEC_FIN;
+    if ((ev && (b % ev) == ev - 1) || sec_end)
+        if (s->snd[3] != MA_ST_TANGO && s->snd[3] != MA_ST_BOSSA)
+            timbal_roll(g, i, delay, false);
+    /* heat high: the quinto speaks now and then over the last beat */
+    if (heat > 0.7f && i >= 10 && (rnd_n(&g->rnd, 100) < (int)((heat - 0.7f) * 60.0f)))
+        schedule(g, delay, MA_PERC, MA_DR_QUINTO, clampi(70 + rnd_n(&g->rnd, 40), 1, 127), 0);
+}
+
+/* the chord sounding at bar b, the next one */
 static const ma_chord *chord_at(const ma_groove *g, int b)
 {
     int bpc = ma_bars_per_chord(&g->s);
-    return &g->loop[(b / bpc) % (g->nloop > 0 ? g->nloop : 1)];
+    return &g->loop[((b < 0 ? 0 : b) / bpc) % (g->nloop > 0 ? g->nloop : 1)];
 }
-static const ma_chord *next_chord(const ma_groove *g, int b)
+static const ma_chord *chord_after(const ma_groove *g, int b)
 {
     int bpc = ma_bars_per_chord(&g->s);
-    return &g->loop[((b / bpc) + 1) % (g->nloop > 0 ? g->nloop : 1)];
+    return &g->loop[(((b < 0 ? 0 : b) / bpc) + 1) % (g->nloop > 0 ? g->nloop : 1)];
 }
 int ma_chord_now(const ma_groove *g)
 {
     int bpc = ma_bars_per_chord(&g->s);
     return g->nloop > 0 ? ((g->bar < 0 ? 0 : g->bar) / bpc) % g->nloop : 0;
 }
-
-static int bass_note(const ma_groove *g, int tone, const ma_chord *c, const ma_chord *nx)
+/* the chord a pattern's step plays: the next one where the bar is the chord's last and the step anticipates */
+static const ma_chord *chord_for(const ma_groove *g, bool anticipate)
 {
-    int root = 36 + ((c->root - 36) % 12 + 12) % 12;   /* C2 .. B2 */
-    if (root > 43)
-        root -= 12;                                     /* (G#1 .. G2: the bass sits low) */
-    switch (tone) {
-    case BR_OCT: return root + 12;
-    case BR_FIFTH: return root + ((c->tone[2] - c->root + 12) % 12);
-    case BR_SEV: return root + ((c->tone[3] - c->root + 12) % 12);
-    case BR_APP: {
-        int nr = 36 + ((nx->root - 36) % 12 + 12) % 12;
-        if (nr > 43) nr -= 12;
-        return nx == c ? root + 12 : nr - 1;            /* a semitone below the next root */
-    }
-    case BR_PASS: return ma_snap(&g->s, root + 2);
-    default: return root;
-    }
-}
-
-/* the chord held: a pad, or the stabs held through the pre-chorus and the break */
-static void triad(const ma_chord *c, int out[3]);
-static void stabs_held(ma_groove *g, int i, uint32_t delay, float sf, int vel, bool roll)
-{
-    const ma_chord *c = chord_at(g, g->bar);
     int bpc = ma_bars_per_chord(&g->s);
-    if (i != 0 || (!roll && (g->bar % bpc) != 0))  /* (roll: a bar each; else as long as the chord lasts) */
-        return;
-    int len = roll ? 16 : 16 * bpc;
-    if (g->s.snd[MA_STABS] == MA_STABS_PIANO) {    /* the piano holds its triad */
-        int t[3];
-        triad(c, t);
-        for (int k = 0; k < 3; ++k)
-            schedule(g, delay + (uint32_t)((float)k * sf * 0.04f), MA_STABS, t[k], vel, sf * (float)len - 40.0f);
-        return;
-    }
-    for (int k = 0; k < c->n; ++k)
-        schedule(g, delay + (uint32_t)((float)k * sf * 0.04f), MA_STABS, c->note[k], vel, sf * (float)len - 40.0f);
+    bool last_bar = ((g->bar < 0 ? 0 : g->bar) % bpc) == bpc - 1;
+    return anticipate && last_bar ? chord_after(g, g->bar) : chord_at(g, g->bar);
 }
 
-/* the chord's triad (root, third, fifth) as three close notes, the lowest the first of them at or above the
- * voicing's lowest note: an inversion near where the stabs' voice leading put the chord */
-static void triad(const ma_chord *c, int out[3])
+/* the chord's triad near lo: three close notes, the lowest the first of them at or above lo */
+static void triad_at(const ma_chord *c, int lo, int out[3])
 {
-    int lo = c->note[0], best = -1;
-    for (int k = 0; k < 3; ++k) {                  /* the tone right at or above the voicing's bottom starts it */
+    int best = 0;
+    out[0] = 999;
+    for (int k = 0; k < 3; ++k) {
         int n = lo;
         while ((n % 12) != c->tone[k])
             ++n;
-        if (best < 0 || n < out[0]) {
+        if (n < out[0]) {
             best = k;
             out[0] = n;
         }
@@ -1074,141 +1077,148 @@ static void triad(const ma_chord *c, int out[3])
         out[j] = n;
     }
 }
+static int tone_at(const ma_chord *c, int k, int lo)
+{
+    int n = lo;
+    while ((n % 12) != c->tone[k % 4])
+        ++n;
+    return n;
+}
 
-static void play_stabs(ma_groove *g, int i, uint32_t delay, float sf, float hum)
+/* the piano of step i (two bars of its family's pattern, the clave's) */
+static void play_piano(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
     const ma_style *st = &MA_STYLE[g->s.style];
-    const ma_chord *c = chord_at(g, g->bar);
-    float e = (float)g->s.energy / 100.0f;
-    bool pre = g->s.arc && g->sec == MA_SEC_PRE, brk = g->brk || (g->s.arc && g->sec == MA_SEC_BREAK);
-    /* PIANO on the STABS card: the offbeat piano chords, in any style */
-    int fam = g->s.snd[MA_STABS] == MA_STABS_PIANO ? STAB_PIANO : st->stab;
-    bool piano = fam == STAB_PIANO;
-    if (fam == STAB_PAD || brk) {             /* a pad, the break: the chord held (REC's break: a bar each) */
-        stabs_held(g, i, delay, sf, clampi(80 + (int)(hum * 8.0f), 1, 127), g->brk);
+    const char *pat = PIANO_PAT[st->piano][g->s.montuno & 3];
+    char ch = pat[cbar(g, g->bar) * 16 + i];
+    if (ch == '.' || ch == ' ')
         return;
+    bool acc = ch >= 'A' && ch <= 'Z';
+    char c = acc ? (char)(ch - 'A' + 'a') : ch;
+    float heat = (float)g->s.heat / 100.0f;
+    int vel = (acc ? 112 : 96) + (i % 4 == 0 ? 4 : 0) + (int)(hum * 8.0f);
+    vel = (int)((float)vel * (0.85f + 0.15f * heat));
+    float gate = st->piano == PF_BOLERO ? 1.6f : st->piano == PF_TANGO ? 0.45f : 0.7f;
+    float len = sf * 2.0f * gate;
+    switch (c) {
+    case 'o': {                                    /* a chord tone in octaves: the montuno's melody, walking the chord */
+        const ma_chord *ch2 = chord_for(g, i >= 14);
+        static const uint8_t WALK[8] = {0, 1, 2, 1, 0, 2, 1, 0};
+        int k = WALK[((g->bar & 1) * 8 + i / 2) % 8];
+        int n = tone_at(ch2, k, 64);
+        schedule(g, delay, MA_PIANO, n, clampi(vel, 1, 127), len);
+        if (st->piano != PF_GUAJEO || heat > 0.5f) /* (the tres's line single; hotter, doubled) */
+            schedule(g, delay, MA_PIANO, n + 12, clampi(vel - 8, 1, 127), len);
+        break;
     }
-    if (pre) {                                     /* the pre-chorus: held a bar each, rising */
-        stabs_held(g, i, delay, sf, clampi(76 + g->sec_bar * 10 + (int)(hum * 6.0f), 1, 127), true);
-        return;
-    }
-    bool verse = g->s.arc && g->sec == MA_SEC_VERSE;
-    if (verse && (g->bar % 2) && !piano)           /* the verse: every other bar, room for the rap (the piano plays on) */
-        return;
-    int len = STAB_PATS[fam][g->stab_pat][i];
-    if (!len) {
-        if (e > 0.85f && fam == STAB_EURO && i == 15 && (g->stab_pat & 1))   /* high energy: a pickup */
-            len = 1;
-        else
-            return;
-    }
-    int vel = fam == STAB_SKANK ? (i % 4 == 2 ? 108 : 70) : piano ? (i % 4 == 2 ? 112 : 96) - (verse ? 10 : 0)
-            : i % 4 == 0 ? 108 : 98;
-    vel += (int)(hum * 10.0f);
-    float gate = fam == STAB_SKANK ? 0.35f : fam == STAB_RAVE ? 0.7f : piano ? 0.6f : 0.85f;
-    if (piano) {                                   /* the piano: the plain triad, root third fifth (a seventh's chord
-                                                    * too), close round the voicing's middle */
+    case 't':
+    case 'n': {
+        const ma_chord *ch2 = chord_for(g, c == 'n');
         int t[3];
-        triad(c, t);
+        triad_at(ch2, st->piano == PF_BOSSA ? 58 : 62, t);
         for (int k = 0; k < 3; ++k)
-            schedule(g, delay, MA_STABS, t[k], clampi(vel - (k == 2 ? 0 : 6), 1, 127), sf * (float)len * gate);
-        return;
+            schedule(g, delay, MA_PIANO, t[k], clampi(vel - (k == 2 ? 0 : 6), 1, 127), c == 'n' ? sf * 3.0f : len);
+        break;
     }
-    /* a stab sounds the voicing's top three: the shared voice budget (eight for all four parts) stays for the
-     * drums' tails, the bass and the hook */
-    int k0 = c->n > 3 ? 1 : 0;
-    for (int k = k0; k < c->n; ++k)
-        schedule(g, delay, MA_STABS, c->note[k], clampi(vel - (k == c->n - 1 ? 0 : 6), 1, 127), sf * (float)len * gate);
+    case 'a': {                                    /* the arpeggio: up through the chord, the bolero's */
+        const ma_chord *ch2 = chord_at(g, g->bar);
+        int k = (i / 2) % 4;
+        int n = tone_at(ch2, k == 3 ? 1 : k, 60) + (k == 3 ? 12 : 0);
+        schedule(g, delay, MA_PIANO, n, clampi(vel - 10, 1, 127), sf * 4.0f);
+        break;
+    }
+    case 'b':                                      /* the left hand's root */
+        schedule(g, delay, MA_PIANO, tone_at(chord_at(g, g->bar), 0, 43), clampi(vel, 1, 127), st->piano == PF_TANGO ? sf : sf * 6.0f);
+        break;
+    case 'c': {                                    /* the left hand's chord, low (the tango's marcato) */
+        int t[3];
+        triad_at(chord_at(g, g->bar), 52, t);
+        for (int k = 0; k < 3; ++k)
+            schedule(g, delay, MA_PIANO, t[k], clampi(vel - 6, 1, 127), sf * 0.9f);
+        break;
+    }
+    default: break;
+    }
+}
+
+static int bass_root(const ma_chord *c)
+{
+    int root = 36 + ((c->root - 36) % 12 + 12) % 12;   /* C2 .. B2, then G#1 .. G2: the bass sits low */
+    return root > 43 ? root - 12 : root;
 }
 
 static void play_bass(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
-    const bass_pat_t *bp = &BASS_PATS[clampi(g->s.bassline, 0, MA_BL_COUNT - 1)][g->bass_pat];
-    int tone = bp->tone[i], len = bp->len[i];
-    if (!tone)
+    const ma_style *st = &MA_STYLE[g->s.style];
+    const char *pat = BASS_PAT[st->bass][g->s.tumbao & 3];
+    int pos = cbar(g, g->bar) * 16 + i;
+    char c = pat[pos];
+    if (c == '.' || c == '-')
         return;
-    const ma_chord *c = chord_at(g, g->bar);
+    int len = 1;
+    while (pos + len < 32 && pat[pos + len] == '-')
+        ++len;
+    if (pos + len == 32 && pat[0] == '-')          /* (a note held over into the next clave) */
+        ++len;
+    const ma_chord *cur = chord_at(g, g->bar);
     int bpc = ma_bars_per_chord(&g->s);
-    bool last_bar = (g->bar % bpc) == bpc - 1;
-    const ma_chord *nx = last_bar ? next_chord(g, g->bar) : c;
-    if (tone == BR_APP && !last_bar)               /* an approach only leads into a new chord */
-        tone = BR_OCT;
-    int n = bass_note(g, tone, c, nx);
-    int vel = (i % 4 == 2 ? 112 : i % 4 == 0 ? 106 : 94) + (int)(hum * 8.0f);
-    float gate = g->s.bassline == MA_BL_ROLLING || g->s.bassline == MA_BL_BOUNCE ? 0.6f
-               : g->s.bassline == MA_BL_OFFBEAT ? 0.75f : 0.9f;
-    schedule(g, delay, MA_BASS, n, clampi(vel, 1, 127), sf * (float)len * gate);
+    bool last_bar = ((g->bar < 0 ? 0 : g->bar) % bpc) == bpc - 1;
+    const ma_chord *nx = last_bar ? chord_after(g, g->bar) : cur;
+    int root = bass_root(cur), n = root;
+    switch (c) {
+    case 'f': n = root + ((cur->tone[2] - cur->root + 12) % 12); if (n > 50) n -= 12; break;
+    case 'o': n = root + 12; break;
+    case 't': n = root + ((cur->tone[1] - cur->root + 12) % 12); break;
+    case 'n': n = bass_root(nx); break;            /* the tumbao's anticipation: the next chord's root, early */
+    case 'p': n = nx == cur ? root + 12 : bass_root(nx) - 1; break;
+    default: break;
+    }
+    int vel = (i % 4 == 0 ? 108 : 100) + (c == 'n' ? 8 : 0) + (int)(hum * 8.0f);
+    schedule(g, delay, MA_BASS, n, clampi(vel, 1, 127), sf * (float)len * 0.92f);
 }
 
-static void play_hook(ma_groove *g, int i, uint32_t delay, float sf, float hum)
+/* the horns: the section's riff (two horns a chord tone apart), the solo's phrase, or nothing (the keys have it) */
+static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
-    const ma_style *st = &MA_STYLE[g->s.style];
-    if (g->keys)                                   /* the player has the hook */
+    const ma_settings *s = &g->s;
+    int sc = sec_now(g);
+    if (riff_now(g)) {
+        g->soloing = false;
+        int pos = cbar(g, g->bar) * 16 + i;
+        if (g->riff[pos] == -128)
+            return;
+        const ma_chord *c = chord_for(g, i >= 14);
+        int k = g->riff[pos];
+        int top = tone_at(c, k % 3, 70) + (k >= 3 ? 0 : 0);
+        while (top > 82) top -= 12;
+        while (top < 70) top += 12;
+        int low = top - 1;                         /* the second horn: the chord tone below the first */
+        while (low % 12 != c->tone[0] && low % 12 != c->tone[1] && low % 12 != c->tone[2])
+            --low;
+        float heat = (float)s->heat / 100.0f;
+        int vel = 104 + (g->riff_len[pos] == 1 ? 10 : 0) + (int)(hum * 6.0f) + (int)(heat * 10.0f);
+        float len = sf * (float)g->riff_len[pos] * (g->riff_len[pos] == 1 ? 0.6f : 0.9f);
+        schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
+        schedule(g, delay, MA_HORNS, low, clampi(vel - 10, 1, 127), len);
         return;
-    bool brk = g->brk || (g->s.arc && g->sec == MA_SEC_BREAK);
-    if (brk && (g->brk || g->sec_bar >= 6))        /* (the break's roll: the hook rests) */
+    }
+    /* the solo: in the verso the melody, in the montuno every other four bars an improvised answer (a variation of
+     * the phrase), in the moña over the riff's rests; the keys take it over */
+    g->soloing = true;
+    if (g->keys || s->solo != MA_SOLO_PHRASE)
         return;
+    bool plays = sc == MA_SEC_VRS || sc == MA_SEC_MONA || ((sc == MA_SEC_MON || sc == MA_SEC_MON2) && (sec_bar(g) / 4) % 2 == 1);
+    if (!s->arc)
+        plays = (sec_bar(g) / 4) % 2 == 1;
+    if (!plays)
+        return;
+    int hp = (sec_bar(g) % 4) * 16 + i;
+    if (g->phr[hp] == -128)
+        return;
+    int len = g->phr_len[hp];
+    int base = 60 + s->key + (s->key < 5 ? 12 : 0);
+    int n = step_note(s->scale, base, g->phr[hp]);
     const ma_chord *c = chord_at(g, g->bar);
-    float gate = (float)g->s.gate / 100.0f;
-    if (g->s.speed == MA_SPEED_PAD) {              /* a pad: two of the chord's notes an octave over the stabs' middle,
-                                                    * held as long as the chord lasts, swelling in */
-        int bpc = ma_bars_per_chord(&g->s);
-        if (i != 0 || (g->bar % bpc) != 0)
-            return;
-        for (int k = 1; k <= 2; ++k) {
-            int n = c->note[k] + 12;
-            if (n > 84)
-                n -= 12;
-            schedule(g, delay + (uint32_t)((float)k * sf * 0.05f), MA_HOOK, n, clampi(78 + (int)(hum * 6.0f), 1, 127),
-                     sf * (float)(16 * bpc) - 60.0f);
-        }
-        return;
-    }
-    if (st->hook == HOOK_ARP) {                    /* an arpeggiator through the chord, up and down */
-        int every = g->s.speed == MA_SPEED_SLOW ? 2 : 1;
-        if (i % every)
-            return;
-        static const uint8_t ORD[8] = {0, 1, 2, 3, 4, 3, 2, 1};
-        int k = ORD[(i / every) % 8], oct = k / 4, t = k % 4;
-        if (g->s.range < 2)
-            oct = 0;
-        int n = 60 + ((c->tone[t] - 60) % 12 + 12) % 12 + 12 * oct;
-        if (n > 84)
-            n -= 12;
-        schedule(g, delay, MA_HOOK, n, clampi(82 + (i % 4 == 0 ? 20 : 0) + (int)(hum * 6.0f), 1, 127),
-                 sf * (float)every * gate);
-        return;
-    }
-    int rep = ma_repeat_bars(&g->s);
-    int hp = (sec_bar(g) % rep) * 16 + i;
-    if (g->hook[hp] == -128)
-        return;
-    int len = g->hook_len[hp];
-    int base = 60 + g->s.key - (g->s.key > 6 ? 12 : 0);
-    if (g->hook_tup[hp]) {                         /* a tuplet: its notes evenly over len sixteenths, an arpeggio of
-                                                    * the chord playing (up, or down from a high start), from the
-                                                    * chord tone nearest the note the walk reached */
-        int tn = g->hook_tup[hp], dir = g->hook[hp] >= 5 ? -1 : 1;
-        float each = sf * (float)len / (float)tn;
-        int nn = step_note(g->s.scale, base, g->hook[hp]);
-        for (int d = 0; d < 12; ++d) {             /* the nearest chord tone, below first */
-            int pc = ((nn - d) % 12 + 12) % 12, pu = ((nn + d) % 12 + 12) % 12;
-            if (pc == c->tone[0] || pc == c->tone[1] || pc == c->tone[2]) { nn -= d; break; }
-            if (pu == c->tone[0] || pu == c->tone[1] || pu == c->tone[2]) { nn += d; break; }
-        }
-        for (int k = 0; k < tn; ++k) {
-            if (k > 0 && (dir > 0 ? nn >= 81 : nn <= 57))
-                dir = -dir;                        /* (it turns back at the hook's edges) */
-            if (k > 0)
-                do                                 /* the next chord tone up (or down) */
-                    nn += dir;
-                while (nn % 12 != c->tone[0] && nn % 12 != c->tone[1] && nn % 12 != c->tone[2]);
-            int v = 96 + (k == 0 ? 14 : 0) + (int)(hum * 6.0f) - (brk ? 18 : 0);
-            schedule(g, delay + (uint32_t)(each * (float)k), MA_HOOK, nn, clampi(v, 1, 127), each * 0.9f);
-        }
-        return;
-    }
-    int n = step_note(g->s.scale, base, g->hook[hp]);
     if (len >= 2 || i % 4 == 0) {                  /* the long and strong notes onto the chord */
         int best = n, bd = 99;
         for (int t = 0; t < 3; ++t)
@@ -1222,8 +1232,49 @@ static void play_hook(ma_groove *g, int i, uint32_t delay, float sf, float hum)
             }
         n = best;
     }
-    int vel = 100 + (i % 4 == 0 ? 10 : 0) + (int)(hum * 6.0f) - (brk ? 18 : 0);
-    schedule(g, delay, MA_HOOK, n, clampi(vel, 1, 127), sf * (float)len * gate);
+    if (sc != MA_SEC_VRS && s->arc) {              /* the montuno's improvisation: the phrase moved about */
+        uint32_t r = (uint32_t)(g->bar * 131 + i * 7 + g->round * 977);
+        if (rnd_n(&r, 3) == 0)
+            n += rnd_n(&r, 2) ? 2 : -2;
+        n = ma_snap(s, n);
+    }
+    int vel = 100 + (i % 4 == 0 ? 8 : 0) + (int)(hum * 6.0f);
+    schedule(g, delay, MA_HORNS, n, clampi(vel, 1, 127), sf * (float)len * 0.88f);
+}
+
+/* the cierre: the whole band hits the clave's figure of the bar together, nothing between (a band hit, the FIN) */
+static void play_cierre(ma_groove *g, int i, uint32_t delay, float sf)
+{
+    if (!ma_clave_hit(g, g->bar, i))
+        return;
+    bool last = cbar(g, g->bar) == 0 ? i == 12 : i == 8;
+    const ma_chord *c = chord_at(g, g->bar);
+    int t[3];
+    triad_at(c, 62, t);
+    float len = last ? sf * 4.0f : sf * 1.2f;
+    for (int k = 0; k < 3; ++k)
+        schedule(g, delay, MA_PIANO, t[k], 118, len);
+    schedule(g, delay, MA_BASS, bass_root(c), 118, len);
+    int top = tone_at(c, 2, 72);
+    schedule(g, delay, MA_HORNS, top, 120, len);
+    schedule(g, delay, MA_HORNS, tone_at(c, 0, top - 9), 112, len);
+    schedule(g, delay, MA_PERC, MA_DR_TIMBAL_HI, 120, 0);
+    schedule(g, delay, MA_PERC, MA_DR_BELL_MAMBO, 112, 0);
+    schedule(g, delay, MA_PERC, last ? MA_DR_TUMBA : MA_DR_QUINTO, 115, 0);
+}
+
+/* this bar a cierre: BAND HIT, HITS's every 4, 8 or 16 bars (the last bar of each), the FIN's last bar */
+static bool cierre_bar(const ma_groove *g)
+{
+    if (g->bar == g->hit_bar)
+        return true;
+    if (g->s.arc && g->sec == MA_SEC_FIN && g->sec_bar == ma_sec_len(g, MA_SEC_FIN) - 1)
+        return true;
+    static const uint8_t EVERY[MA_HITS_COUNT] = {0, 4, 8, 16};
+    int ev = EVERY[g->s.hits], sc = sec_now(g);
+    if (ev && (sc == MA_SEC_MON || sc == MA_SEC_MON2) && (sec_bar(g) % ev) == ev - 1)
+        return true;
+    return false;
 }
 
 /* one sixteenth: the parts, swung and humanized */
@@ -1247,16 +1298,30 @@ static void do_step(ma_groove *g)
             part_off(g, p);
         g->muted[p] = out;
     }
+    if (cierre_bar(g) && !g->desc) {               /* the cierre: the band on the clave, together */
+        if (i == 0)
+            for (int p = 0; p < MA_PARTS; ++p)
+                part_off(g, p);
+        g->soloing = false;
+        play_cierre(g, i, 0, sf);
+        if (MA_STYLE[g->s.snd[3]].clave_on && ma_clave_hit(g, g->bar, i))
+            schedule(g, 0, MA_PERC, MA_DR_CLAVE, 100, 0);
+        return;
+    }
+    if (g->desc && g->desc_end >= 0 && g->bar == g->desc_end - 1) {
+        timbal_roll(g, i, 0, true);                /* the descarga's last bar: the roll, the band in on the bar line */
+        return;
+    }
     for (int p = 0; p < MA_PARTS; ++p) {
         if (g->muted[p])
             continue;
         float hum = (rnd_f(&g->rnd) - 0.5f) * 2.0f * (float)g->s.human / 100.0f;
-        uint32_t d = delay + (uint32_t)((hum > 0 ? hum : 0.0f) * g->sr * 0.010f);   /* late only, up to 10 ms */
+        uint32_t d = delay + (uint32_t)((hum > 0 ? hum : 0.0f) * g->sr * 0.008f);   /* late only, up to 8 ms */
         switch (p) {
-        case MA_STABS: play_stabs(g, i, d, sf, hum); break;
+        case MA_PIANO: play_piano(g, i, d, sf, hum); break;
         case MA_BASS: play_bass(g, i, d, sf, hum); break;
-        case MA_HOOK: play_hook(g, i, d, sf, hum); break;
-        default: play_drums(g, i, d, hum); break;
+        case MA_HORNS: play_horns(g, i, d, sf, hum); break;
+        default: play_perc(g, i, d, hum); break;
         }
     }
 }
@@ -1272,17 +1337,19 @@ void ma_play(ma_groove *g, bool on)
     g->wait = 0;
     g->step = -1;
     g->bar = 0;
-    g->brk = false;
-    g->brk_held = false;
-    g->crash_next = false;
-    g->sec = g->s.arc ? MA_SEC_INTRO : MA_SEC_CHORUS;
+    g->hit_bar = -1;
+    g->hit_wait = false;
+    g->desc = g->desc_held = false;
+    g->desc_end = -1;
+    g->mambo_next = false;
+    g->mambo_live = false;
+    g->sec = g->s.arc ? MA_SEC_IN : MA_SEC_MON;
     g->sec_bar = 0;
     g->round = 0;
-    g->hook_var = 0;
-    g->perf_up = 0;
-    g->perf_next = -1;
-    g->tr = 0;
-    g->beat_ph = 1.0f;
+    g->phr_var = 0;
+    g->riff_var = 0;
+    g->soloing = false;
+    g->solo_note = -1;
     if (on) {
         if (g->next_style >= 0 || g->next_song >= 0) {   /* (queued while stopped: at once) */
             g->bar = -1;
@@ -1290,24 +1357,29 @@ void ma_play(ma_groove *g, bool on)
             bar_line(g);
             g->bar = 0;
             g->step = -1;
-            g->sec = g->s.arc ? MA_SEC_INTRO : MA_SEC_CHORUS;
+            g->sec = g->s.arc ? MA_SEC_IN : MA_SEC_MON;
             g->sec_bar = 0;
         }
     }
     ma_rebuild(g);
 }
 
+static void now_bar_line(ma_groove *g)
+{
+    int b = g->bar, sb = g->sec_bar, sc = g->sec;
+    g->bar = -1;
+    bar_line(g);
+    g->bar = b;
+    g->sec = sc;
+    g->sec_bar = sb;
+}
+
 void ma_queue_style(ma_groove *g, int style)
 {
     style = ((style % MA_STYLES) + MA_STYLES) % MA_STYLES;
     g->next_style = style;
-    if (!g->playing) {                             /* stopped: at once */
-        int b = g->bar, sb = g->sec_bar, sc = g->sec;
-        g->bar = -1;
-        bar_line(g);
-        g->bar = b;
-        g->sec = sc;
-        g->sec_bar = sb;
+    if (!g->playing) {
+        now_bar_line(g);
     } else {
         char m[24] = "NEXT ";
         cpy(m + 5, MA_STYLE[style].name, (int)sizeof m - 5);
@@ -1318,52 +1390,33 @@ void ma_queue_style(ma_groove *g, int style)
 void ma_queue_song(ma_groove *g, int song)
 {
     g->next_song = ((song % 1000) + 1000) % 1000;
-    if (!g->playing) {
-        int b = g->bar, sb = g->sec_bar, sc = g->sec;
-        g->bar = -1;
-        bar_line(g);
-        g->bar = b;
-        g->sec = sc;
-        g->sec_bar = sb;
-    }
+    if (!g->playing)
+        now_bar_line(g);
 }
 
-void ma_break(ma_groove *g, bool down)
+void ma_band_hit(ma_groove *g, bool down)
 {
     if (!g->playing)
         return;
     if (down) {
-        g->brk = true;
-        g->brk_held = true;
-        g->brk_end = g->bar + 4;                   /* a tap: three bars of stabs, the roll, the chorus */
-        for (int p = 0; p < MA_PARTS; ++p) {
-            part_off(g, p);                        /* (the stabs come back held, from the next bar) */
-            if (p != MA_STABS)
-                g->muted[p] = true;                /* (at once: their late notes of this sixteenth too) */
-        }
-        msg(g, "BREAK");
+        g->hit_wait = true;                        /* a tap: the cierre on the next bar line */
+        g->desc_held = true;
+        msg(g, "BAND HIT");
     } else {
-        g->brk_held = false;
-        if (g->brk && g->bar >= g->brk_end - 1)    /* held past its three bars: the roll next bar, then back */
-            g->brk_end = g->bar + 2;
+        g->desc_held = false;
+        if (g->desc) {                             /* held into a descarga: the roll next bar, the band after */
+            g->desc_end = g->bar + 2;
+            msg(g, "BAND IN");
+        }
     }
 }
 
-void ma_keyup(ma_groove *g)
+void ma_mambo(ma_groove *g)
 {
     if (!g->playing)
         return;
-    int cur = g->perf_next >= 0 ? g->perf_next : g->perf_up;
-    int nx = cur >= MA_KEYUP_MAX ? 0 : cur + 1;
-    g->perf_next = nx;
-    if (nx == 0) {
-        msg(g, "KEY HOME");
-    } else {
-        char m[24] = "KEY UP +";
-        m[8] = (char)('0' + nx);
-        m[9] = 0;
-        msg(g, m);
-    }
+    g->mambo_next = true;
+    msg(g, g->s.arc ? "MAMBO NEXT" : g->mambo_live ? "MAMBO OUT" : "MAMBO NEXT");
 }
 
 void ma_key(ma_groove *g, int k, int note, bool down)
@@ -1371,44 +1424,43 @@ void ma_key(ma_groove *g, int k, int note, bool down)
     if (k < 0 || k >= 27)
         return;
     if (down) {
-        int n = g->s.keysnap ? ma_snap(&g->s, note) + g->tr : note;   /* (SNAP on: in the key, the key up in it; off: as pressed) */
+        int n = g->s.keysnap ? ma_snap(&g->s, note) : note;   /* (SNAP on: in the key; off: as pressed) */
         if (g->key_note[k] >= 0)
-            emit(g, 0, MA_HOOK, g->key_note[k], 0);
-        if (!g->keys)                              /* the hook makes way */
-            part_off(g, MA_HOOK);
+            emit(g, 0, MA_HORNS, g->key_note[k], 0);
+        if (!g->keys)                              /* the solo makes way */
+            part_off(g, MA_HORNS);
         g->keys |= 1u << k;
         g->key_note[k] = n;
-        emit(g, 1, MA_HOOK, n, 104);
-        feed(g, MA_HOOK, n, 104);
-        g->hook_on_clock = g->clock;
+        g->soloing = true;
+        emit(g, 1, MA_HORNS, n, 106);
+        feed(g, MA_HORNS, n, 106);
+        g->solo_on_clock = g->clock;
+        g->solo_note = n;
     } else {
         g->keys &= ~(1u << k);
         if (g->key_note[k] >= 0)
-            emit(g, 0, MA_HOOK, g->key_note[k], 0);
+            emit(g, 0, MA_HORNS, g->key_note[k], 0);
         g->key_note[k] = -1;
     }
 }
 
-/* the lift: how open the lifted parts' filter is in the form, 0..1 of the LIFT ceiling */
-static float lift_open(const ma_groove *g)
+/* the solo's angle now (degrees): FIXED the card's, ORBIT once round every eight bars, STEP a new place each phrase */
+static float p3_angle_now(const ma_groove *g)
 {
+    float a = (float)g->s.p3angle * 10.0f;
     if (!g->playing)
-        return 1.0f;
-    float pos = (float)(g->step < 0 ? 0 : g->step) / 16.0f;
-    if (g->brk)
-        return 0.6f;
-    if (!g->s.arc)
-        return 1.0f;
-    switch (g->sec) {
-    case MA_SEC_INTRO: return 0.3f + 0.7f * ((float)g->sec_bar + pos) / 8.0f;
-    case MA_SEC_VERSE: return 0.85f;
-    case MA_SEC_PRE: return 0.55f + 0.45f * ((float)g->sec_bar + pos) / (float)ma_sec_len(g, MA_SEC_PRE);
-    case MA_SEC_BREAK: return g->sec_bar < 6 ? 0.6f : 0.6f + 0.4f * ((float)(g->sec_bar - 6) + pos) / 2.0f;
-    default: return 1.0f;
+        return a;
+    float pos = ((float)(g->bar < 0 ? 0 : g->bar) + (float)(g->step < 0 ? 0 : g->step) / 16.0f);
+    if (g->s.p3mode == MA_P3_ORBIT)
+        return a + pos / 8.0f * 360.0f;
+    if (g->s.p3mode == MA_P3_STEP) {
+        uint32_t r = (uint32_t)((g->bar < 0 ? 0 : g->bar) / 4) * 2654435761u + 99u;
+        return a + (float)rnd_n(&r, 12) * 30.0f;
     }
+    return a;
 }
 
-/* the block: notes in time, then the lift and the pump for the glue */
+/* the block: notes in time, then the horns' tone, gain and place for the glue */
 void ma_process(ma_groove *g, int frames)
 {
     if (g->playing) {
@@ -1426,21 +1478,17 @@ void ma_process(ma_groove *g, int frames)
                 chunk = 1;
             g->clock += (uint32_t)chunk;
             g->wait -= (float)chunk;
-            g->beat_ph += (float)chunk / (sf * 4.0f);   /* beats since the last kick */
             left -= chunk;
-            for (int k = 0; k < npend;) {          /* the swung and late notes */
+            for (int k = 0; k < npend;) {
                 if ((int32_t)(g->clock - pend[k].at) >= 0) {
-                    int nn = pend[k].note;
-                    if (pend[k].part == MA_DRUMS && (nn & 0x80))
-                        emit(g, 0, MA_DRUMS, nn & 0x7F, 0);   /* a choke */
-                    else if (!g->muted[pend[k].part])
-                        note(g, pend[k].part, nn, pend[k].vel, pend[k].len);
+                    if (!g->muted[pend[k].part])
+                        note(g, pend[k].part, pend[k].note, pend[k].vel, pend[k].len);
                     pend[k] = pend[--npend];
                 } else {
                     ++k;
                 }
             }
-            for (int k = 0; k < g->nheld;) {       /* the note-offs */
+            for (int k = 0; k < g->nheld;) {
                 if ((int32_t)(g->clock - g->held[k].off) >= 0)
                     note_off_now(g, k);
                 else
@@ -1448,22 +1496,33 @@ void ma_process(ma_groove *g, int frames)
             }
         }
     }
-    float cut = clampf((float)g->s.lift / 100.0f * clampf(lift_open(g), 0.0f, 1.0f), 0.0f, 1.0f);
-    g->lift_now = cut;
-    uint8_t mask = MA_STYLE[g->s.style].lift_parts;
-    for (int p = 0; p < MA_PARTS; ++p)
-        g->cut[p] = (uint8_t)((mask >> p) & 1u ? (int)(cut * 127.0f + 0.5f) : 127);
-    /* the pump: a fast duck on the kick (6 ms down), back over 70 % of the beat */
-    float depth = g->playing && !g->muted[MA_DRUMS] ? (float)g->s.pump / 100.0f * 0.8f : 0.0f;
-    float beat_s = 60.0f / (float)clampi(g->s.bpm, 60, 200);
-    float t = g->beat_ph * beat_s;                 /* seconds since the kick (beat_ph counts beats) */
-    float d;
-    if (t < 0.006f)
-        d = depth * t / 0.006f;
-    else {
-        float u = clampf((t - 0.006f) / (0.7f * beat_s), 0.0f, 1.0f);
-        d = depth * (1.0f - u) * (1.0f - u);
+    for (int p = 0; p < MA_PARTS; ++p) {
+        g->tone[p] = 127;
+        g->gain[p] = 0;
     }
-    for (int p = 0; p < MA_PARTS; ++p)
-        g->duck[p] = (uint8_t)(p == MA_DRUMS ? 0 : (int)(d * 127.0f + 0.5f));
+    g->pan_horns = 64;
+    if (!g->soloing && !g->keys)                   /* the section: open, in the middle */
+        return;
+    /* the solo: the MUTE's darkness, the BELL, PAN 3D (behind: duller, as the bell turns away; far: softer, darker) */
+    static const float MUTE_TONE[MA_MUTE_COUNT] = {1.0f, 0.72f, 0.55f, 0.46f, 0.6f};
+    float t = MUTE_TONE[g->s.mute % MA_MUTE_COUNT];
+    if (g->s.mute == MA_MUTE_WAH) {                /* the wah: the plunger opening and closing on the eighths */
+        float beat = g->playing ? ((float)(g->step < 0 ? 0 : g->step) + 1.0f - g->wait / step_frames(g)) / 2.0f : 0.0f;
+        t = 0.3f + 0.65f * (0.5f + 0.5f * sin_turns(beat));
+    }
+    t *= 0.6f + 0.4f * (float)g->s.bell / 100.0f;
+    float gn = 0.0f;
+    float ang = p3_angle_now(g);
+    g->p3_angle = ang;
+    if (g->s.p3mode != MA_P3_OFF) {
+        float turns = ang / 360.0f, front = cos_turns(turns);   /* 1 in front, -1 behind */
+        t *= 0.62f + 0.38f * (0.5f + 0.5f * front);
+        t *= 0.88f + 0.24f * (float)g->s.p3height / 100.0f;
+        float dist = (float)g->s.p3dist / 100.0f;
+        t *= 1.0f - 0.35f * dist;
+        gn = 0.6f * dist;
+        g->pan_horns = (uint8_t)clampi(64 + (int)(63.0f * sin_turns(turns) * (0.4f + 0.6f * (float)g->s.width / 100.0f)), 0, 127);
+    }
+    g->tone[MA_HORNS] = (uint8_t)clampi((int)(clampf(t, 0.0f, 1.0f) * 127.0f + 0.5f), 0, 127);
+    g->gain[MA_HORNS] = (uint8_t)clampi((int)(gn * 127.0f + 0.5f), 0, 127);
 }

@@ -13,7 +13,7 @@
   web/make_site.py build/felucca-X.Y.fwsc X.Y OUT_DIR
 
 The package must be one made by tools/fm1pkg_make.py (Felucca's own loader, no vendor files).
-Its identity (FM-1_47745500, Manta's; FM-1_9xx for Felucca's) is read from the package; the device must report it after
+Its identity (FM-1_47626820, Manta's; FM-1_9xx for Felucca's) is read from the package; the device must report it after
 the install.
 """
 import json
