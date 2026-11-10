@@ -44,7 +44,8 @@ enum { MA_SC_MINOR, MA_SC_MAJOR, MA_SC_DORIAN, MA_SC_HARMONIC, MA_SCALES };
 enum { MA_CLAVE_32, MA_CLAVE_23, MA_CLAVE_COUNT };
 enum { MA_SOLO_OFF, MA_SOLO_PHRASE, MA_SOLO_KEYS, MA_SOLO_COUNT };
 enum { MA_HITS_OFF, MA_HITS_4, MA_HITS_8, MA_HITS_16, MA_HITS_COUNT };
-enum { MA_MUTE_OPEN, MA_MUTE_STRAIGHT, MA_MUTE_CUP, MA_MUTE_HARMON, MA_MUTE_WAH, MA_MUTE_COUNT };
+/* the trumpets' mute; AUTO: the section open, each solo turn the next of the four mutes */
+enum { MA_MUTE_OPEN, MA_MUTE_STRAIGHT, MA_MUTE_CUP, MA_MUTE_HARMON, MA_MUTE_WAH, MA_MUTE_AUTO, MA_MUTE_COUNT };
 enum { MA_PHR_GEN, MA_PHR_TRAD, MA_PHR_MIX, MA_PHR_COUNT };
 enum { MA_P3_OFF, MA_P3_FIXED, MA_P3_ORBIT, MA_P3_STEP, MA_P3_COUNT };   /* PAN 3D's MODE */
 enum { MA_FILLS_OFF, MA_FILLS_8, MA_FILLS_4, MA_FILLS_2, MA_FILLS_COUNT };
@@ -156,6 +157,8 @@ typedef struct {
     float p3_angle;                                /* the solo's angle now (degrees, 0 in front, 90 right) */
     bool muted[MA_PARTS];                          /* out (the form, a break, a level of 0) */
     bool soloing;                                  /* the horns' track is the solo now (the form, the keys) */
+    uint8_t solo_mute;                             /* AUTO: this solo turn's mute (STRAIGHT .. WAH) */
+    bool solo_was;                                 /* (the solo playing in the block before: a new turn starts) */
     uint8_t mute_live;                             /* the solo's MUTE now (MA_MUTE_OPEN while the section plays) */
     /* in, from the glue: the HORNS sound is the sampled trumpet (its mutes are its own filters, the TONE only the bell
      * and PAN 3D), and has the trombone too (the section's second horn an octave down, on it) */

@@ -132,35 +132,35 @@ enum { SR_FAST, SR_MID, SR_SLOW };
  * 6 ACCORDION 7 BANDONEON. The percussion's set is the style's own (snd[3] = the style) */
 const ma_style MA_STYLE[MA_STYLES] = {
     {"SALSA", MA_SIDE_CALIENTE, 184, 9, MA_SC_MINOR, 70, MA_CLAVE_32, MA_HITS_8, {0, 0, 0}, {3, 1, 6, 0}, 1, 0,
-     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_OPEN, {{1, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
+     PF_MONTUNO, BF_TUMBAO, HF_SALSA, MA_ST_SALSA, 1, 30, 35, 20, MA_MUTE_AUTO, {{1, 3, 0}, {1, 2, 5}, {1, 3, 0}}},
     {"MAMBO", MA_SIDE_CALIENTE, 192, 7, MA_SC_MAJOR, 85, MA_CLAVE_23, MA_HITS_8, {0, 1, 0}, {1, 0, 11, 2}, 1, 0,
-     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_OPEN, {{1, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
+     PF_MONTUNO, BF_TUMBAO, HF_MAMBO, MA_ST_MAMBO, 1, 35, 40, 25, MA_MUTE_AUTO, {{1, 0, 2}, {0, 2, 6}, {1, 0, 3}}},
     {"MERENGUE", MA_SIDE_CALIENTE, 152, 2, MA_SC_MAJOR, 80, MA_CLAVE_32, MA_HITS_8, {0, 2, 3}, {2, 0, 9, 3}, 1, 0,
-     PF_MERENGUE, BF_MERENGUE, HF_MERENGUE, MA_ST_MERENGUE, 0, 25, 25, 25, MA_MUTE_OPEN,
+     PF_MERENGUE, BF_MERENGUE, HF_MERENGUE, MA_ST_MERENGUE, 0, 25, 25, 25, MA_MUTE_AUTO,
      {{5, 7, 0}, {0, 6, 4}, {6, 0, 2}}},
     {"CUMBIA", MA_SIDE_CALIENTE, 98, 7, MA_SC_MINOR, 60, MA_CLAVE_32, MA_HITS_16, {5, 6, 6}, {9, 2, 3, 0}, 1, 10,
-     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_OPEN, {{7, 0, 1}, {0, 2, 3}, {4, 3, 2}}},
+     PF_CUMBIA, BF_CUMBIA, HF_CUMBIA, MA_ST_CUMBIA, 0, 30, 20, 30, MA_MUTE_AUTO, {{7, 0, 1}, {0, 2, 3}, {4, 3, 2}}},
     {"SAMBA", MA_SIDE_CALIENTE, 102, 0, MA_SC_MAJOR, 85, MA_CLAVE_32, MA_HITS_8, {7, 1, 2}, {7, 0, 8, 1}, 1, 0,
-     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_OPEN, {{3, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
+     PF_SAMBA, BF_SAMBA, HF_SAMBA, MA_ST_SAMBA, 0, 30, 30, 20, MA_MUTE_AUTO, {{3, 1, 7}, {0, 5, 6}, {0, 4, 3}}},
     /* the son of old Havana: the upright's montuno, the acoustic bass, one trumpet, bongo, maracas and claves; laid
      * back, a warm room (a song now and then brings the guitar, the upright beside it) */
     {"SON", MA_SIDE_NOCHE, 100, 2, MA_SC_MINOR, 50, MA_CLAVE_23, MA_HITS_16, {0, 1, 1}, {12, 0, 3, 1}, 1, 0,
-     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 50, 25, 55, MA_MUTE_OPEN, {{0, 7, 0}, {1, 6, 1}, {1, 2, 1}}},
+     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_SON, 1, 50, 25, 55, MA_MUTE_AUTO, {{0, 7, 0}, {1, 6, 1}, {1, 2, 1}}},
     {"CHA-CHA", MA_SIDE_NOCHE, 120, 5, MA_SC_MAJOR, 55, MA_CLAVE_23, MA_HITS_16, {0, 0, 5}, {11, 0, 1, 2}, 1, 0,
-     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_OPEN,
+     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_CHACHA, 0, 35, 35, 20, MA_MUTE_AUTO,
      {{1, 7, 2}, {1, 6, 2}, {4, 1, 3}}},
     {"BOLERO", MA_SIDE_NOCHE, 80, 2, MA_SC_HARMONIC, 35, MA_CLAVE_32, MA_HITS_OFF, {1, 6, 1}, {4, 5, 3, 1}, 1, 0,
-     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_HARMON, {{7, 4, 7}, {1, 5, 0}, {2, 3, 2}}},
+     PF_BOLERO, BF_BOLERO, HF_BOLERO, MA_ST_BOLERO, 1, 50, 45, 25, MA_MUTE_AUTO, {{7, 4, 7}, {1, 5, 0}, {2, 3, 2}}},
     {"BOSSA", MA_SIDE_NOCHE, 136, 4, MA_SC_MAJOR, 40, MA_CLAVE_32, MA_HITS_OFF, {7, 5, 3}, {7, 8, 1, 6}, 1, 0,
-     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_OPEN, {{1, 7, 0}, {1, 6, 0}, {1, 4, 5}}},
+     PF_BOSSA, BF_BOSSA, HF_BOSSA, MA_ST_BOSSA, 0, 40, 35, 30, MA_MUTE_AUTO, {{1, 7, 0}, {1, 6, 0}, {1, 4, 5}}},
     {"TANGO", MA_SIDE_NOCHE, 118, 9, MA_SC_HARMONIC, 70, MA_CLAVE_32, MA_HITS_8, {0, 1, 7}, {10, 5, 3, 4}, 1, 0,
-     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_OPEN, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
+     PF_TANGO, BF_TANGO, HF_TANGO, MA_ST_TANGO, 0, 30, 30, 35, MA_MUTE_AUTO, {{6, 7, 1}, {0, 2, 6}, {0, 7, 5}}},
     /* the guaracha: the son fast and cheeky, a conjunto's (the tres, the bongo, the maracas, a trumpet) */
     {"GUARACHA", MA_SIDE_CALIENTE, 200, 2, MA_SC_MAJOR, 80, MA_CLAVE_23, MA_HITS_8, {0, 1, 1}, {0, 1, 2, 11}, 1, 0,
-     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_OPEN, {{7, 0, 0}, {0, 6, 5}, {0, 1, 2}}},
+     PF_GUAJEO, BF_TUMBAO, HF_SON, MA_ST_GUARACHA, 1, 30, 30, 30, MA_MUTE_AUTO, {{7, 0, 0}, {0, 6, 5}, {0, 1, 2}}},
     /* the danzon: Cuba's ballroom, a charanga's violins over the piano, the pailas' cinquillo, the guiro */
     {"DANZON", MA_SIDE_NOCHE, 112, 5, MA_SC_MAJOR, 45, MA_CLAVE_32, MA_HITS_16, {0, 1, 5}, {2, 11, 0, 7}, 2, 0,
-     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_DANZON, 0, 40, 35, 35, MA_MUTE_OPEN, {{1, 2, 7}, {0, 6, 5}, {4, 5, 3}}},
+     PF_CHACHA, BF_CHACHA, HF_CHACHA, MA_ST_DANZON, 0, 40, 35, 35, MA_MUTE_AUTO, {{1, 2, 7}, {0, 6, 5}, {4, 5, 3}}},
 };
 const char *ma_style_name(int i) { return MA_STYLE[clampi(i, 0, MA_STYLES - 1)].name; }
 
@@ -1892,11 +1892,20 @@ void ma_process(ma_groove *g, int frames)
     g->pan_horns = 64;
     /* the horns' MUTE, on the section and the solo alike (one track, one mute: a bolero's horns all muted); a mute
      * is a trumpet's: on the other HORNS sounds (a sax, the violins, a guitar) it does nothing */
-    int mute = g->brass ? g->s.mute % MA_MUTE_COUNT : MA_MUTE_OPEN;
+    /* AUTO: the section's chords open; each solo turn takes the next mute, round the four */
+    bool solo_now = g->soloing || g->keys;
+    if (solo_now && !g->solo_was)
+        g->solo_mute = (uint8_t)(g->solo_mute % 4u + 1u);
+    g->solo_was = solo_now;
+    int mute = g->s.mute % MA_MUTE_COUNT;
+    if (mute == MA_MUTE_AUTO)
+        mute = solo_now ? (g->solo_mute ? g->solo_mute : MA_MUTE_STRAIGHT) : MA_MUTE_OPEN;
+    if (!g->brass)
+        mute = MA_MUTE_OPEN;
     g->mute_live = (uint8_t)mute;
     /* (the sampled brass: the engine's mute filter is the mute; the TONE only takes a little off the cup's top, and
      * the wah's sweep is the filter's) */
-    static const float MUTE_TONE_BRASS[MA_MUTE_COUNT] = {1.0f, 1.0f, 0.85f, 1.0f, 0.6f};
+    static const float MUTE_TONE_BRASS[MA_MUTE_COUNT] = {1.0f, 1.0f, 0.85f, 1.0f, 0.6f, 1.0f};
     float t = MUTE_TONE_BRASS[mute];
     if (mute == MA_MUTE_WAH) {                /* the wah: the plunger opening and closing on the eighths */
         float beat = g->playing ? ((float)(g->step < 0 ? 0 : g->step) + 1.0f - g->wait / step_frames(g)) / 2.0f : 0.0f;

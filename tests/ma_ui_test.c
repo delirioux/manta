@@ -247,7 +247,7 @@ int main(int argc, char **argv)
         lint_where = nm;
         mu_draw_all(&ui);
     }
-    CHECK(g.s.mute == MA_MUTE_WAH, "MUTE up to WAH (%d)", g.s.mute);
+    CHECK(g.s.mute == MA_MUTE_AUTO, "MUTE up to AUTO (%d)", g.s.mute);
     mu_knob(&ui, MU_K2, -2);
     shot("08_solo");
     all_palettes("solo");

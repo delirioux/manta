@@ -476,6 +476,21 @@ int main(void)
         g.keys = 0;
         ma_process(&g, 32);
         CHECK(g.mute_live == MA_MUTE_HARMON, "the section muted too (%d)", g.mute_live);
+        g.s.mute = MA_MUTE_AUTO;                   /* AUTO: the section open, each solo turn the next mute */
+        int seen = 0;
+        bool open_section = true;
+        for (int turn = 0; turn < 4; ++turn) {
+            g.soloing = false;
+            ma_process(&g, 32);
+            g.soloing = false;
+            open_section &= g.mute_live == MA_MUTE_OPEN;
+            g.soloing = true;
+            ma_process(&g, 32);
+            g.soloing = true;
+            ma_process(&g, 32);
+            seen |= 1 << g.mute_live;
+        }
+        CHECK(open_section && seen == 0x1E, "AUTO: the section open, the solo turns through the four mutes (%x)", seen);
         g.brass = false;
         g.soloing = true;
         g.s.mute = MA_MUTE_OPEN;

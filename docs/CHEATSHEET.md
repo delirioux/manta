@@ -32,7 +32,7 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | What | How |
 | --- | --- |
 | The parts' sounds | **FX**: **PIANO**, **BASS**, **HORNS** (eight each), **PERC** (a style's percussion set) |
-| The solo | **LFO**: **INSTR**, **MUTE** (OPEN, CONE, CUP, HARMON, WAH), **PHRASE** (GEN; TRAD and MIX coming), **BELL** |
+| The solo | **LFO**: **INSTR**, **MUTE** (AUTO: the section open, the solo's turns through the mutes; OPEN, CONE, CUP, HARMON, WAH), **PHRASE** (GEN; TRAD and MIX coming), **BELL** |
 | PAN 3D | **LFO** again: **MODE** (OFF, FIXED, ORBIT, STEP), **ANGLE**, **HEIGHT**, **DIST**; on headphones |
 | Percussion | **EDIT**: **CONGAS** (TUMBAO, MARCHA, BOLERO), **BONGO** (MARTIL, BELL), **TIMBAL** (SHELL, BELL), **EXTRA** (GUIRO, SHAKER, CABASA, WASH); AUTO is the style's own |
 | Levels | **GLO**: the four parts |
