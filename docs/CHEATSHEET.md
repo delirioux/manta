@@ -44,7 +44,7 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | --- | --- |
 | Key and chords | **SCL**: **KEY**, **SCALE** (MIN, MAJ, DOR, HARM), **CHORDS**, **BARS** a chord |
 | Groove | **ARP**: **SWING**, **PIANO** and **BASS** (pattern 1 to 4), **FILLS** |
-| The song's form | **ENV**: **ARC** (intro, verso, montuno, mambo, montuno, moña, cierre), **VERSO** and **MON** bars, **MAMBO** in the form |
+| The song's form | **ENV**: **ARC** (intro, tema, verso, corte, frase, piano, montuno, mambo, moña, cierre), **VERSO** and **MON** bars, **MAMBO** in the form |
 
 ## Keep and connect
 

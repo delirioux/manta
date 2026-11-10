@@ -43,7 +43,8 @@ first. Installing firmware is at your own risk.
    shakers, cabasa, triangle, toms and a washboard, from CC0 recordings.
 4. **Real piano and brass**: a sampled Yamaha upright playing the montuno, and a sampled trumpet and trombone section,
    the trombone an octave under the trumpets.
-5. **A song form**: intro, verso, montuno, mambo, montuno, moña and the cierre, round again with a new melody.
+5. **A Havana song's form**: the groove, the trumpet's theme, a solo where a singer would sing, the corte, the
+   piano's montuno solo, the montuno's call and response, the mambo, the moña and the cierre.
 6. **BAND HIT** (REC): the whole band hits the clave's figure together on the next bar. Hold it for a descarga: the
    percussion alone, then a timbal roll and the band back on the bar line.
 7. **MAMBO** (SEQ): the horn section into its riff from the next bar.
@@ -93,10 +94,13 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
   solo: trumpet and trombone, trumpet, a requinto (the lead guitar), sax, pan pipes, violins, accordion or bandoneon) and PERC (a style's
   percussion set). The percussion, the upright, the trumpet and trombone (TPT+TBN, TPT), the tenor sax and the violin
   section are samples; the rest is Felucca's synthesis.
-- **The form** (ARC): INTRO (the percussion, then the piano, then the bass, the horns), VERSO (the melody), MONTUNO
-  (the solo improvising, the bongo and timbal bells), MAMBO (the horn section), MONTUNO, MOÑA (the riff with the solo
-  over it), CIERRE (the band's hits), then round again. MAMBO off leaves the mambo and the moña out; ARC off plays the
-  montuno on and on.
+- **The form** (ARC): INTRO (the groove: the piano's broken montuno, the guitar, maracas, woodblock, congas, the
+  bass), TEMA (the trumpet's theme, ending high with vibrato), VERSO (a solo where a singer would sing: the trumpet's
+  or the piano's), CORTE (a bar of the soloist alone), FRASE (a trumpet phrase), PIANO (its montuno solo), MONTUNO (the
+  coro played by the horns and the solo by turns), MAMBO, MOÑA, CIERRE, then round again from the tema. MAMBO off
+  leaves the mambo and the moña out; ARC off plays the montuno on and on.
+- **Five instruments on four tracks**: with the GUITAR on the PIANO part, the upright plays beside it, on the PERC
+  track (whose samples hold the kit and the upright).
 - **The keys** are music only: the solo, an octave over the keys as printed, as you press them (MENU's SNAP puts them
   onto the scale). OCT- and OCT+ move them.
 - **MIDI out**: PIANO on channel 1, BASS on 2, HORNS on 3, the percussion on 10 with General MIDI notes.

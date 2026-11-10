@@ -91,6 +91,15 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
   güira plays on the güiro.
 - **One mute for the HORNS track.** The section and the solo share it; BOLERO's horns are muted and sit back
   (its GAIN down, about 9 dB under the mix).
+- **A fifth instrument on four tracks.** Felucca has four parts and eight voices. The PERC track's sample set, BAND,
+  holds the kit on the top 30 keys and the upright under it, so with the GUITAR on the PIANO track the upright plays
+  beside it on the PERC track (MA_KEYS, `mas_route`), at the PIANO's MIX level. A real fifth track would cost about
+  13 KB of RAM (about 17 KB free) and some 300 places in Felucca's code.
+- **A Havana song's form.** After a Havana band's songs: the groove, the trumpet's theme ending high with
+  vibrato (the LFO on the horns' pitch, eased in), a solo where the singer would be (the trumpet's or the piano's, by
+  song and round), the corte (the soloist alone a bar), a trumpet phrase, the piano's montuno solo, then the montuno,
+  the mambo, the moña, the cierre. The groove's sections break the montuno up into syncopated arpeggios and add maracas
+  and a woodblock.
 - **No singing, no empty room.** Manta leaves the singing to whoever sings along, but leaves no gap where a singer
   would be: in the montuno the section plays the coro's refrain (the phrase's first two bars, the same each time, in
   two voices on the chord) four bars, the solo improvises the next four, and so on.

@@ -142,15 +142,16 @@ int main(void)
         CHECK(ma_clave_side(&g, 0) == (cl ? 2 : 3), "clave %s: bar 0 is the %s side", cl ? "2-3" : "3-2", cl ? "two" : "three");
     }
 
-    /* the form: IN VRS MON MBO MON MOÑ FIN and round again; without the mambo IN VRS MON FIN */
+    /* the form: IN TEMA VERSO CORTE FRASE PIANO MON MBO MOÑA FIN and round again from the tema; without the mambo
+     * ... MON FIN */
     {
         ma_defaults(&g.s);
         g.s.verse = 8;
         g.s.mbars = 8;
         ma_rebuild(&g);
         ma_play(&g, true);
-        static const int ORDER[] = {MA_SEC_IN, MA_SEC_VRS, MA_SEC_MON, MA_SEC_MBO, MA_SEC_MON2, MA_SEC_MONA, MA_SEC_FIN,
-                                    MA_SEC_VRS};
+        static const int ORDER[] = {MA_SEC_IN, MA_SEC_TEMA, MA_SEC_VRS, MA_SEC_CORTE, MA_SEC_FRASE, MA_SEC_PNO,
+                                    MA_SEC_MON, MA_SEC_MBO, MA_SEC_MONA, MA_SEC_FIN, MA_SEC_TEMA};
         int bar = 0, ok = 1;
         for (unsigned k = 0; k < sizeof ORDER / sizeof ORDER[0]; ++k) {
             run_to_bar(bar);
@@ -164,7 +165,8 @@ int main(void)
         ma_play(&g, false);
         g.s.mambo = 0;
         ma_play(&g, true);
-        int want[] = {MA_SEC_IN, MA_SEC_VRS, MA_SEC_MON, MA_SEC_FIN, MA_SEC_VRS};
+        int want[] = {MA_SEC_IN, MA_SEC_TEMA, MA_SEC_VRS, MA_SEC_CORTE, MA_SEC_FRASE, MA_SEC_PNO, MA_SEC_MON, MA_SEC_FIN,
+                      MA_SEC_TEMA};
         bar = 0;
         ok = 1;
         for (unsigned k = 0; k < sizeof want / sizeof want[0]; ++k) {
@@ -175,6 +177,46 @@ int main(void)
         }
         CHECK(ok, "MAMBO off: no mambo, no moña");
         ma_play(&g, false);
+    }
+
+    /* the new form's turns: the tema ends high with vibrato; the corte is the soloist alone; the piano section is the
+     * piano's, no horns; over songs the verso goes now to the piano, now to the horns */
+    {
+        int piano_vrs = 0, horn_vrs = 0;
+        for (int song = 0; song < 8; ++song) {
+            ma_defaults(&g.s);
+            g.s.verse = 8;
+            g.s.song = (uint16_t)song;
+            ma_rebuild(&g);
+            ma_play(&g, true);
+            int tema = ma_sec_len(&g, MA_SEC_IN), vrs = tema + 8, corte = vrs + 8, frase = corte + 1, pno = frase + 4;
+            run_to_bar(tema + 7);
+            ma_process(&g, (int)(g.sr * 60.0f / (float)g.s.bpm * 4.0f) - 100);
+            bool vib = g.vib;
+            run_to_bar(vrs);
+            ma_process(&g, 64);
+            bool vp = g.vrs_piano;
+            piano_vrs += vp;
+            horn_vrs += !vp;
+            int bar_frames = (int)(g.sr * 60.0f / (float)g.s.bpm * 4.0f);
+            run_to_bar(corte);
+            reset_counts();
+            ma_process(&g, bar_frames - 200);       /* (the corte's bar, not the next one's first step) */
+            int others = on[MA_BASS] + on[MA_PERC] + (vp ? on[MA_HORNS] : on[MA_PIANO] + on[MA_KEYS]);
+            int solo = vp ? on[MA_PIANO] + on[MA_KEYS] : on[MA_HORNS];
+            run_to_bar(pno);
+            reset_counts();
+            for (int b = 0; b < 8; ++b)
+                ma_process(&g, b < 7 ? bar_frames : bar_frames - 200);
+            if (song == 0) {
+                CHECK(vib, "the tema's last note: vibrato");
+                CHECK(others == 0 && solo > 0, "the corte: the soloist alone (%d notes, %d others)", solo, others);
+                CHECK(on[MA_HORNS] == 0 && on[MA_PIANO] > 30 && on[MA_PERC] > 0 && on[MA_BASS] > 0,
+                      "the piano section: the piano's solo, no horns (%d piano)", on[MA_PIANO]);
+            }
+            ma_play(&g, false);
+        }
+        CHECK(piano_vrs > 0 && horn_vrs > 0, "the verso: the piano's in %d songs, the horns' in %d", piano_vrs, horn_vrs);
     }
 
     /* a song replays exactly */
@@ -275,11 +317,11 @@ int main(void)
         ma_defaults(&g.s);
         ma_rebuild(&g);
         ma_play(&g, true);
-        run_to_bar(6);
+        run_to_bar(10);
         ma_process(&g, 300);
-        CHECK(g.sec == MA_SEC_VRS, "in the verso");
+        CHECK(g.sec == MA_SEC_TEMA, "in the tema");
         ma_mambo(&g);
-        run_to_bar(7);
+        run_to_bar(11);
         ma_process(&g, 64);
         CHECK(g.sec == MA_SEC_MBO && g.sec_bar == 0, "MAMBO: the mambo on the next bar line");
         ma_play(&g, false);

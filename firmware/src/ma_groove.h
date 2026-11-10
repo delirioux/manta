@@ -60,7 +60,11 @@ enum { MA_DR_QUINTO, MA_DR_CONGA, MA_DR_CONGA_MUTE, MA_DR_TUMBA, MA_DR_BONGO_HI,
        MA_DR_SHAKER_FWD, MA_DR_SHAKER_BACK, MA_DR_CABASA, MA_DR_TRIANGLE, MA_DR_TRIANGLE_MUTE, MA_DR_TOM_HI,
        MA_DR_TOM_LO, MA_DR_KICK, MA_DR_WASH, MA_DR_WASH_TAP, MA_DR_COUNT };
 /* the form's sections, in the order they play (ARC on); after FIN, round again from VRS */
-enum { MA_SEC_IN, MA_SEC_VRS, MA_SEC_MON, MA_SEC_MBO, MA_SEC_MON2, MA_SEC_MONA, MA_SEC_FIN, MA_SECS };
+/* the form: the intro's groove; the TEMA, the solo's theme; the VERSO, a solo (the trumpet's or the piano's) where a
+ * singer would sing; the CORTE, a bar of the solo alone; the FRASE, the trumpet's phrase; the PIANO, its montuno solo;
+ * the MONTUNO, the coro (played) and the solo by turns; the MAMBO; the MONA; the CIERRE */
+enum { MA_SEC_IN, MA_SEC_TEMA, MA_SEC_VRS, MA_SEC_CORTE, MA_SEC_FRASE, MA_SEC_PNO, MA_SEC_MON, MA_SEC_MBO,
+       MA_SEC_MONA, MA_SEC_FIN, MA_SECS };
 #define MA_SETS 8
 #define MA_SOUNDS 8                                /* each part's SOUND list (ma_sounds.h) */
 #define MA_PIANO_UPRIGHT 0                         /* PIANO sound 0: the sampled upright */
@@ -141,6 +145,10 @@ typedef struct {
     /* the form */
     int sec, sec_bar;
     int round;
+    bool vrs_piano;                                /* this round the VERSO's solo is the piano's (else the horns') */
+    bool vib;                                      /* out: the solo's held note sings with vibrato */
+    uint8_t arp_k;                                 /* the broken montuno: its place in the chord */
+    int8_t pno_deg, pno_dir;                       /* the PIANO solo's run: where it is on the scale, which way */
     /* the block's controls for the glue */
     uint8_t tone[MA_PARTS];                        /* 0..127: how bright each part is (127: as its sound is) */
     uint8_t gain[MA_PARTS];                        /* 0..127: how far each part is turned down (0: not at all) */

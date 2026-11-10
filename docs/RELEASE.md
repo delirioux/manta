@@ -9,7 +9,8 @@ The first test build: a Latin band on the FM-1.
   trombone section (VSCO 2 CE), the trombone an octave under the trumpets, a sampled tenor sax and violin section,
   pan pipes, and a nylon guitar that strums each style its own way (the bossa's and the samba's own) and a requinto
   for lead riffs.
-- The song's form: intro, verso, montuno, mambo, montuno, moña, cierre.
+- A Havana song's form: intro, tema, verso, corte, frase, piano, montuno, mambo, moña, cierre; no singing, a solo
+  where a singer would be; the upright beside the guitar on the PERC track.
 - REC is BAND HIT (held: a descarga), SEQ is MAMBO, the keys play the solo trumpet with its mutes (filters over the
   real horn), PAN 3D on headphones.
 

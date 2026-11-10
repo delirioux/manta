@@ -11,7 +11,7 @@ CALIENTE on the left, NOCHE on the right; the chosen one comes in on the next ba
 does. ALGORITHM picks a new song in the same style on the next bar: its number seeds the chord loop, the riffs, the
 melody and the sounds, so a song always comes back the same. SELECT is the tempo, MASTER the volume.
 
-The header shows the section playing (IN, VRS, MON, MBO, MNA, FIN) and, on the right, a badge: the clave's side
+The header shows the section playing (INTRO, TEMA, VERSO, CORTE, FRASE, PIANO, MONTUNO, MAMBO, MONA, CIERRE) and, on the right, a badge: the clave's side
 (3/2 or 2/3, as the bar playing falls) or HELD while a descarga is held. The footer's sixteen dashes are the way
 through the section; under them the style and the song's number, on every page.
 
@@ -47,15 +47,18 @@ With ARC on, a song goes:
 
 | Section | Bars | What plays |
 | --- | --- | --- |
-| **INTRO** (IN) | 4 | The percussion first, then the piano, then the bass, the horns' pickup into the verso. |
-| **VERSO** (VRS) | 8 or 16 | The melody, on the solo trumpet with SOLO on PHRASE; the horns lay out; the bells light. |
-| **MONTUNO** (MON) | 8 or 16 | The groove opens: the bongo's bell and the timbal's bell. Call and response, four bars each: the horn section plays the coro's refrain (where a son's singers would answer), then the solo improvises (or you, on the keys). HITS fire here. |
-| **MAMBO** (MBO) | 8 | The horn section's mambo riff, louder; the solo rests. |
-| **MONTUNO** (MON) | 8 or 16 | Again. |
-| **MOÑA** (MNA) | 8 | The horns' riff with the solo over it, the band at its hottest. |
-| **CIERRE** (FIN) | 4 | The band's hits on the clave, then round again from the verso with a new melody. |
+| **INTRO** (IN) | 4, 8 when fast | The groove: the piano's broken montuno (and the guitar beside it), the percussion with its maracas and woodblock, the bass from the second bar. No horns. |
+| **TEMA** (TE) | 8 | The groove with the solo's theme on top, syncopated, twice; its last note the tonic, high, held, with vibrato. |
+| **VERSO** (VE) | 8 or 16 | Where a singer would sing: a solo, the trumpet's in some songs and rounds, the piano's in others (the melody in octaves over its left hand, the horns resting). |
+| **CORTE** (CO) | 1 | The band stops; the soloist plays a bar alone, a run up into the band's return. |
+| **FRASE** (FR) | 4 | A phrase of the trumpet's, improvised, over the groove. |
+| **PIANO** (PI) | 8 | The piano's montuno solo: broken thirds up and down the scale on syncopated sixteenths, the left hand's roots; the percussion and the bass go on, the horns and the guitar rest. |
+| **MONTUNO** (MO) | 8 or 16 | The bongo's bell and the timbal's bell. Call and response, four bars each: the horn section plays the coro's refrain (where a son's singers would answer), then the solo improvises (or you, on the keys). HITS fire here. |
+| **MAMBO** (MB) | 8 | The horn section's mambo riff, louder; the solo rests. |
+| **MOÑA** (MN) | 8 | The horns' riff with the solo over it, the band at its hottest. |
+| **CIERRE** (FI) | 4 | The band's hits on the clave, then round again from the tema with a new melody. |
 
-MAMBO off on the ARC page leaves the mambo and the moña out: IN, VRS, MON, FIN. With ARC off the montuno plays on
+MAMBO off on the ARC page leaves the mambo and the moña out. With ARC off the montuno plays on
 and on, and SEQ and REC are yours to shape it.
 
 ## The pages
@@ -71,7 +74,7 @@ and on, and SEQ and REC are yours to shape it.
 | **GROOVE** (ARP) | **SWING** on the sixteenths (salsa plays it straight, cumbia and bossa a little swung). **PIANO** the montuno's pattern, 1 to 4 of the style's own (the GUITAR has two a style: 1 and 3 the first, 2 and 4 the second). **BASS** the tumbao's pattern, 1 to 4. **FILLS** every 8, 4 or 2 bars, or none: the timbal's and the conga's fills into the next phrase. |
 | **MIX** (GLO) | the four parts' levels. |
 | **SPACE** (GLO again) | **ROOM** a small, dry room: Manta is meant to be punchy. **PLATE** more of the room on the horns and the piano. **WARMTH** a softer top, as an old record. **WIDTH** the stereo spread of the percussion and the piano. |
-| **ARC** (ENV) | **ARC** on: the song has its form; off: the montuno on and on. **VERSO** 8 or 16 bars. **MON** the montuno, 8 or 16 bars. **MAMBO** the mambo and the moña in the form or not. |
+| **ARC** (ENV) | **ARC** on: the song has its form (above); off: the montuno on and on. **VERSO** 8 or 16 bars. **MON** the montuno, 8 or 16 bars. **MAMBO** the mambo and the moña in the form or not. |
 | **SETS** (SAVE) | Eight sets: the whole song, style and all. **SET** picks one, **LOAD** and **STORE** turned right do it, **CLEAR** turned right three times empties it. |
 | **MENU** (hold HOME) | **COLOR** the palette: HAVANA by default (mango and palm), and Felucca's. **LOOK** FLAT or LINE. **SNAP** the keys: OFF, as you press them (the default), or ON, onto the scale. The panel: the version and the CPU, the audio's load. |
 

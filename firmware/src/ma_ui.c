@@ -415,8 +415,8 @@ static void mu_chord_strip(const ma_groove *g, int32_t y, int now)
 static void mu_form_strip(const ma_groove *g, int32_t y)
 {
     for (int k = 0; k < MA_SECS; ++k) {
-        int32_t x = 10 + k * 32, w = 28;
-        bool skip = g->s.arc && !g->s.mambo && (k == MA_SEC_MBO || k == MA_SEC_MON2 || k == MA_SEC_MONA);
+        int32_t x = 10 + k * 22, w = 19;
+        bool skip = g->s.arc && !g->s.mambo && (k == MA_SEC_MBO || k == MA_SEC_MONA);
         bool now = g->playing && g->s.arc && !g->desc && g->sec == k;
         bool past = g->playing && g->s.arc && !g->desc && k < g->sec;
         if (!g->s.arc)
@@ -710,10 +710,10 @@ static void mu_panel_arc(ma_ui *u)
         mu_label(10, 82, "REC HITS THE CLAVE", T_MID);
         return;
     }
-    static const int LVL[MA_SECS] = {30, 55, 75, 100, 75, 95, 60};
+    static const int LVL[MA_SECS] = {40, 60, 55, 15, 65, 70, 80, 100, 95, 60};
     for (int k = 0; k < MA_SECS; ++k) {
-        int32_t x = 10 + k * 32, w = 28, h = LVL[k] * 74 / 100, top = 92 - h;
-        bool skip = !g->s.mambo && (k == MA_SEC_MBO || k == MA_SEC_MON2 || k == MA_SEC_MONA);
+        int32_t x = 10 + k * 22, w = 19, h = LVL[k] * 74 / 100, top = 92 - h;
+        bool skip = !g->s.mambo && (k == MA_SEC_MBO || k == MA_SEC_MONA);
         bool now = g->playing && !g->desc && g->sec == k, past = g->playing && !g->desc && k < g->sec;
         uint16_t c = skip ? T_LINE : now ? T_ACCENT : past || !g->playing ? T_THEME : ux_mix(T_SURF, T_THEME, 45);
         cv_rect(x, top, w, h, c);

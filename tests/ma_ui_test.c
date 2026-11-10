@@ -176,8 +176,8 @@ int main(int argc, char **argv)
     press(MU_B_PLAY);
     CHECK(g.playing, "PLAY plays");
     for (int k = 0; k < 40; ++k) { run_ms(16); if (k % 2 == 0) { char n[32]; snprintf(n, sizeof n, "anim_%03d", k / 2); lint_where = n; write_ppm(n); } }
-    bars(4);
-    CHECK(g.sec == MA_SEC_VRS, "the intro over at bar 4 (%s at %d)", ma_sec_name(g.sec), g.bar);
+    bars(8);
+    CHECK(g.sec == MA_SEC_TEMA, "the intro over at bar 8 (%s at %d)", ma_sec_name(g.sec), g.bar);
     CHECK(part_on[MA_PIANO] && part_on[MA_BASS] && part_on[MA_PERC], "the parts play (%d %d %d %d)", part_on[0],
           part_on[1], part_on[2], part_on[3]);
     bars(1);
