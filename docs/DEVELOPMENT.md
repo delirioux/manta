@@ -111,7 +111,7 @@ Manta's files are `firmware/src/ma_*`, `tests/ma_*`, `tools/ma_*`, `web/ma_*` an
 - **The fast styles count two bars to the clave.** Salsa, mambo, merengue and the guaracha are written as the
   dancers count them, two bars of 4/4 to a clave (a tempo of 140 to 200), so their pulse is the eighth: their
   piano, guitar, solo and texture keep to the eighths (a sixteenth there would sound as a thirty-second, frantic).
-  Their tempos sit at the relaxed end: SALSA 130, MAMBO 170, GUARACHA 176, MERENGUE 138.
+  Their tempos sit at the relaxed end: SALSA 130, MAMBO 150, GUARACHA 176, MERENGUE 138.
 - **A bass that goes on.** The UPRIGHT is a sampled double bass (VSCO 2 CE, plucked, 11.025 kHz, about 12 KB: the
   triangle and the upright piano's tails a little shorter made the room). Each bar the bass plays its pattern as
   written about half the time, otherwise another of its family's rhythms, or holds back its first note, or on a
