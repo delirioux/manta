@@ -59,7 +59,7 @@ With ARC on, a song goes:
 | **CORTE** (CO) | 1 | The band stops; the soloist plays a bar alone, a run up into the band's return. |
 | **FRASE** (FR) | 4 | A phrase of the trumpet's, improvised, over the groove. |
 | **PIANO** (PI) | 8 | The piano's montuno solo: broken thirds up and down the scale on syncopated sixteenths, the left hand's roots; the percussion and the bass go on, the horns and the guitar rest. |
-| **MONTUNO** (MO) | 8 or 16 | The bongo's bell and the timbal's bell. Call and response, four bars each: the horn section plays the coro's refrain (where a son's singers would answer), then the solo improvises (or you, on the keys). HITS fire here. |
+| **MONTUNO** (MO) | 8 or 16 | On its own vamp (HARMONY's VAMP). The bongo's bell and the timbal's bell. Call and response, four bars each: the horn section plays the coro's refrain (where a son's singers would answer), then the solo improvises (or you, on the keys). HITS fire here. |
 | **MAMBO** (MB) | 8 | The horn section's mambo riff, louder; the solo rests. |
 | **MOÑA** (MN) | 8 | The horns' riff with the solo over it, the band at its hottest. |
 | **CIERRE** (FI) | 4 | The band's hits on the clave, then round again from the tema with a new melody. |
@@ -83,6 +83,7 @@ and on, and SEQ and REC are yours to shape it.
 | **MIX** (GLO) | the four parts' levels. |
 | **SPACE** (GLO again) | **ROOM** a small, dry room: Manta is meant to be punchy. **PLATE** more of the room on the horns and the piano. **WARMTH** a softer top, as an old record. **WIDTH** the stereo spread of the percussion and the piano. |
 | **ARC** (ENV) | **ARC** on: the song has its form (above); off: the montuno on and on. **VERSO** 8 or 16 bars. **MON** the montuno, 8 or 16 bars. **MAMBO** the mambo and the moña in the form or not. |
+| **HARMONY** (ENV again) | **VAMP** ON: with ARC on, the montuno, the mambo and the moña leave the song's loop for a vamp of their own, a bar a chord: in minor the tonic and the dominant's seventh (i V7), in major the son's I IV V7 IV. **MOD** the key changing: OFF; LIFT, the mambo and the moña a whole tone up, back down for the cierre; ROUND (the default), each round from the tema a fourth up, as a descarga wanders (kept within a tritone of the song's key). The chords' names, the keys' glow and SNAP follow the key playing. The panel: the song's loop, the vamp and the key now. |
 | **SETS** (SAVE) | Eight sets: the whole song, style and all. **SET** picks one, **LOAD** and **STORE** turned right do it, **CLEAR** turned right three times empties it. |
 | **MENU** (hold HOME) | **COLOR** the palette: HAVANA by default (mango and palm), and Felucca's. **LOOK** FLAT or LINE. **SNAP** the keys: OFF, as you press them (the default), or ON, onto the scale. The panel: the version and the CPU, the audio's load. |
 

@@ -59,6 +59,7 @@ and PERC; from any other page it takes you to SCOPES. The keys play music, or in
 | --- | --- |
 | Key and chords | **SCL**: **KEY**, **SCALE** (MIN, MAJ, DOR, HARM), **CHORDS**, **BARS** a chord |
 | Groove | **ARP**: **SWING**, **PIANO** and **BASS** (pattern 1 to 4), **FILLS** |
+| Montuno vamp, key changes | **ENV** again: **VAMP** (the montuno on i V7 or I IV V7 IV), **MOD** (OFF, LIFT: the mambo a tone up, ROUND: each round a fourth up) |
 | The song's form | **ENV**: **ARC** (intro, tema, verso, corte, frase, piano, montuno, mambo, moña, cierre), **VERSO** and **MON** bars, **MAMBO** in the form |
 
 ## The song's form: the letters at the bottom of PLAY

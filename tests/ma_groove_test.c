@@ -545,6 +545,38 @@ int main(void)
         g.soloing = false;
     }
 
+    /* HARMONY: the montuno on its vamp; ROUND: the next round a fourth up */
+    {
+        ma_init(&g, SR);
+        ma_defaults(&g.s);
+        g.s.arc = 1;
+        g.s.vamp = 1;
+        g.s.modu = MA_MOD_ROUND;
+        g.s.mambo = 0;
+        ma_rebuild(&g);
+        ma_play(&g, true);
+        int guard = 0;
+        while (g.sec != MA_SEC_MON && guard++ < 400)
+            run_to_bar(g.bar + 1);
+        int n;
+        const ma_chord *ch = ma_chords(&g, &n);
+        CHECK(g.sec == MA_SEC_MON && ch == g.vamp && n == 2, "the montuno: on its vamp (i V7 in minor)");
+        CHECK(ma_chord_cur(&g) == &g.vamp[0], "the vamp from the montuno's first bar");
+        run_to_bar(g.bar + 1);
+        CHECK(ma_chord_cur(&g) == &g.vamp[1] && (g.vamp[1].tone[1] - g.vamp[1].root + 12) % 12 == 4,
+              "then the dominant, its major third");
+        CHECK(g.mod == 0, "the first round in the song's key");
+        guard = 0;
+        while (g.round == 0 && guard++ < 400)
+            run_to_bar(g.bar + 1);
+        CHECK(g.round == 1 && g.mod == 5 && ma_key_now(&g) == (g.s.key + 5) % 12, "ROUND: the next round a fourth up (%d)", g.mod);
+        g.s.modu = MA_MOD_OFF;
+        while (g.round == 1 && guard++ < 800)
+            run_to_bar(g.bar + 1);
+        CHECK(g.mod == 0, "MOD OFF: the song's key again");
+        ma_play(&g, false);
+    }
+
     /* a bad record: everything into range */
     {
         ma_settings s;

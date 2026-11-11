@@ -91,7 +91,11 @@ typedef struct {
     uint16_t song;                                 /* ALGORITHM: the song number in the style, 0..999 */
     uint8_t mine;                                  /* a bit a part (PIANO BASS HORNS PERC): its own pattern plays (EDIT) */
     uint8_t bright[4];                             /* the instrument pages' BRIGHT, 0..100 (100: the sound as it is) */
+    uint8_t vamp;                                  /* HARMONY's VAMP: the montuno on its own two-chord vamp (ARC on) */
+    uint8_t modu;                                  /* HARMONY's MOD: MA_MOD_* */
 } ma_settings;
+enum { MA_MOD_OFF, MA_MOD_LIFT, MA_MOD_ROUND, MA_MODS };   /* LIFT: the mambo and the moña a tone up; ROUND: each round
+                                                    * from the tema a fourth up (the key wandering as a descarga's) */
 
 /* the parts' own patterns (EDIT, on the instrument pages): two bars (a clave) of sixteenths. The notes are kept over
  * the chord they were played on (semitones over its root's C3), so they follow the loop: a third, a fifth or a
@@ -138,6 +142,10 @@ typedef struct {
     int bar;                                       /* bars since PLAY (0: the first) */
     /* the song: built from the style, the song number, the key and the loop (ma_rebuild) */
     ma_chord loop[MA_LOOP_MAX];
+    ma_chord vamp[4];                              /* the montuno's vamp (VAMP): minor i V7, else I IV V7 IV */
+    uint8_t nvamp;
+    int8_t mod;                                    /* the key now over the song's (MOD), semitones; the notes moved as
+                                                    * they go out, the chords' names and the keys' glow with them */
     int nloop;
     uint8_t pat;                                   /* the song's pattern variation (0..3) */
     uint8_t phr_var, riff_var;
@@ -252,7 +260,12 @@ void ma_process(ma_groove *g, int frames);         /* the audio: notes in time, 
 void ma_all_off(ma_groove *g);
 
 bool ma_feed_pop(ma_groove *g, ma_seen *n);
-int ma_chord_now(const ma_groove *g);              /* the loop's chord sounding (0..nloop-1) */
+int ma_chord_now(const ma_groove *g);
+const ma_chord *ma_chords(const ma_groove *g, int *n);   /* the chords playing now: the loop's, or the montuno's vamp */
+const ma_chord *ma_chord_cur(const ma_groove *g);  /* the chord this bar */
+void ma_chord_name(const ma_groove *g, const ma_chord *c, char *out, int n);   /* its name in the key now (MOD) */
+int ma_key_now(const ma_groove *g);                /* the key now: KEY moved by MOD */
+int ma_snap_now(const ma_groove *g, int note);     /* ma_snap in the key now */              /* the loop's chord sounding (0..nloop-1) */
 int ma_bars_per_chord(const ma_settings *s);
 int ma_sec_len(const ma_groove *g, int sec);       /* a section's bars */
 const char *ma_style_name(int i);

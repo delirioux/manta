@@ -270,6 +270,8 @@ void ma_defaults(ma_settings *s)
     s->keysnap = 0;
     for (int i = 0; i < 4; ++i)
         s->bright[i] = 100;
+    s->vamp = 1;
+    s->modu = MA_MOD_ROUND;
 }
 
 void ma_settings_fix(ma_settings *s)
@@ -318,6 +320,9 @@ void ma_settings_fix(ma_settings *s)
     if (s->song > 999)
         s->song = 0;
     s->mine &= 15u;
+    s->vamp = s->vamp ? 1 : 0;
+    if (s->modu >= MA_MODS)
+        s->modu = MA_MOD_ROUND;
     for (int i = 0; i < 4; ++i)
         s->bright[i] = (uint8_t)clampi(s->bright[i], 0, 100);
 }
@@ -555,6 +560,14 @@ void ma_rebuild(ma_groove *g)
     g->nloop = L->n;
     for (int i = 0; i < L->n; ++i)
         build_chord(&g->loop[i], s, L->deg[i], L->flavour, L->dom != 0, &center);
+    {   /* the montuno's vamp: in minor the tonic and the dominant's seventh, a bar each; in major the son's I IV V7 IV */
+        static const uint8_t VM[2] = {0, 4}, VJ[4] = {0, 3, 4, 3};
+        bool minor = s->scale != MA_SC_MAJOR;
+        int c2 = 64;
+        g->nvamp = minor ? 2 : 4;
+        for (int i = 0; i < g->nvamp; ++i)
+            build_chord(&g->vamp[i], s, minor ? VM[i] : VJ[i], VJ[i] == 4 || VM[i] == 4 ? 7 : 3, true, &c2);
+    }
     uint32_t seed = (uint32_t)s->style * 7919u + (uint32_t)s->song * 104729u + 17u;
     uint32_t r = seed;
     g->pat = (uint8_t)rnd_n(&r, 4);
@@ -944,8 +957,11 @@ static void part_off(ma_groove *g, int part)
 static struct { uint32_t at; uint8_t part, note, vel, pad; float len; } pend[MA_PEND];
 static int npend;
 static float step_frames(const ma_groove *g);
+static void set_mod(ma_groove *g);
 static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, float len)
 {
+    if (part != MA_PERC)                           /* MOD: the key now */
+        n = clampi(n + g->mod, 0, 127);
     if (part == MA_PIANO || part == MA_KEYS)       /* the piano kept out of its thin top: down an octave above A5 */
         while (n > 81)
             n -= 12;
@@ -1131,6 +1147,7 @@ static void bar_line(ma_groove *g)
             g->sec = nx;
             g->sec_bar = 0;
             g->vib = false;                        /* (the tema's held note sung out) */
+            set_mod(g);
         }
     }
     g->vrs_piano = vrs_piano_of(g);
@@ -1282,18 +1299,78 @@ static void play_perc(ma_groove *g, int i, uint32_t delay, float hum)
 }
 
 /* the chord sounding at bar b, the next one */
+/* MOD: the key the section plays in. LIFT the mambo and the moña a whole tone up; ROUND each round a fourth up
+ * from the song's key (kept within a tritone either way, the band's range); ARC off or MOD off: the song's key */
+static void set_mod(ma_groove *g)
+{
+    int m = 0;
+    if (g->s.arc && g->s.modu == MA_MOD_LIFT && (g->sec == MA_SEC_MBO || g->sec == MA_SEC_MONA))
+        m = 2;
+    else if (g->s.arc && g->s.modu == MA_MOD_ROUND && g->round > 0)
+        m = (g->round * 5) % 12;
+    if (m > 6)
+        m -= 12;
+    g->mod = (int8_t)m;
+}
+
+/* the montuno's vamp plays (VAMP, ARC on): the montuno, the mambo and the moña, a bar a chord, from the section's
+ * first bar */
+static bool vamp_on(const ma_groove *g)
+{
+    return g->s.vamp && g->s.arc && g->nvamp &&
+           (g->sec == MA_SEC_MON || g->sec == MA_SEC_MBO || g->sec == MA_SEC_MONA);
+}
+static int vamp_bar(const ma_groove *g, int b)     /* (bar b's place in the vamp: counted from the section's start) */
+{
+    int start = (g->bar < 0 ? 0 : g->bar) - g->sec_bar;
+    int k = (b < 0 ? 0 : b) - start;
+    return ((k % g->nvamp) + g->nvamp) % g->nvamp;
+}
 static const ma_chord *chord_at(const ma_groove *g, int b)
 {
+    if (vamp_on(g))
+        return &g->vamp[vamp_bar(g, b)];
     int bpc = ma_bars_per_chord(&g->s);
     return &g->loop[((b < 0 ? 0 : b) / bpc) % (g->nloop > 0 ? g->nloop : 1)];
 }
 static const ma_chord *chord_after(const ma_groove *g, int b)
 {
+    if (vamp_on(g))
+        return &g->vamp[vamp_bar(g, b + 1)];
     int bpc = ma_bars_per_chord(&g->s);
     return &g->loop[(((b < 0 ? 0 : b) / bpc) + 1) % (g->nloop > 0 ? g->nloop : 1)];
 }
+const ma_chord *ma_chords(const ma_groove *g, int *n)
+{
+    if (vamp_on(g)) {
+        *n = g->nvamp;
+        return g->vamp;
+    }
+    *n = g->nloop;
+    return g->loop;
+}
+const ma_chord *ma_chord_cur(const ma_groove *g) { return chord_at(g, g->bar); }
+int ma_key_now(const ma_groove *g) { return ((g->s.key + g->mod) % 12 + 12) % 12; }
+int ma_snap_now(const ma_groove *g, int note)
+{
+    ma_settings k = g->s;
+    k.key = (uint8_t)ma_key_now(g);
+    return ma_snap(&k, note);
+}
+void ma_chord_name(const ma_groove *g, const ma_chord *c, char *out, int n)
+{
+    const char *suf = c->name + (c->name[1] == '#' ? 2 : 1);
+    cpy(out, NOTE_NAMES[(c->root + g->mod + 24) % 12], n);
+    int k = 0;
+    while (out[k]) k++;
+    for (int i = 0; suf[i] && k < n - 1; ++i)
+        out[k++] = suf[i];
+    out[k] = 0;
+}
 int ma_chord_now(const ma_groove *g)
 {
+    if (vamp_on(g))
+        return vamp_bar(g, g->bar);
     int bpc = ma_bars_per_chord(&g->s);
     return g->nloop > 0 ? ((g->bar < 0 ? 0 : g->bar) / bpc) % g->nloop : 0;
 }
@@ -2066,7 +2143,7 @@ void ma_edit_begin(ma_groove *g, int part)
                 const ma_chord *c = pos_chord(g, k);
                 int out[MA_PAT_NOTES], len, n = ma_played(g, part, k, out, &len);
                 for (int j = 0; j < MA_PAT_NOTES; ++j)
-                    pats_edit.n[part][k][j] = j < n ? (int8_t)pat_off(c, out[j]) : MA_PAT_REST;
+                    pats_edit.n[part][k][j] = j < n ? (int8_t)pat_off(c, out[j] - g->mod) : MA_PAT_REST;
                 pats_edit.len[part][k] = (uint8_t)(n ? len : 0);
             }
         }
@@ -2146,7 +2223,7 @@ void ma_edit_key(ma_groove *g, int k, int note, bool down)
         const ma_chord *c = pos_chord(g, g->egrp);
         for (int j = 0; j < MA_PAT_NOTES; ++j)     /* the others held with it: one chord */
             if (n[j] == MA_PAT_REST) {
-                n[j] = (int8_t)pat_off(c, note);
+                n[j] = (int8_t)pat_off(c, note - g->mod);   /* (kept in the song's key: MOD moves it) */
                 break;
             }
         g->ekeys++;
@@ -2290,6 +2367,7 @@ void ma_play(ma_groove *g, bool on)
     g->sec = g->s.arc ? MA_SEC_IN : MA_SEC_MON;
     g->sec_bar = 0;
     g->round = 0;
+    g->mod = 0;
     g->vrs_piano = vrs_piano_of(g);
     g->vib = false;
     g->pno_deg = 4;
@@ -2407,7 +2485,7 @@ void ma_key(ma_groove *g, int k, int note, bool down)
     if (k < 0 || k >= 27)
         return;
     if (down) {
-        int n = g->s.keysnap ? ma_snap(&g->s, note) : note;   /* (SNAP on: in the key; off: as pressed) */
+        int n = g->s.keysnap ? ma_snap_now(g, note) : note;   /* (SNAP on: in the key; off: as pressed) */
         if (g->key_note[k] >= 0)
             emit(g, 0, MA_HORNS, g->key_note[k], 0);
         if (!g->keys)                              /* the solo makes way */

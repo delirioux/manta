@@ -116,6 +116,7 @@ static const uint8_t SV_BARS[] = {1, 2, 4}, SV_SECTION[] = {8, 16};
 static const uint8_t SV_ELEN[] = {1, 2, 3, 4, 6, 8, 12, 16};   /* EDIT's LEN, in sixteenths */
 static const char *const SN_ELEN[] = {"1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4", "1 BAR"};
 static const char *const SN_EUSE[] = {"STYLE", "MINE"};
+static const char *const SN_MOD[] = {"OFF", "LIFT", "ROUND"};
 #define C_NUM(l, f) {l, SS_(f), SC_NUM, 0, 100, 5, 0, 0}
 #define C_LIST(l, f, n) {l, SS_(f), SC_LIST, 0, (int16_t)(sizeof n / sizeof n[0]) - 1, 1, n, 0}
 #define C_VALS(l, f, v) {l, SS_(f), SC_VALS, 0, (int16_t)(sizeof v / sizeof v[0]) - 1, 1, 0, v}
@@ -151,13 +152,14 @@ static const mu_cdef MU_CARDS[MU_PAGES][4] = {
                      C_NUM("BRIGHT", bright[1]), C_NUM("LEVEL", lvl[1])},
     [MU_PG_IHORNS] = {C_SND("SOUND", 2), C_LIST("MUTE", mute, SN_MUTE), C_NUM("BRIGHT", bright[2]),
                       C_NUM("LEVEL", lvl[2])},
+    [MU_PG_HARM] = {C_LIST("VAMP", vamp, SN_ONOFF), C_LIST("MOD", modu, SN_MOD), C_OFF, C_OFF},
 };
 /* EDIT's cards, on whichever instrument page */
 static const mu_cdef MU_ECARDS[4] = {{"STEP", 0, SC_ESTEP, 0, 31, 1, 0, 0}, {"LEN", 0, SC_ELEN, 0, 7, 1, SN_ELEN, 0},
                                      {"ERASE", 0, SC_EERASE, 0, 0, 1, 0, 0}, {"USE", 0, SC_EUSE, 0, 1, 1, SN_EUSE, 0}};
 static const char *const MU_PAGE_NAMES[MU_PAGES] = {"PLAY", "SOUND", "SOLO", "PAN 3D", "PERC", "KEY", "GROOVE", "MIX",
                                                     "SPACE", "ARC", "SETS", "MENU", "SCOPES", "PIANO", "BASS",
-                                                    "HORNS"};
+                                                    "HORNS", "HARMONY"};
 /* the instrument page's part (-1: not one) */
 static int mu_page_part(int pg)
 {
@@ -451,20 +453,24 @@ static void mu_circle(int32_t cx, int32_t cy, int32_t r, uint16_t c)
     }
 }
 
-/* the loop's chords, the one sounding filled */
+/* the chords playing (the loop's, or the montuno's vamp), named in the key now (MOD), the one sounding filled */
 static void mu_chord_strip(const ma_groove *g, int32_t y, int now)
 {
-    int n = g->nloop < 4 ? g->nloop : 4;
+    int n;
+    const ma_chord *ch = ma_chords(g, &n);
+    if (n > 4) n = 4;
     int32_t gap = 5, w = (224 - gap * (n - 1)) / (n > 0 ? n : 1);
     for (int i = 0; i < n; ++i) {
         int32_t x = 10 + i * (w + gap);
+        char nm[10];
+        ma_chord_name(g, &ch[i], nm, sizeof nm);
         if (i == now) {
             cv_rrect(x, y, w, 18, 3, T_THEME, T_SURF);
-            cv_text_in(x, y + CAP_IN(S, 18), w, &AF_S, g->loop[i].name, T_INK, T_THEME);
+            cv_text_in(x, y + CAP_IN(S, 18), w, &AF_S, nm, T_INK, T_THEME);
         } else {
             cv_rrect(x, y, w, 18, 3, mu_well(), T_SURF);
             cv_rrect(x + 1, y + 1, w - 2, 16, 3, T_SURF, mu_well());
-            cv_text_in(x, y + CAP_IN(S, 18), w, &AF_S, g->loop[i].name, T_TEXT, T_SURF);
+            cv_text_in(x, y + CAP_IN(S, 18), w, &AF_S, nm, T_TEXT, T_SURF);
         }
     }
 }
@@ -779,6 +785,41 @@ static void mu_panel_inst(ma_ui *u, int part)
     }
 }
 
+/* HARMONY: the song's loop, the montuno's vamp, the key now */
+static void mu_panel_harm(ma_ui *u)
+{
+    const ma_groove *g = u->g;
+    char t[40], nm[10];
+    mu_label(10, 6, "THE SONG", T_MID);
+    int n;
+    const ma_chord *cur = g->playing ? ma_chord_cur(g) : 0;
+    for (int row = 0; row < 2; ++row) {
+        const ma_chord *ch = row ? g->vamp : g->loop;
+        n = row ? g->nvamp : g->nloop;
+        if (n > 4) n = 4;
+        int32_t y = row ? 62 : 20, gap = 5, w = (224 - gap * 3) / 4;
+        if (row)
+            mu_label(10, 48, g->s.vamp && g->s.arc ? "THE MONTUNO'S VAMP" : "THE VAMP (OFF)", g->s.vamp ? T_MID : T_DIM);
+        for (int i = 0; i < n; ++i) {
+            int32_t x = 10 + i * (w + gap);
+            bool on = cur == &ch[i];
+            ma_chord_name(g, &ch[i], nm, sizeof nm);
+            cv_rrect(x, y, w, 20, 3, on ? T_THEME : mu_well(), T_SURF);
+            cv_text_in(x, y + CAP_IN(S, 20), w, &AF_S, nm, on ? T_INK : (row && !g->s.vamp ? T_DIM : T_TEXT),
+                       on ? T_THEME : mu_well());
+        }
+    }
+    mu_cpy(t, "KEY NOW ", sizeof t);
+    mu_cat(t, ma_note_name(ma_key_now(g)), sizeof t);
+    if (g->mod) {
+        char a[8];
+        mu_cat(t, g->mod > 0 ? "  +" : "  ", sizeof t);
+        mu_fmt_int(a, g->mod);
+        mu_cat(t, a, sizeof t);
+    }
+    mu_label(10, 94, t, g->mod ? T_ACCENT : T_MID);
+}
+
 /* PERC's page: its scope, and the drums over the two bars, a row a drum (EDIT: the edit's; else what played) */
 static void mu_panel_perc(ma_ui *u)
 {
@@ -815,7 +856,9 @@ static void mu_panel_key(ma_ui *u)
 {
     const ma_groove *g = u->g;
     char t[32], a[8];
-    int bpc = ma_bars_per_chord(&g->s), now = g->playing ? ma_chord_now(g) : -1;
+    int nn, bpc = ma_bars_per_chord(&g->s), now = g->playing ? ma_chord_now(g) : -1;
+    if (ma_chords(g, &nn) != g->loop)             /* (the montuno's vamp playing: the loop waits) */
+        now = -1;
     mu_cpy(t, "THE LOOP, ", sizeof t);
     mu_fmt_int(a, bpc);
     mu_cat(t, a, sizeof t);
@@ -965,6 +1008,7 @@ static void mu_draw_panel(ma_ui *u)
         case MU_PG_IPIANO: mu_panel_inst(u, MA_PIANO); break;
         case MU_PG_IBASS: mu_panel_inst(u, MA_BASS); break;
         case MU_PG_IHORNS: mu_panel_inst(u, MA_HORNS); break;
+        case MU_PG_HARM: mu_panel_harm(u); break;
         }
     }
     cv_blit(0, MU_PANEL_Y);
@@ -1321,7 +1365,7 @@ void mu_button(ma_ui *u, int b, bool down)
         break;
     }
     case MU_B_GLO: mu_goto_page(u, u->page == MU_PG_MIX ? MU_PG_SPACE : MU_PG_MIX); break;
-    case MU_B_ENV: mu_goto_page(u, MU_PG_ARC); break;
+    case MU_B_ENV: mu_goto_page(u, u->page == MU_PG_ARC ? MU_PG_HARM : MU_PG_ARC); break;
     case MU_B_SAVE: mu_goto_page(u, MU_PG_SETS); break;
     default: break;
     }
@@ -1351,7 +1395,7 @@ void mu_key(ma_ui *u, int note, bool down)
         u->key_mode[k] = 1;
         u->key_sent[k] = note + 12 * u->oct + REG[g->edit & 3];
         if (g->s.keysnap && g->edit != MA_PERC)
-            u->key_sent[k] = ma_snap(&g->s, u->key_sent[k]);
+            u->key_sent[k] = ma_snap_now(g, u->key_sent[k]);
         ma_edit_key(g, k, u->key_sent[k], true);
         if (g->edit == MA_PERC)
             mu_msg(u, ma_drum_name(ma_key_drum(k)));
@@ -1360,7 +1404,7 @@ void mu_key(ma_ui *u, int note, bool down)
         u->key_part[k] = (int8_t)part;
         u->key_sent[k] = note + 12 * u->oct + REG[part];
         if (g->s.keysnap && part != MA_PERC)
-            u->key_sent[k] = ma_snap(&g->s, u->key_sent[k]);
+            u->key_sent[k] = ma_snap_now(g, u->key_sent[k]);
         ma_part_key(g, part, k, u->key_sent[k], true);
         if (part == MA_PERC)
             mu_msg(u, ma_drum_name(ma_key_drum(k)));

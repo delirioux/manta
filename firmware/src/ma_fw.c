@@ -349,7 +349,7 @@ static void ma_leds(void)
         [MU_PG_PLAY] = B_HOME, [MU_PG_SOUND] = B_FX, [MU_PG_SOLO] = B_LFO, [MU_PG_PAN3D] = B_LFO, [MU_PG_PERC] = B_HOME,
         [MU_PG_KEY] = B_SCL, [MU_PG_GROOVE] = B_ARP, [MU_PG_MIX] = B_GLO, [MU_PG_SPACE] = B_GLO, [MU_PG_ARC] = B_ENV,
         [MU_PG_SETS] = B_SAVE, [MU_PG_MENU] = B_HOME, [MU_PG_SCOPES] = B_HOME, [MU_PG_IPIANO] = B_HOME,
-        [MU_PG_IBASS] = B_HOME, [MU_PG_IHORNS] = B_HOME};
+        [MU_PG_IBASS] = B_HOME, [MU_PG_IHORNS] = B_HOME, [MU_PG_HARM] = B_ENV};
     static uint8_t ready;
     uint8_t nl[FM1_NCOL] = {0}, nd[FM1_NCOL] = {0};
     uint32_t k, c;
@@ -383,14 +383,14 @@ static void ma_leds(void)
         }
     }
     if (ma_g.playing && ma_g.nloop > 0 && !drums) {
-        const ma_chord *chd = &ma_g.loop[ma_chord_now(&ma_g)];
+        const ma_chord *chd = ma_chord_cur(&ma_g);
         for (k = 0; k < 27u; k++)
             for (int t = 0; t < 4; ++t)
-                if ((MU_KEY_LO + k) % 12u == (uint32_t)chd->tone[t] % 12u) lit |= 1u << k;
+                if ((MU_KEY_LO + k) % 12u == (uint32_t)(chd->tone[t] + ma_g.mod + 24) % 12u) lit |= 1u << k;
     }
     if (!drums)
         for (k = 0; k < 27u; k++)
-            if (ma_snap(&ma_g.s, (int)(MU_KEY_LO + k)) == (int)(MU_KEY_LO + k)) scale |= 1u << k;
+            if (ma_snap_now(&ma_g, (int)(MU_KEY_LO + k)) == (int)(MU_KEY_LO + k)) scale |= 1u << k;
     for (k = 0; k < 27u; k++)
         led_put(nl, 14u + k, (int)((((fm1_in.notes | lit) >> k) & 1u)));
     if (ma_g.playing)

@@ -346,6 +346,12 @@ int main(int argc, char **argv)
     CHECK(!g.s.mambo, "MAMBO off");
     shot("16_arc_nomambo");
     mu_knob(&ui, MU_K4, 1);
+    press(MU_B_ENV);
+    CHECK(ui.page == MU_PG_HARM, "ENV again: HARMONY");
+    shot("16b_harmony");
+    mu_knob(&ui, MU_K2, -1);
+    CHECK(g.s.modu == MA_MOD_LIFT, "MOD: LIFT");
+    mu_knob(&ui, MU_K2, 1);
     /* SETS */
     press(MU_B_SAVE);
     CHECK(ui.page == MU_PG_SETS, "SAVE: SETS");

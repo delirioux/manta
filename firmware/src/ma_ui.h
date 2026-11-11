@@ -22,6 +22,7 @@
  *              plays them at once; leaving the page another way drops them. Elsewhere: the last instrument page
  *   FX         SOUND                        LFO   SOLO, again: PAN 3D   SCL   KEY
  *   ARP        GROOVE                       EDIT  (above)               GLO   MIX, again: SPACE
+ *   ENV        ARC, again: HARMONY (the montuno's vamp, the modulation)
  *   ENV        ARC                          SAVE  SETS (eight sets on the knobs) */
 #ifndef MA_UI_H
 #define MA_UI_H
@@ -38,7 +39,7 @@ enum {
 };
 enum { MU_PG_PLAY, MU_PG_SOUND, MU_PG_SOLO, MU_PG_PAN3D, MU_PG_PERC, MU_PG_KEY, MU_PG_GROOVE, MU_PG_MIX,
        MU_PG_SPACE, MU_PG_ARC, MU_PG_SETS, MU_PG_MENU, MU_PG_SCOPES, MU_PG_IPIANO, MU_PG_IBASS, MU_PG_IHORNS,
-       MU_PAGES };                        /* (PERC is the percussion's instrument page) */
+       MU_PG_HARM, MU_PAGES };                        /* (PERC is the percussion's instrument page) */
 #define MU_SCOPE_W 96                     /* a scope's samples (the glue fills them, triggered on a rising zero) */
 #define MU_KEY_LO 53                      /* F3: the FM-1's lowest key */
 #define MU_KEY_HI 79                      /* G5 */
