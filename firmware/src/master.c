@@ -11,6 +11,9 @@ static void master_poll(void)
     if (a >= 0) {
         master_knob += (a * 16 - master_knob) / 8;
         song.master_q12 = master_of_pot((uint32_t)(master_knob / 16));
+#if FELUCCA_MANTA
+        song.master_q12 = (uint32_t)(((uint64_t)song.master_q12 * ma_fade_q12) >> 12);   /* (Manta: held PLAY's fade) */
+#endif
     }
 }
 /* power-on (main.c), before audio_init: the knob as it stands, no glide */

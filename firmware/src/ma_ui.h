@@ -8,7 +8,7 @@
  *   PRESETS    the style (the list shows while turning; playing, it comes in on the next bar)
  *   ALGORITHM  a new song in the same style (on the next bar)
  *   KNOB 1..4  the four cards of the page (PLAY: HEAT CLAVE SOLO HITS)
- *   PLAY       start (with the intro, ARC on) / stop
+ *   PLAY       start (with the intro, ARC on) / stop; held while playing: the song fades out (MU_FADE_MS) and stops
  *   REC        BAND HIT: tapped, the band hits the clave together on the next bar (a cierre); held, the descarga
  *              (the percussion alone) until let go, a timbal roll, the band back on the bar line
  *   SEQ        MAMBO: the horn section into its mambo from the next bar (ARC off: the riff in and out)
@@ -35,6 +35,9 @@ enum { MU_PG_PLAY, MU_PG_SOUND, MU_PG_SOLO, MU_PG_PAN3D, MU_PG_PERC, MU_PG_KEY, 
        MU_PG_SPACE, MU_PG_ARC, MU_PG_SETS, MU_PG_MENU, MU_PAGES };
 #define MU_KEY_LO 53                      /* F3: the FM-1's lowest key */
 #define MU_KEY_HI 79                      /* G5 */
+#define MU_FADE_HOLD_MS 600               /* PLAY held this long while playing: the fade out */
+#define MU_FADE_MS 8000                   /* the fade, to silence; then the band stops */
+#define MU_FADE_REST_MS 1500              /* stopped after a fade: silent this long more (the tails), then back up */
 
 typedef struct {
     ma_groove *g;
@@ -45,6 +48,10 @@ typedef struct {
     int msg_ms;
     int home_ms;
     bool home_down;
+    bool play_down, play_held;            /* PLAY: down; held long enough for the fade (its release does nothing) */
+    int play_ms;
+    int fade_ms;                          /* the fade's time left (0: none); below 0: the rest after it */
+    int fade_q12;                         /* the level the fade leaves, 4096 full (the glue: under MASTER) */
     uint32_t keys_down;                   /* bit (note - MU_KEY_LO) */
     int oct;                              /* OCT- OCT+: the keys' octave, -2 .. 2 */
     int key_sent[27];                     /* the note each key sent (with the octave it was pressed in) */

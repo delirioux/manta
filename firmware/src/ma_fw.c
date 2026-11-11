@@ -343,6 +343,7 @@ static void ma_leds(void)
 /* a frame: the settings into the tracks, the LEDs, the screen; the settings and sets saved a while after the last
  * change, stopped */
 static uint32_t ma_last_ms;
+static uint32_t ma_fade_q12 = 4096u;                         /* held PLAY's fade, under MASTER (master.c) */
 static void ma_frame(void)
 {
     uint32_t now = fm1_ms, dt = now - ma_last_ms;
@@ -367,6 +368,7 @@ static void ma_frame(void)
     ma_u.batt = (int)batt_shown();
     ma_u.cpu = (int)(song.cpu_q8 * 100u / 256u);
     mu_tick(&ma_u, dt > 100u ? 100 : (int)dt);
+    ma_fade_q12 = (uint32_t)ma_u.fade_q12;
     if (first) {
         mu_draw_all(&ma_u);
         first = 0;

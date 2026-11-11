@@ -6,7 +6,7 @@ Knob 1 to 4 turn the four cards on the screen. A page's button pressed again goe
 
 ## Playing
 
-PLAY starts with the intro (with ARC on) and stops. PRESETS opens the list of the twelve styles while you turn,
+PLAY starts with the intro (with ARC on) and stops. Held while playing, it fades the song out over eight seconds, FADE OUT on the screen, and stops; a tap during the fade stops at once. PRESETS opens the list of the twelve styles while you turn,
 CALIENTE on the left, NOCHE on the right; the chosen one comes in on the next bar line, NEXT in the header until it
 does. ALGORITHM picks a new song in the same style on the next bar: its number seeds the chord loop, the riffs, the
 melody and the sounds, so a song always comes back the same. SELECT is the tempo, MASTER the volume.

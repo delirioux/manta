@@ -113,6 +113,7 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
   the horns into the mambo, again to take them out.
 - **Your solo**: SOLO on KEYS, LFO for the SOLO page, MUTE on HARMON or WAH, and play over the montuno; LFO again for
   PAN 3D, MODE on ORBIT, and the trumpet walks round you on headphones.
+- **The ending**: hold PLAY while the band plays and the song fades out over eight seconds, as on the record.
 - **A tour**: PRESETS from SALSA to MERENGUE to CUMBIA, each on the next bar line, the CLAVE and HEAT as you go.
 
 ## Credits

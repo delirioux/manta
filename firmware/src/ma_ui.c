@@ -855,6 +855,7 @@ void mu_init(ma_ui *u, ma_groove *g)
     u->page = MU_PG_PLAY;
     u->hot = -1;
     u->batt = 3;
+    u->fade_q12 = 4096;
     for (int k = 0; k < 27; ++k)
         u->key_sent[k] = -1;
     mu_apply_style(u);
@@ -1010,10 +1011,29 @@ void mu_button(ma_ui *u, int b, bool down)
         ma_band_hit(g, down);
         return;
     }
+    if (b == MU_B_PLAY) {                          /* tap: start / stop; held while playing: fade out */
+        if (down) {
+            u->play_down = true;
+            u->play_held = false;
+            u->play_ms = 0;
+            if (!g->playing) {                     /* (stopped: starts at once, on the press) */
+                u->play_held = true;
+                u->fade_ms = 0;
+                u->fade_q12 = 4096;
+                ma_play(g, true);
+            }
+        } else if (u->play_down) {
+            u->play_down = false;
+            if (!u->play_held && g->playing) {     /* a tap: stop now (a fade too) */
+                ma_play(g, false);
+                if (u->fade_ms > 0) u->fade_ms = -MU_FADE_REST_MS;
+            }
+        }
+        return;
+    }
     if (!down)
         return;
     switch (b) {
-    case MU_B_PLAY: ma_play(g, !g->playing); break;
     case MU_B_SEQ:
         if (g->playing) ma_mambo(g);
         else mu_msg(u, "PLAY FIRST");
@@ -1078,6 +1098,29 @@ void mu_tick(ma_ui *u, int ms)
         u->force = true;
     }
     if (u->msg_ms > 0) u->msg_ms -= ms;
+    if (u->play_down && !u->play_held && (u->play_ms += ms) >= MU_FADE_HOLD_MS) {
+        u->play_held = true;                       /* held: the fade (held again during one: nothing more) */
+        if (u->g->playing && u->fade_ms <= 0) {
+            u->fade_ms = MU_FADE_MS;
+            mu_msg(u, "FADE OUT");
+        }
+    }
+    if (u->fade_ms > 0) {
+        if (!u->g->playing) {                      /* (stopped another way meanwhile) */
+            u->fade_ms = -MU_FADE_REST_MS;
+        } else if ((u->fade_ms -= ms) <= 0) {
+            ma_play(u->g, false);
+            u->fade_ms = -MU_FADE_REST_MS;
+        }
+    } else if (u->fade_ms < 0 && (u->fade_ms += ms) >= 0) {
+        u->fade_ms = 0;
+    }
+    if (u->fade_ms > 0) {                          /* the level: squared, so the ear hears it go evenly */
+        int f = (int)((int64_t)u->fade_ms * 4096 / MU_FADE_MS);
+        u->fade_q12 = (int)((int64_t)f * f >> 12);
+    } else {
+        u->fade_q12 = u->fade_ms < 0 ? 0 : 4096;
+    }
     if (u->home_down) {
         u->home_ms += ms;
         if (u->home_ms >= MU_MENU_HOLD_MS && u->page != MU_PG_MENU) {

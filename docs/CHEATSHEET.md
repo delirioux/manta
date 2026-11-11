@@ -10,6 +10,7 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | What | How |
 | --- | --- |
 | Start / stop | **PLAY**: with the intro (ARC on) |
+| Fade out | **PLAY** held while playing: the song fades out over 8 seconds and stops (a tap stops at once) |
 | Tempo / volume | **SELECT** / **MASTER** |
 | Another style | **PRESETS**: one of twelve, on the next bar line (CALIENTE: SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA, GUARACHA; NOCHE: SON, CHA-CHA, BOLERO, BOSSA, TANGO, DANZON) |
 | Another song | **ALGORITHM**: a new chord loop, riff, melody and sounds in the same style, on the next bar |

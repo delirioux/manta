@@ -339,6 +339,19 @@ int main(int argc, char **argv)
     press(MU_B_PLAY);
     CHECK(!g.playing, "PLAY stops");
     CHECK(g.nheld == 0, "nothing left sounding");
+    /* PLAY held while playing: the fade out, then the stop; the level back after the rest */
+    press(MU_B_PLAY);
+    CHECK(g.playing, "PLAY plays again");
+    mu_button(&ui, MU_B_PLAY, true);
+    mu_tick(&ui, MU_FADE_HOLD_MS + 10);
+    mu_button(&ui, MU_B_PLAY, false);
+    CHECK(g.playing && ui.fade_ms > 0, "PLAY held: fading, still playing");
+    mu_tick(&ui, MU_FADE_MS / 2);
+    CHECK(ui.fade_q12 > 0 && ui.fade_q12 < 2048, "halfway: the level under half (%d)", ui.fade_q12);
+    mu_tick(&ui, MU_FADE_MS / 2 + 10);
+    CHECK(!g.playing && ui.fade_q12 == 0, "the fade's end: stopped, silent");
+    mu_tick(&ui, MU_FADE_REST_MS + 10);
+    CHECK(ui.fade_q12 == 4096, "after the rest: the level back");
     CHECK(lint_findings == 0, "the layout lint: %d findings", lint_findings);
     printf("ma_ui: %d checks, %d failed, %d frames, %d notes on (piano %d, bass %d, horns %d, perc %d)\n", checks, fails,
            frames_written, notes_on, part_on[0], part_on[1], part_on[2], part_on[3]);
