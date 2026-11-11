@@ -11,6 +11,8 @@ The first test build: a Latin band on the FM-1.
   for lead riffs.
 - A Havana song's form: intro, tema, verso, corte, frase, piano, montuno, mambo, moña, cierre; no singing, a solo
   where a singer would be; the upright beside the guitar on the PERC track.
+- SCOPES, the home screen: every part's scope. A page for each instrument (HOME round), its scope and its notes;
+  EDIT there writes them over on the keys, EDIT again plays them. PLAY held fades the song out.
 - REC is BAND HIT (held: a descarga), SEQ is MAMBO, the keys play the solo trumpet with its mutes (filters over the
   real horn), PAN 3D on headphones.
 

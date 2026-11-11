@@ -6,7 +6,7 @@
 
 <p align="center"><img src="docs/manta-logo.png" alt="Manta" width="256"></p>
 
-[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue.svg)](LICENSE)
+[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-ff8a1f.svg)](LICENSE)
 
 **Generative Latin grooves for the M-VAVE FM-1. Let the band play, ¡tú al solo!** Press PLAY and Manta's band
 plays: a sampled percussion section locked to the clave, a montuno on an upright piano, a tumbao bass and a
@@ -18,7 +18,7 @@ take the solo trumpet on the keys. Built on [Sill](https://github.com/delirioux/
 > pages are in; the old songs' phrases and the full PAN 3D are next. Built with no warranty.
 > [Felucca](https://github.com/hugelton/Felucca)'s installer, or the official V15, takes the FM-1 back.
 
-<p align="center"><img src="docs/manta-play.gif" alt="PLAY: the chords, the bar and the clave as they play, the song's form" width="240"></p>
+<p align="center"><img src="docs/manta-play.gif" alt="The home screen's four scopes, PLAY, the instrument pages and an EDIT, from the firmware itself" width="240"></p>
 
 ## Try it, install it
 
@@ -31,8 +31,8 @@ Manta is a test build on `dev` for now; its pages:
   the FM-1 with a USB data cable, press Install and allow MIDI when the browser asks. Every run also leaves its
   package in the artifact `manta-firmware`; from a terminal: `python3 tools/fm1_install.py manta-X.Y.fwsc`.
 
-Manta keeps its settings and its eight sets in Felucca's first two song slots: back up anything you made in Felucca
-first. Installing firmware is at your own risk.
+Manta keeps its settings, its eight sets and the parts' own patterns in Felucca's first four song slots: back up
+anything you made in Felucca first. Installing firmware is at your own risk.
 
 ## Ten things Manta does
 
@@ -52,9 +52,11 @@ first. Installing firmware is at your own risk.
    the real horn) and its bell's brightness.
 9. **PAN 3D** (as [Sardine](https://github.com/delirioux/sardine)'s): the solo placed around your head on headphones,
    duller behind you as the bell turns away, softer far off, orbiting if you like.
-10. **The cards**: four knobs, four cards a page, no menus; a new style or song always on the next bar line.
+10. **Every part yours**: HOME shows the four parts' scopes; HOME again PLAY, then a page for each instrument with its
+    scope and the notes it plays. EDIT there and the keys write over its notes (live, or step by step stopped); EDIT
+    again and the part plays them at once. Leave without EDIT and nothing changes.
 
-## The four knobs (PLAY)
+## The four knobs (SCOPES and PLAY)
 
 | | |
 | --- | --- |
@@ -83,9 +85,9 @@ its number.
 The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHEATSHEET.md) has them on one page.
 
 <p align="center">
+<img src="docs/screens/scopes.png" alt="SCOPES" width="200">
 <img src="docs/screens/play.png" alt="PLAY" width="200">
-<img src="docs/screens/solo.png" alt="SOLO" width="200">
-<img src="docs/screens/pan3d.png" alt="PAN 3D" width="200">
+<img src="docs/screens/piano_edit.png" alt="EDIT on the PIANO page" width="200">
 <img src="docs/screens/perc.png" alt="PERC" width="200">
 </p>
 
@@ -101,7 +103,11 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
   leaves the mambo and the moña out; ARC off plays the montuno on and on.
 - **Five instruments on four tracks**: with the GUITAR on the PIANO part, the upright plays beside it, on the PERC
   track (whose samples hold the kit and the upright).
-- **The keys** are music only: the solo, an octave over the keys as printed, as you press them (MENU's SNAP puts them
+- **EDIT** (on an instrument page): the keys write the part's notes, in its register (PERC: a drum a key, the kick
+  lowest). Playing, they land where the bar is; stopped, at the STEP card's step, then on by LEN. ERASE clears a step,
+  USE picks whether the part plays its own or the style's. The notes follow the chords. EDIT again saves them, and
+  they play at once; any other button leaves them unsaved.
+- **The keys** are otherwise music only: the solo, an octave over the keys as printed, as you press them (MENU's SNAP puts them
   onto the scale). OCT- and OCT+ move them.
 - **MIDI out**: PIANO on channel 1, BASS on 2, HORNS on 3, the percussion on 10 with General MIDI notes.
 

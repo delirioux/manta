@@ -269,8 +269,48 @@ int main(int argc, char **argv)
     run_ms(500);
     shot("09_pan3d");
     all_palettes("pan3d");
+    /* HOME: SCOPES, PLAY, then the instrument pages */
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_SCOPES, "HOME: SCOPES");
+    shot("19_scopes");
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_PLAY, "HOME again: PLAY");
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_IPIANO, "HOME again: PIANO");
+    run_ms(300);
+    shot("20_piano");
+    /* EDIT on PIANO, playing: the keys write where the bar is; EDIT again saves, and it plays */
     press(MU_B_EDIT);
-    CHECK(ui.page == MU_PG_PERC, "EDIT: PERC");
+    CHECK(g.edit == MA_PIANO, "EDIT: the piano edited");
+    shot("21_piano_edit");
+    for (int k = 0; k < 6; ++k) {
+        mu_key(&ui, 60, true); mu_key(&ui, 64, true); mu_key(&ui, 67, true);
+        run_ms(120);
+        mu_key(&ui, 60, false); mu_key(&ui, 64, false); mu_key(&ui, 67, false);
+        run_ms(200);
+    }
+    press(MU_B_EDIT);
+    CHECK(g.edit < 0 && (g.s.mine & 1u) && (ma_pats_now()->has & 1u) && ui.pats_changed, "EDIT again: saved, MINE plays");
+    {
+        int on = part_on[MA_PIANO];
+        bars(2);
+        CHECK(part_on[MA_PIANO] > on, "the piano plays its own (%d notes)", part_on[MA_PIANO] - on);
+    }
+    CHECK(!strcmp(MU_CARDS[MU_PG_IPIANO][1].label, "PATTERN"), "PIANO's PATTERN card");
+    mu_knob(&ui, MU_K2, 1);
+    CHECK(!(g.s.mine & 1u), "PATTERN turned: the style's again");
+    /* BASS: an edit left by HOME is dropped */
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_IBASS, "HOME again: BASS");
+    press(MU_B_EDIT);
+    mu_key(&ui, 60, true);
+    run_ms(100);
+    mu_key(&ui, 60, false);
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_IHORNS && g.edit < 0 && !(ma_pats_now()->has & 2u), "left by HOME: not saved");
+    shot("22_horns");
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_PERC, "HOME again: PERC");
     mu_knob(&ui, MU_K4, 4);
     CHECK(g.s.extra == MA_EXTRA_WASH, "EXTRA: WASHBOARD (%d)", g.s.extra);
     shot("10_perc");
@@ -322,7 +362,9 @@ int main(int argc, char **argv)
     shot("18_menu");
     all_palettes("menu");
     press(MU_B_HOME);
-    CHECK(ui.page == MU_PG_PLAY, "HOME: PLAY");
+    CHECK(ui.page == MU_PG_SCOPES, "HOME: SCOPES");
+    press(MU_B_HOME);
+    CHECK(ui.page == MU_PG_PLAY, "HOME again: PLAY");
     /* every style's PLAY page */
     for (int st = 0; st < MA_STYLES; ++st) {
         ma_queue_style(&g, st);
@@ -339,6 +381,21 @@ int main(int argc, char **argv)
     press(MU_B_PLAY);
     CHECK(!g.playing, "PLAY stops");
     CHECK(g.nheld == 0, "nothing left sounding");
+    /* EDIT stopped, on PERC: a drum a key at the cursor, the cursor on by LEN */
+    press(MU_B_EDIT);
+    while (ui.page != MU_PG_PERC) press(MU_B_HOME);
+    press(MU_B_EDIT);
+    CHECK(g.edit == MA_PERC && g.ecur == 0, "EDIT stopped: PERC at step 1");
+    memset(ma_pats_now()->dr, 0, sizeof ma_pats_now()->dr);
+    for (int k = 0; k < MA_PAT_STEPS; ++k)
+        ((ma_pats *)ma_pats_edit())->dr[k] = 0;
+    mu_key(&ui, MU_KEY_LO, true);              /* the lowest key: the kick */
+    mu_key(&ui, MU_KEY_LO, false);
+    CHECK((ma_pats_edit()->dr[0] >> MA_DR_KICK) & 1u, "the lowest key: a kick at step 1");
+    CHECK(g.ecur == g.elen, "the cursor on by LEN (%d)", g.ecur);
+    shot("23_perc_edit");
+    press(MU_B_EDIT);
+    CHECK((ma_pats_now()->dr[0] >> MA_DR_KICK) & 1u && (g.s.mine & 8u), "saved: PERC plays its own");
     /* PLAY held while playing: the fade out, then the stop; the level back after the rest */
     press(MU_B_PLAY);
     CHECK(g.playing, "PLAY plays again");

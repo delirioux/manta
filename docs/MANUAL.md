@@ -1,6 +1,6 @@
 # Manta manual
 
-Manta 0.1. Every page, every card. Four parts play: **PIANO** (the montuno), **BASS** (the tumbao), **HORNS** (the
+Manta 0.1. Every page, every card. Hold PLAY while the band plays to fade the song out. Four parts play: **PIANO** (the montuno), **BASS** (the tumbao), **HORNS** (the
 section, the solo trumpet and whatever you play on the keys) and **PERC** (the style's percussion set, on the clave).
 Knob 1 to 4 turn the four cards on the screen. A page's button pressed again goes to its second page where it has one.
 
@@ -10,6 +10,10 @@ PLAY starts with the intro (with ARC on) and stops. Held while playing, it fades
 CALIENTE on the left, NOCHE on the right; the chosen one comes in on the next bar line, NEXT in the header until it
 does. ALGORITHM picks a new song in the same style on the next bar: its number seeds the chord loop, the riffs, the
 melody and the sounds, so a song always comes back the same. SELECT is the tempo, MASTER the volume.
+
+Manta starts on **SCOPES**, its home screen: a scope for each part, the sound it plays, and a mark under it when it
+plays its own pattern; its cards are PLAY's. HOME goes round SCOPES, PLAY and the four instrument pages (below); from
+any other page HOME brings you to SCOPES.
 
 The header shows the section playing (INTRO, TEMA, VERSO, CORTE, FRASE, PIANO, MONTUNO, MAMBO, MONA, CIERRE) and, on the right, a badge: the clave's side
 (3/2 or 2/3, as the bar playing falls) or HELD while a descarga is held. The footer's sixteen dashes are the way
@@ -65,11 +69,13 @@ and on, and SEQ and REC are yours to shape it.
 
 | Page (button) | Cards |
 | --- | --- |
-| **PLAY** (HOME) | **HEAT** how hot the band plays: the ghost strokes, the quinto's calls, the accents and the dynamics. **CLAVE** 3-2 or 2-3. **SOLO** OFF, PHRASE (the band's solo trumpet plays the melody and improvises) or KEYS (only you play it). **HITS** OFF, or band hits on their own at the end of every 4, 8 or 16 bars of the montuno. The panel: the chord loop, the bar as it plays with the clave's strokes over it, and the form with the section playing. |
+| **PLAY** (HOME, again) | **HEAT** how hot the band plays: the ghost strokes, the quinto's calls, the accents and the dynamics. **CLAVE** 3-2 or 2-3. **SOLO** OFF, PHRASE (the band's solo trumpet plays the melody and improvises) or KEYS (only you play it). **HITS** OFF, or band hits on their own at the end of every 4, 8 or 16 bars of the montuno. The panel: the chord loop, the bar as it plays with the clave's strokes over it, and the form with the section playing. |
 | **SOUND** (FX) | **PIANO**: UPRIGHT (sampled, warm), MALLETS (the marimba), ORGAN, TRES, HARP, ACCORD (accordion: three buzzing reeds, the musette's beating), BANDO (bandoneon: reeds in octaves, darker), GUITAR (a nylon guitar: it strums, picks and arpeggiates, each style its own way). With the TRES or the GUITAR the upright plays beside them (on the PERC track). **BASS**: BABY (the baby bass), UPRIGHT (a sampled double bass, plucked), FM BASS, SUB, SLAP, SLIDE, ROUND, TUBA. **HORNS**: TPT+TBN (sampled: the trumpets, the trombone an octave under them), TPT (sampled: the trumpet alone), REQUINT (the requinto, the bolero trio's lead guitar: its riffs in thirds), SAX (a sampled tenor), PANPIPE (the Andes' pan pipes), VIOLINS (a sampled section), ACCORD, BANDO. **PERC**: a style's percussion set, any style's. Each style has its own sound a part and three more; song 1 plays its own, the other songs pick from the four (a card turned by hand holds until the next song). |
 | **SOLO** (LFO) | **INSTR** the solo's sound (the HORNS sound: the section and the solo share the track). **MUTE** AUTO (the default: the section's chords open, and each solo turn takes the next mute, CONE, CUP, HARMON, WAH and round), or one for the whole HORNS track, the section and the solo alike: OPEN, CONE (the straight mute), CUP, HARMON or WAH (the harmon's stem opening and closing on each note); filters over the open horn, so they cost no flash (on TPT+TBN and TPT a real mute's filter; on the other sounds the tone darker). BOLERO's horns sit back in its mix. **PHRASE** where the solo's lines come from: GEN, made in the style; TRAD and MIX, phrases from traditional songs, are coming and play GEN for now. **BELL** how bright the bell sounds. |
 | **PAN 3D** (LFO again) | As [Sardine](https://github.com/delirioux/sardine)'s, for the solo, on headphones. **MODE** OFF, FIXED (where ANGLE puts it), ORBIT (round your head, a bar a step) or STEP (a new place each phrase). **ANGLE** FRONT, R10 to R170, BACK, L170 to L10. **HEIGHT** up or down. **DIST** near or far. Behind you the bell turns away and the trumpet goes duller; far off it goes softer. The cards are grey while MODE is OFF. In 0.1 PAN 3D is the bell's tone, the level and the pan; Sardine's binaural filters are next. |
-| **PERC** (EDIT) | **CONGAS** OFF, AUTO (the style's), TUMBAO, MARCHA, BOLERO. **BONGO** OFF, AUTO, MARTIL (the martillo), BELL (the bongo bell, in the montuno). **TIMBAL** OFF, AUTO, SHELL (the cascara on the shell), BELL. **EXTRA** OFF, AUTO, GUIRO, SHAKER, CABASA, WASH (the washboard: one scrape a bar, now and then a tap when it is hot). The panel draws the two bars of the clave and the lanes playing. |
+| **SCOPES** (HOME) | The home screen: the four parts' scopes (PLAY's cards). |
+| **PIANO**, **BASS**, **HORNS** (HOME past PLAY) | The instrument pages: the part's scope and, over the two bars of the clave, the notes it plays as a roll. **SOUND**, **PATTERN** (the style's 1 to 4; MINE while its own plays, turned back to the style's), **BRIGHT** (100 the sound as it is, lower darker), **LEVEL**; the HORNS' second card is the **MUTE**. |
+| **PERC** (HOME past HORNS) | Its scope and the drums over the two bars. **CONGAS** OFF, AUTO (the style's), TUMBAO, MARCHA, BOLERO. **BONGO** OFF, AUTO, MARTIL (the martillo), BELL (the bongo bell, in the montuno). **TIMBAL** OFF, AUTO, SHELL (the cascara on the shell), BELL. **EXTRA** OFF, AUTO, GUIRO, SHAKER, CABASA, WASH (the washboard: one scrape a bar, now and then a tap when it is hot). Grey while its own pattern plays. |
 | **KEY** (SCL) | **KEY** the root. **SCALE** MIN, MAJ, DOR (dorian), HARM (harmonic minor). **CHORDS** a chord loop. **BARS** a chord lasts 1, 2 or 4 bars. |
 | **GROOVE** (ARP) | **SWING** on the sixteenths (salsa plays it straight, cumbia and bossa a little swung). **PIANO** the montuno's pattern, 1 to 4 of the style's own (the GUITAR has two a style: 1 and 3 the first, 2 and 4 the second). **BASS** the tumbao's pattern, 1 to 4. **FILLS** every 8, 4 or 2 bars, or none: the timbal's and the conga's fills into the next phrase. |
 | **MIX** (GLO) | the four parts' levels. |
@@ -87,6 +93,28 @@ ARC and MENU stay yours.
 <img src="screens/pan3d.png" alt="PAN 3D" width="200">
 <img src="screens/perc.png" alt="PERC" width="200">
 </p>
+
+## EDIT: the parts' own notes
+
+On an instrument page, **EDIT** lights and the keys write over the part's notes: the two bars of the clave, as it
+played them (or its own pattern, if it has one). The cards become **STEP**, **LEN**, **ERASE** and **USE**.
+
+- **Playing**, a key (or a chord) lands on the step playing, the next one past its middle, held as long as you hold it;
+  the part plays the edit as it goes. STEP says LIVE.
+- **Stopped**, it lands on STEP's step, LEN long (1/16 to a bar), and STEP moves on by LEN.
+- The keys play in the part's register: the PIANO's as printed, the BASS two octaves down, the HORNS an octave up
+  (OCT- and OCT+ move them, SNAP puts them onto the scale). On PERC each key is a drum, the kick on the lowest, then the
+  toms, the congas, the bongos, the timbales, the claves, the bells, the agogô, the güiro, the shaker, the cabasa, the
+  triangle and the washboard.
+- **ERASE** right clears the step and moves on; left goes a step back and clears it (playing: the step playing).
+- **USE** MINE: saved, the part plays its own; STYLE: saved for later, the style's plays.
+- The notes follow the chords: they are kept over the chord they were played on, and a third, a fifth or a seventh
+  becomes the next chord's own.
+
+**EDIT** again saves them and the part plays them at once (SAVED in the header). Any other button (HOME, another page)
+leaves the edit unsaved. A new style plays its own patterns again (PATTERN or USE bring yours back). The PIANO's own
+pattern makes way for its solos in the form, the HORNS' is the section's (the riff and the coro), the solo its own.
+Sets keep the parts' own patterns too.
 
 ## The percussion
 
@@ -107,4 +135,5 @@ washboard's scrape on the short güiro's, its tap on the claves').
 ## Saving
 
 The settings save themselves two seconds after the last change while stopped, never while playing (writing the
-flash would stall the audio). They live in Felucca's first song slot, the sets in its second.
+flash would stall the audio). They live in Felucca's first song slot, the sets in its second, the parts' own
+patterns in its third and fourth.

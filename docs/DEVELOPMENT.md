@@ -158,3 +158,9 @@ comes from the FM-1 (MENU shows the CPU).
 3. **TRAD.** Phrases from traditional songs of the Latin countries, transcribed from public-domain scores, on PHRASE's
    TRAD and MIX.
 4. **The sound by ear.** The kit's levels, the upright against the bass, the brass and its mutes, the trims.
+
+## The README's animation and the screenshots
+
+`tools/ma_shots.sh` runs the firmware in the browser emulator (build it first: `web/emu/ma_build.sh`) and writes
+`docs/manta-play.gif` and `docs/screens/{scopes,piano,piano_edit,bass,horns,perc}.png` from what it draws, the scopes
+with the real sound behind them (`web/emu/ma_shots.mjs` is the tour).

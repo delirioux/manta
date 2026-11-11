@@ -3,13 +3,15 @@
 What every control does, by what you want to do. The [manual](MANUAL.md) goes through every page.
 
 **Getting around:** KNOB 1 to 4 turn the four cards on the screen. A page's button opens it; pressed again, its
-second page where it has one. HOME takes you back to PLAY. The keys only ever play music.
+second page where it has one. HOME goes round SCOPES (the home screen: every part's scope), PLAY, PIANO, BASS, HORNS
+and PERC; from any other page it takes you to SCOPES. The keys play music, or in EDIT write a part's notes.
 
 ## Play
 
 | What | How |
 | --- | --- |
 | Start / stop | **PLAY**: with the intro (ARC on) |
+| See the band | **HOME**: SCOPES, the four parts' scopes, the sound each plays, a mark when it plays its own pattern |
 | Fade out | **PLAY** held while playing: the song fades out over 8 seconds and stops (a tap stops at once) |
 | Tempo / volume | **SELECT** / **MASTER** |
 | Another style | **PRESETS**: one of twelve, on the next bar line (CALIENTE: SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA, GUARACHA; NOCHE: SON, CHA-CHA, BOLERO, BOSSA, TANGO, DANZON) |
@@ -19,7 +21,17 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | Mambo | **SEQ**: the horn section into its riff from the next bar; again to take it out |
 | Play the solo | **Keys**: the solo trumpet as you press them; hold **HOME**, KNOB 3: **SNAP** onto the scale. **OCT-** / **OCT+**: their octave |
 
-## The four knobs (PLAY)
+## Each instrument (HOME, HOME, HOME...)
+
+| What | How |
+| --- | --- |
+| The part's page | **HOME** past PLAY: **PIANO**, **BASS**, **HORNS**, **PERC**; its scope and the notes it plays over two bars |
+| Its sound | **SOUND**, **PATTERN** (the style's 1 to 4, or MINE: turned, back to the style's), **BRIGHT**, **LEVEL** (HORNS: **MUTE**; PERC: the four lanes) |
+| Write its notes | **EDIT**: the keys write over them (playing: where the bar is; stopped: at **STEP**, then on by **LEN**). PERC: a drum a key, the kick lowest |
+| Clear a step | **ERASE**: right clears the step and moves on, left goes back and clears (playing: the step playing) |
+| Keep it | **EDIT** again: saved, it plays at once (**USE** MINE; STYLE keeps it for later). Any other button: not saved |
+
+## The four knobs (SCOPES and PLAY)
 
 | What | How |
 | --- | --- |
@@ -35,7 +47,7 @@ second page where it has one. HOME takes you back to PLAY. The keys only ever pl
 | The parts' sounds | **FX**: **PIANO**, **BASS**, **HORNS** (eight each), **PERC** (a style's percussion set) |
 | The solo | **LFO**: **INSTR**, **MUTE** (AUTO: the section open, the solo's turns through the mutes; OPEN, CONE, CUP, HARMON, WAH), **PHRASE** (GEN; TRAD and MIX coming), **BELL** |
 | PAN 3D | **LFO** again: **MODE** (OFF, FIXED, ORBIT, STEP), **ANGLE**, **HEIGHT**, **DIST**; on headphones |
-| Percussion | **EDIT**: **CONGAS** (TUMBAO, MARCHA, BOLERO), **BONGO** (MARTIL, BELL), **TIMBAL** (SHELL, BELL), **EXTRA** (GUIRO, SHAKER, CABASA, WASH); AUTO is the style's own |
+| Percussion | **HOME** to **PERC**: **CONGAS** (TUMBAO, MARCHA, BOLERO), **BONGO** (MARTIL, BELL), **TIMBAL** (SHELL, BELL), **EXTRA** (GUIRO, SHAKER, CABASA, WASH); AUTO is the style's own |
 | Levels | **GLO**: the four parts |
 | Room | **GLO** again: **ROOM**, **PLATE**, **WARMTH**, **WIDTH** |
 
@@ -74,4 +86,4 @@ MB and MN are dimmed with MAMBO off (ENV). With ARC off only MO is lit (MB while
 | Sets | **SAVE**: eight sets. **SET** picks, **LOAD** / **STORE** turned right, **CLEAR** turned right three times |
 | Colour, CPU | Hold **HOME**: MENU, **COLOR**, **LOOK**, **SNAP** (the keys onto the scale) |
 | MIDI out | PIANO on channel 1, BASS 2, HORNS 3, percussion 10 (General MIDI notes) |
-| Saving | Automatic, while stopped |
+| Saving | Automatic, while stopped (the settings, the sets and the parts' own patterns, in Felucca's first four song slots) |

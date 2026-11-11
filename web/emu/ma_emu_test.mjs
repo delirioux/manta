@@ -28,7 +28,8 @@ const run = (sec) => {
 const press = (b) => { w.web_buttons(1 << b); run(0.05); w.web_buttons(0); run(0.05); };
 
 run(2);
-check(`boots Manta ${str(w.web_da_version())} on PLAY, stopped`, w.web_da_page() === 0 && !w.web_playing());
+const SCOPES = 12;   // ma_ui.h MU_PG_SCOPES: the home screen
+check(`boots Manta ${str(w.web_da_version())} on SCOPES, stopped`, w.web_da_page() === SCOPES && !w.web_playing());
 check("silent while stopped", peak < 1e-3);
 
 press(B.PLAY);
@@ -39,10 +40,10 @@ check("PLAY's green LED lit", (w.web_lit_buttons() >> 14) & 1);
 
 const pages = [];
 for (const b of [B.FX, B.LFO, B.LFO, B.EDIT, B.SCL, B.ARP, B.GLO, B.GLO, B.ENV, B.SAVE]) { press(b); pages.push(w.web_da_page()); }
-check(`FX LFO x2 EDIT SCL ARP GLO x2 ENV SAVE open their pages (${pages.join(" ")})`, new Set(pages).size === 10 && !pages.includes(0));
+check(`FX LFO x2 EDIT SCL ARP GLO x2 ENV SAVE open their pages (${pages.join(" ")})`, new Set(pages).size === 10 && !pages.includes(SCOPES));
 press(B.HOME);
 run(0.5);
-check("HOME returns", w.web_da_page() === 0);
+check("HOME returns to SCOPES", w.web_da_page() === SCOPES);
 
 press(B.PLAY);
 run(4);

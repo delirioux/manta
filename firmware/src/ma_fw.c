@@ -96,12 +96,61 @@ static void ma_sets_load(void)
 #if FELUCCA_FLASH
     static ma_sets_rec r;                                    /* (static: 8 records, off the stack) */
     memset(&r, 0, sizeof r);
-    if (st_load(OBJ_PROJECT0 + 1u, &r, sizeof r) == (int)sizeof r && r.magic == MA_SETS_MAGIC && r.size == sizeof r.s[0]) {
+    int n = st_load(OBJ_PROJECT0 + 1u, &r, sizeof r);
+    uint32_t hd = (uint32_t)((const uint8_t *)r.s - (const uint8_t *)&r);
+    /* (an older, shorter record: each set at its own size, the new fields their defaults) */
+    if (n > 0 && r.magic == MA_SETS_MAGIC && r.size && r.size <= sizeof r.s[0] &&
+        (uint32_t)n >= hd + (uint32_t)MA_SETS * r.size) {
         for (int i = 0; i < MA_SETS; ++i) {
-            ma_u.sets[i] = r.s[i];
-            ma_settings_fix(&ma_u.sets[i]);
+            ma_settings s;
+            ma_defaults(&s);
+            memcpy(&s, (const uint8_t *)r.s + (uint32_t)i * r.size, r.size);
+            ma_settings_fix(&s);
+            ma_u.sets[i] = s;
         }
         ma_u.set_used = r.used;
+    }
+#endif
+}
+
+/* the parts' own patterns (EDIT): the ones playing and sets 1-4's in the third project object, sets 5-8's in the
+ * fourth (a sector each) */
+#define MA_PATS_MAGIC 0x3154504Du                            /* "MPT1" */
+typedef struct { uint32_t magic; uint16_t size, ver; ma_pats p[5]; } ma_pats_rec;
+#if FELUCCA_FLASH
+static ma_pats_rec ma_pats_buf __attribute__((section(".pool")));
+#endif
+static void ma_pats_load(void)
+{
+#if FELUCCA_FLASH
+    ma_pats_rec *r = &ma_pats_buf;
+    for (uint32_t o = 0; o < 2u; ++o) {
+        memset(r, 0, sizeof *r);
+        int n = st_load(OBJ_PROJECT0 + 2u + o, r, sizeof *r);
+        if (n < (int)(sizeof *r - sizeof r->p) || r->magic != MA_PATS_MAGIC || r->size != sizeof(ma_pats))
+            continue;
+        int k = (n - (int)(sizeof *r - sizeof r->p)) / (int)sizeof(ma_pats);
+        for (int i = 0; i < k && i < (o ? 4 : 5); ++i) {
+            ma_pats *d = o ? ma_pats_set(4 + i) : i ? ma_pats_set(i - 1) : ma_pats_now();
+            *d = r->p[i];
+            d->has &= 15u;
+        }
+    }
+#endif
+}
+static void ma_pats_save(void)
+{
+#if FELUCCA_FLASH
+    ma_pats_rec *r = &ma_pats_buf;
+    for (uint32_t o = 0; o < 2u; ++o) {
+        memset(r, 0, sizeof *r);
+        r->magic = MA_PATS_MAGIC;
+        r->size = (uint16_t)sizeof(ma_pats);
+        r->ver = 1;
+        int k = o ? 4 : 5;
+        for (int i = 0; i < k; ++i)
+            r->p[i] = *(o ? ma_pats_set(4 + i) : i ? ma_pats_set(i - 1) : ma_pats_now());
+        st_save(OBJ_PROJECT0 + 2u + o, r, (uint32_t)(sizeof *r - sizeof r->p) + (uint32_t)k * sizeof(ma_pats));
     }
 #endif
 }
@@ -250,6 +299,7 @@ static void ma_fw_init(void)
     ma_set_sound(&ma_g, ma_sound, 0);
     mu_init(&ma_u, &ma_g);
     ma_sets_load();
+    ma_pats_load();
     ma_apply();
 }
 
@@ -296,9 +346,10 @@ static void ma_input(void)
 static void ma_leds(void)
 {
     static const uint8_t PAGE_BTN[MU_PAGES] = {
-        [MU_PG_PLAY] = B_HOME, [MU_PG_SOUND] = B_FX, [MU_PG_SOLO] = B_LFO, [MU_PG_PAN3D] = B_LFO, [MU_PG_PERC] = B_EDIT,
+        [MU_PG_PLAY] = B_HOME, [MU_PG_SOUND] = B_FX, [MU_PG_SOLO] = B_LFO, [MU_PG_PAN3D] = B_LFO, [MU_PG_PERC] = B_HOME,
         [MU_PG_KEY] = B_SCL, [MU_PG_GROOVE] = B_ARP, [MU_PG_MIX] = B_GLO, [MU_PG_SPACE] = B_GLO, [MU_PG_ARC] = B_ENV,
-        [MU_PG_SETS] = B_SAVE, [MU_PG_MENU] = B_HOME};
+        [MU_PG_SETS] = B_SAVE, [MU_PG_MENU] = B_HOME, [MU_PG_SCOPES] = B_HOME, [MU_PG_IPIANO] = B_HOME,
+        [MU_PG_IBASS] = B_HOME, [MU_PG_IHORNS] = B_HOME};
     static uint8_t ready;
     uint8_t nl[FM1_NCOL] = {0}, nd[FM1_NCOL] = {0};
     uint32_t k, c;
@@ -308,6 +359,7 @@ static void ma_leds(void)
     }
     led_put(nl, panel.btn[PAGE_BTN[ma_u.page % MU_PAGES]], 1);
     led_put(nl, panel.btn[B_REC], ma_g.desc || ma_g.hit_wait || ma_g.bar == ma_g.hit_bar);
+    led_put(nl, panel.btn[B_EDIT], ma_g.edit >= 0);   /* (EDIT lit: the keys write) */
     led_put(nl, panel.btn[B_SEQ], ma_g.mambo_next || ma_g.mambo_live || (ma_g.s.arc && ma_g.sec == MA_SEC_MBO));
     for (k = 0; k < NB; k++)
         led_put(nd, panel.btn[k], 1);
@@ -343,6 +395,27 @@ static void ma_leds(void)
 /* a frame: the settings into the tracks, the LEDs, the screen; the settings and sets saved a while after the last
  * change, stopped */
 static uint32_t ma_last_ms;
+/* the parts' scopes for the screen: the latest of each ring, from a rising zero (a steady picture); a ring that did
+ * not move since the last frame, a silent part */
+static void ma_scope_grab(void)
+{
+    static uint32_t last[NPART];
+    for (uint32_t p = 0; p < 4u && p < NPART; ++p) {
+        uint32_t w = ma_scope_w[p];
+        ma_u.scope_live[p] = w != last[p];
+        last[p] = w;
+        if (!ma_u.scope_live[p])
+            continue;
+        uint32_t st = w - MU_SCOPE_W - 96u, at = st + 96u;
+        for (uint32_t j = st + 1u; j < st + 96u; ++j)
+            if (ma_scope[p][(j - 1u) & (MA_SCOPE_N - 1u)] < 0 && ma_scope[p][j & (MA_SCOPE_N - 1u)] >= 0) {
+                at = j;
+                break;
+            }
+        for (uint32_t k = 0; k < MU_SCOPE_W; ++k)
+            ma_u.scope[p][k] = ma_scope[p][(at + k) & (MA_SCOPE_N - 1u)];
+    }
+}
 static uint32_t ma_fade_q12 = 4096u;                         /* held PLAY's fade, under MASTER (master.c) */
 static void ma_frame(void)
 {
@@ -362,7 +435,13 @@ static void ma_frame(void)
     if (ma_u.sets_changed && !ma_g.playing) {                /* (stopped: the flash is the code's while playing) */
         ma_u.sets_changed = false;
         ma_sets_save();
+        ma_u.pats_changed = true;
     }
+    if (ma_u.pats_changed && !ma_g.playing && !ma_dirty) {   /* (the patterns: with the settings, stopped) */
+        ma_u.pats_changed = false;
+        ma_pats_save();
+    }
+    ma_scope_grab();
     song.playing = ma_g.playing;                             /* (PLAY's green LED, Felucca's meters) */
     ma_leds();
     ma_u.batt = (int)batt_shown();
