@@ -1013,16 +1013,20 @@ static void mu_msg(ma_ui *u, const char *m)
 }
 
 /* the keys held let go (EDIT in or out: a key's note-off where its note-on went) */
+static void mu_key_off(ma_ui *u, int k)
+{
+    switch (u->key_mode[k]) {
+    case 1: ma_edit_key(u->g, k, u->key_sent[k], false); break;
+    case 2: ma_part_key(u->g, u->key_part[k], k, u->key_sent[k], false); break;
+    default: ma_key(u->g, k, u->key_sent[k], false); break;
+    }
+    u->key_sent[k] = -1;
+}
 static void mu_keys_release(ma_ui *u)
 {
     for (int k = 0; k < 27; ++k)
-        if ((u->keys_down >> k) & 1u) {
-            if (u->g->edit >= 0)
-                ma_edit_key(u->g, k, u->key_sent[k], false);
-            else
-                ma_key(u->g, k, u->key_sent[k], false);
-            u->key_sent[k] = -1;
-        }
+        if ((u->keys_down >> k) & 1u)
+            mu_key_off(u, k);
     u->keys_down = 0;
 }
 
@@ -1032,6 +1036,8 @@ static void mu_goto_page(ma_ui *u, int pg)
         mu_keys_release(u);
         ma_edit_end(u->g, false);
         mu_msg(u, "NOT SAVED");
+    } else if (pg != u->page && mu_page_part(u->page) >= 0) {
+        mu_keys_release(u);                        /* (the keys played this page's instrument) */
     }
     if (mu_page_part(pg) >= 0)
         u->inst_page = pg;
@@ -1328,31 +1334,40 @@ void mu_key(ma_ui *u, int note, bool down)
     int k = note - MU_KEY_LO;
     uint32_t bit = 1u << k;
     ma_groove *g = u->g;
-    if (g->edit >= 0) {                            /* EDIT: the part's notes (its register), or its drums */
-        static const int8_t REG[4] = {0, -24, 12, 0};
-        if (down) {
-            u->keys_down |= bit;
-            u->key_sent[k] = note + 12 * u->oct + REG[g->edit & 3];
-            if (g->s.keysnap && g->edit != MA_PERC)
-                u->key_sent[k] = ma_snap(&g->s, u->key_sent[k]);
-            ma_edit_key(g, k, u->key_sent[k], true);
-            if (g->edit == MA_PERC)
-                mu_msg(u, ma_drum_name(ma_key_drum(k)));
-        } else if (u->keys_down & bit) {
+    if (!down) {
+        if (u->keys_down & bit) {
             u->keys_down &= ~bit;
-            ma_edit_key(g, k, u->key_sent[k], false);
-            u->key_sent[k] = -1;
+            mu_key_off(u, k);
         }
         return;
     }
-    if (down) {
-        u->keys_down |= bit;
-        u->key_sent[k] = note + 12 * u->oct + 12;  /* (a trumpet's register: an octave over the keys as printed) */
-        ma_key(u->g, k, u->key_sent[k], true);
-    } else {
-        u->keys_down &= ~bit;
-        ma_key(u->g, k, u->key_sent[k], false);
-        u->key_sent[k] = -1;
+    if (u->keys_down & bit)
+        mu_key_off(u, k);
+    u->keys_down |= bit;
+    /* the keys' register: the PIANO's as printed, the BASS two octaves down, the HORNS (the solo) an octave up */
+    static const int8_t REG[4] = {0, -24, 12, 0};
+    int part = mu_page_part(u->page);
+    if (g->edit >= 0) {                            /* EDIT: the part's notes written, or its drums */
+        u->key_mode[k] = 1;
+        u->key_sent[k] = note + 12 * u->oct + REG[g->edit & 3];
+        if (g->s.keysnap && g->edit != MA_PERC)
+            u->key_sent[k] = ma_snap(&g->s, u->key_sent[k]);
+        ma_edit_key(g, k, u->key_sent[k], true);
+        if (g->edit == MA_PERC)
+            mu_msg(u, ma_drum_name(ma_key_drum(k)));
+    } else if (part == MA_PIANO || part == MA_BASS || part == MA_PERC) {   /* its page: the keys play it */
+        u->key_mode[k] = 2;
+        u->key_part[k] = (int8_t)part;
+        u->key_sent[k] = note + 12 * u->oct + REG[part];
+        if (g->s.keysnap && part != MA_PERC)
+            u->key_sent[k] = ma_snap(&g->s, u->key_sent[k]);
+        ma_part_key(g, part, k, u->key_sent[k], true);
+        if (part == MA_PERC)
+            mu_msg(u, ma_drum_name(ma_key_drum(k)));
+    } else {                                       /* elsewhere (and HORNS): the solo trumpet */
+        u->key_mode[k] = 0;
+        u->key_sent[k] = note + 12 * u->oct + 12;
+        ma_key(g, k, u->key_sent[k], true);
     }
 }
 

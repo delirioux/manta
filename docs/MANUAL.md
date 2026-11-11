@@ -96,6 +96,13 @@ ARC and MENU stay yours.
 <img src="screens/perc.png" alt="PERC" width="200">
 </p>
 
+## Playing a part yourself
+
+On an instrument page the keys play that instrument, live: the PIANO as printed, the BASS two octaves down, the HORNS
+the solo trumpet (an octave up), PERC a drum a key (the kick lowest; the header names the drum). While you hold keys on
+the PIANO or the BASS, the band's part makes way. On PERC's page the keys glow for the drums its two bars play, lit as
+they strike; on the others they show the key's scale. Elsewhere the keys play the solo.
+
 ## EDIT: the parts' own notes
 
 On an instrument page, **EDIT** lights and the keys write over the part's notes: the two bars of the clave, as it

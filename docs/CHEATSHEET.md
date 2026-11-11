@@ -27,6 +27,7 @@ and PERC; from any other page it takes you to SCOPES. The keys play music, or in
 | What | How |
 | --- | --- |
 | The part's page | **HOME** past PLAY: **PIANO**, **BASS**, **HORNS**, **PERC**; its scope and the notes it plays over two bars |
+| Play it yourself | On its page the **keys** play that instrument (the band's part makes way while you hold them); PERC: a drum a key, its drums glowing |
 | Its sound | **SOUND**, **PATTERN** (the style's 1 to 4, or MINE: turned, back to the style's), **BRIGHT**, **LEVEL** (HORNS: **MUTE**; PERC: the four lanes) |
 | Write its notes | **EDIT**: the keys write over them (playing: where the bar is; stopped: at **STEP**, then on by **LEN**). PERC: a drum a key, the kick lowest |
 | Clear a step | **ERASE**: right clears the step and moves on, left goes back and clears (playing: the step playing) |

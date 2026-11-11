@@ -13,7 +13,8 @@
  *              (the percussion alone) until let go, a timbal roll, the band back on the bar line
  *   SEQ        MAMBO: the horn section into its mambo from the next bar (ARC off: the riff in and out)
  *   keys       the solo trumpet, live, as pressed (MENU's SNAP: onto the scale). Music only, never settings; on an
- *              instrument page in EDIT they write the part's notes (PERC: its drums, low to high)
+ *              instrument page they play that instrument (the part makes way while held; PERC: its drums, low to
+ *              high), in EDIT they write its notes
  *   OCT- OCT+  the keys' octave
  *   HOME       SCOPES (every part's scope), again PLAY, then the instrument pages PIANO BASS HORNS PERC, round;
  *              from any other page SCOPES; held: MENU (colour, look, snap)
@@ -61,6 +62,8 @@ typedef struct {
     uint32_t keys_down;                   /* bit (note - MU_KEY_LO) */
     int oct;                              /* OCT- OCT+: the keys' octave, -2 .. 2 */
     int key_sent[27];                     /* the note each key sent (with the octave it was pressed in) */
+    uint8_t key_mode[27];                 /* where it went: 0 the solo, 1 EDIT, 2 its page's instrument */
+    int8_t key_part[27];
     /* SETS */
     ma_settings sets[MA_SETS];
     uint8_t set_used;                     /* bit per set */

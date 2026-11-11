@@ -823,7 +823,7 @@ void ma_init(ma_groove *g, float sample_rate)
     g->elen = 2;
     g->egrp = -1;
     for (int k = 0; k < 27; ++k)
-        g->ekey_note[k] = -1;
+        g->ekey_note[k] = g->pkey_note[k] = -1;
     pats_clear(&pats_now);
     pats_clear(&pats_edit);
     for (int i = 0; i < MA_SETS; ++i)
@@ -2243,6 +2243,8 @@ static void do_step(ma_groove *g)
             d += (uint32_t)((float)lay * g->sr * 0.001f);
         else if (p == MA_BASS)
             d += (uint32_t)((float)lay * g->sr * 0.0003f);
+        if (g->pkeys && (g->pkey_part == p || (g->pkey_part == MA_PIANO && p == MA_KEYS)))
+            continue;                              /* (the player has it: the keys held on its page) */
         {   /* a part's own pattern (EDIT): the piano's and the horns' solos still theirs, but while edited */
             const ma_pats *mp = mine_for(g, p == MA_KEYS ? MA_PIANO : p);
             if (mp && p == MA_KEYS && (g->edit == MA_PIANO || mine_plays(g, MA_PIANO)))
@@ -2365,6 +2367,41 @@ void ma_mambo(ma_groove *g)
     msg(g, g->s.arc ? "MAMBO NEXT" : g->mambo_live ? "MAMBO OUT" : "MAMBO NEXT");
 }
 
+void ma_part_key(ma_groove *g, int part, int k, int note, bool down)
+{
+    if (k < 0 || k >= 27 || part < 0 || part > MA_PERC)
+        return;
+    if (part == MA_PERC) {                         /* a drum: struck, it rings out (its voice frees itself) */
+        if (down) {
+            int d = ma_key_drum(k);
+            emit(g, 1, MA_PERC, d, 108);
+            feed(g, MA_PERC, d, 108);
+            if (g->step >= 0 && g->playing)
+                g->hits[MA_PERC] |= (uint16_t)(1u << g->step);
+        }
+        return;
+    }
+    if (down) {
+        if (g->pkey_note[k] >= 0)
+            emit(g, 0, g->pkey_part, g->pkey_note[k], 0);
+        if (!g->pkeys || g->pkey_part != part) {   /* the part makes way for the player */
+            part_off(g, part);
+            if (part == MA_PIANO)
+                part_off(g, MA_KEYS);
+        }
+        g->pkey_part = (int8_t)part;
+        g->pkeys |= 1u << k;
+        g->pkey_note[k] = (int8_t)clampi(note, 0, 127);
+        emit(g, 1, part, note, 104);
+        feed(g, part, note, 104);
+    } else {
+        g->pkeys &= ~(1u << k);
+        if (g->pkey_note[k] >= 0)
+            emit(g, 0, g->pkey_part, g->pkey_note[k], 0);
+        g->pkey_note[k] = -1;
+    }
+}
+
 void ma_key(ma_groove *g, int k, int note, bool down)
 {
     if (k < 0 || k >= 27)
@@ -2427,7 +2464,8 @@ void ma_process(ma_groove *g, int frames)
             left -= chunk;
             for (int k = 0; k < npend;) {
                 if ((int32_t)(g->clock - pend[k].at) >= 0) {
-                    if (!g->muted[pend[k].part])
+                    if (!g->muted[pend[k].part] && !(g->pkeys && (pend[k].part == g->pkey_part ||
+                                                                (g->pkey_part == MA_PIANO && pend[k].part == MA_KEYS))))
                         note(g, pend[k].part, pend[k].note, pend[k].vel, pend[k].len);
                     pend[k] = pend[--npend];
                 } else {

@@ -108,6 +108,7 @@ The [manual](docs/MANUAL.md) has every page and card; the [cheat sheet](docs/CHE
   lowest). Playing, they land where the bar is; stopped, at the STEP card's step, then on by LEN. ERASE clears a step,
   USE picks whether the part plays its own or the style's. The notes follow the chords. EDIT again saves them, and
   they play at once; any other button leaves them unsaved.
+- **On an instrument page** the keys play that instrument (PERC: a drum a key, the drums it plays glowing).
 - **The keys** are otherwise music only: the solo, an octave over the keys as printed, as you press them (MENU's SNAP puts them
   onto the scale). OCT- and OCT+ move them.
 - **MIDI out**: PIANO on channel 1, BASS on 2, HORNS on 3, the percussion on 10 with General MIDI notes.

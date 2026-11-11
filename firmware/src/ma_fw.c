@@ -363,10 +363,25 @@ static void ma_leds(void)
     led_put(nl, panel.btn[B_SEQ], ma_g.mambo_next || ma_g.mambo_live || (ma_g.s.arc && ma_g.sec == MA_SEC_MBO));
     for (k = 0; k < NB; k++)
         led_put(nd, panel.btn[k], 1);
-    /* the keys: the key's scale at half glow (follows KEY and SCALE), the chord playing's tones lit, the keys held lit
-     * (EDIT on PERC: the keys are drums, no scale) */
+    /* the keys: the key's scale at half glow (follows KEY and SCALE), the chord playing's tones lit, the keys held lit.
+     * On PERC's page the keys are drums: the ones its two bars play at half glow, the ones striking now lit */
     uint32_t lit = 0, scale = 0;
-    bool drums = ma_g.edit == MA_PERC;
+    bool drums = ma_g.edit == MA_PERC || ma_u.page == MU_PG_PERC;
+    if (drums) {
+        uint32_t used = 0, now = 0;
+        int pos = ma_pos(&ma_g);
+        for (int st = 0; st < MA_PAT_STEPS; ++st) {
+            uint32_t b = ma_g.edit == MA_PERC ? ma_pats_edit()->dr[st] : ma_played_dr(&ma_g, st);
+            used |= b;
+            if (st == pos)
+                now = b;
+        }
+        for (k = 0; k < 27u; k++) {
+            uint32_t d = (uint32_t)ma_key_drum((int)k);
+            if ((used >> d) & 1u) scale |= 1u << k;
+            if ((now >> d) & 1u) lit |= 1u << k;
+        }
+    }
     if (ma_g.playing && ma_g.nloop > 0 && !drums) {
         const ma_chord *chd = &ma_g.loop[ma_chord_now(&ma_g)];
         for (k = 0; k < 27u; k++)

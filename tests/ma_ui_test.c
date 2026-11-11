@@ -302,6 +302,15 @@ int main(int argc, char **argv)
     /* BASS: an edit left by HOME is dropped */
     press(MU_B_HOME);
     CHECK(ui.page == MU_PG_IBASS, "HOME again: BASS");
+    {   /* on its page the keys play the bass, two octaves down, the band's bass making way */
+        int on = part_on[MA_BASS], h = part_on[MA_HORNS];
+        mu_key(&ui, 60, true);
+        CHECK(part_on[MA_BASS] == on + 1 && part_on[MA_HORNS] == h && g.pkeys, "BASS's page: a key plays the bass");
+        run_ms(400);
+        CHECK(part_on[MA_BASS] == on + 1, "the band's bass makes way while held");
+        mu_key(&ui, 60, false);
+        CHECK(!g.pkeys, "let go");
+    }
     press(MU_B_EDIT);
     mu_key(&ui, 60, true);
     run_ms(100);

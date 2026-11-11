@@ -197,6 +197,9 @@ typedef struct {
     char msg[24];                                  /* a word for the screen ("NEXT MAMBO", "BAND HIT"); the UI clears it */
     uint8_t msg_new;
     /* EDIT: the part being edited (-1 none) plays the edit's copy; the keys write into it */
+    uint32_t pkeys;                                /* the keys held playing a part (its instrument page) */
+    int8_t pkey_part;                              /* that part (it makes way while they are held) */
+    int8_t pkey_note[27];
     bool sim;                                      /* a dry run (ma_preview's copy): notes written down, not played */
     int8_t edit;
     uint8_t ecur;                                  /* stopped: the step the keys write (0..31) */
@@ -243,6 +246,8 @@ void ma_queue_song(ma_groove *g, int song);
 void ma_band_hit(ma_groove *g, bool down);         /* REC: a tap a cierre, held the descarga */
 void ma_mambo(ma_groove *g);                       /* SEQ: the mambo from the next bar */
 void ma_key(ma_groove *g, int key, int note, bool down);   /* the FM-1's key (0..26) playing note: the solo */
+void ma_part_key(ma_groove *g, int part, int key, int note, bool down);   /* a key playing a part (its page): PIANO,
+                                                    * BASS (the part makes way while held), PERC (note: the key's drum) */
 void ma_process(ma_groove *g, int frames);         /* the audio: notes in time, the tone, gain and pan */
 void ma_all_off(ma_groove *g);
 
