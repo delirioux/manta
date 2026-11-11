@@ -14,22 +14,24 @@ sampled trumpet and trombone section, from salsa and mambo to bolero and tango. 
 take the solo trumpet on the keys. Built on [Sill](https://github.com/delirioux/sill),
 [Tuna](https://github.com/delirioux/tuna) and [Felucca](docs/FELUCCA.md).
 
-> **Version 0.1, a test build.** The groove, the percussion kit, the upright, the trumpet and trombone and the
-> pages are in; the old songs' phrases and the full PAN 3D are next. Built with no warranty.
-> [Felucca](https://github.com/hugelton/Felucca)'s installer, or the official V15, takes the FM-1 back.
+> **Version 1.0.** The groove, the percussion kit, the sampled upright, brass, sax, violins and double bass, the
+> Havana song form, SCOPES and the instrument pages with EDIT. The old songs' phrases and the full PAN 3D are next.
+> Built with no warranty. [Felucca](https://github.com/hugelton/Felucca)'s installer, or the official V15, takes the
+> FM-1 back.
 
 <p align="center"><img src="docs/manta-play.gif" alt="The home screen's four scopes, PLAY, the instrument pages and an EDIT, from the firmware itself" width="240"></p>
 
 ## Try it, install it
 
-Manta is a test build on `dev` for now; its pages:
-
-- **[Try it in the browser](https://delirioux.github.io/manta/dev/try/)**: the whole firmware, the FM-1's screen and
+- **[Try it in the browser](https://delirioux.github.io/manta/try/)**: the whole firmware, the FM-1's screen and
   sound, compiled to WebAssembly on Felucca's browser emulator (Chrome, Edge or Firefox; the computer keyboard plays
   the keys).
-- **[Install it on the FM-1](https://delirioux.github.io/manta/dev/)** from Chrome or Edge on a computer: connect
+- **[Install it on the FM-1](https://delirioux.github.io/manta/)** from Chrome or Edge on a computer: connect
   the FM-1 with a USB data cable, press Install and allow MIDI when the browser asks. Every run also leaves its
-  package in the artifact `manta-firmware`; from a terminal: `python3 tools/fm1_install.py manta-X.Y.fwsc`.
+  package in the artifact `manta-firmware` (and each release on GitHub); from a terminal:
+  `python3 tools/fm1_install.py manta-X.Y.fwsc`.
+- The next version's test build, from `dev`: [installer](https://delirioux.github.io/manta/dev/),
+  [in the browser](https://delirioux.github.io/manta/dev/try/).
 
 Manta keeps its settings, its eight sets and the parts' own patterns in Felucca's first four song slots: back up
 anything you made in Felucca first. Installing firmware is at your own risk.

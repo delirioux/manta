@@ -2,5 +2,5 @@
 /* Manta's version: the splash, MENU, the package (tools/build.py --release, the workflow) */
 #ifndef MA_VERSION_H
 #define MA_VERSION_H
-#define MA_VERSION "0.1"
+#define MA_VERSION "1.0"
 #endif

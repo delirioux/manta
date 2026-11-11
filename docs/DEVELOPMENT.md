@@ -4,8 +4,10 @@ The working notes behind Manta: the agreements, how the work flows, why the code
 stands and what comes next. What Manta is and how to play it is in the [README](../README.md) and the
 [manual](MANUAL.md).
 
-Status: 10 November 2026. Version 0.1, a test build on `dev`: the groove engine, the twelve styles, the percussion kit,
-the upright and the pages, tested on the host and in the browser emulator; the FM-1 build comes from CI.
+Status: 11 November 2026. Version 1.0, released on `main`: the groove engine, the twelve styles and the Havana form,
+the sampled kit, upright, brass, sax, violins and double bass, SCOPES, the instrument pages and EDIT; tested on the
+host and in the browser emulator, the FM-1 build from CI. Next on `dev`: TRAD (the traditional songs' phrases), Sardine's
+binaural PAN 3D.
 
 ## Agreements
 
