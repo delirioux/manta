@@ -58,6 +58,28 @@ PATCHES = [
         op(r=(80, 50, 30, 62), l=(99, 60, 40, 0), ol=55, fc=2, kvs=4),
         OFF, OFF],
         fb=0, lpms=0)),
+    # the accordion (the cumbia's and the vallenato's): three steel reeds a key, buzzing, not a synth's pad. Each
+    # reed a carrier with its own modulator at ratio 1 (the reed's saw-like buzz, brighter with the third's
+    # feedback); two at 8' tuned apart (+17 cents: the musette's beating), one at 4' softer; the bellows' quick
+    # swell, held level (the bellows, not the key, make it loud), let go at once
+    ("ACCORDION", voice("ACCORDION", 5, [
+        op(r=(78, 50, 50, 72), l=(99, 96, 96, 0), ol=96, det=5, kvs=1),
+        op(r=(70, 45, 40, 70), l=(99, 90, 88, 0), ol=80, rs=1),
+        op(r=(78, 50, 50, 72), l=(99, 96, 96, 0), ol=93, ff=1, kvs=1),
+        op(r=(70, 45, 40, 70), l=(99, 90, 88, 0), ol=78, rs=1),
+        op(r=(80, 50, 50, 72), l=(99, 94, 94, 0), ol=76, fc=2, det=9, kvs=1),
+        op(r=(72, 45, 40, 70), l=(99, 88, 86, 0), ol=74, fc=2, rs=1)],
+        fb=6, lpms=0)),
+    # the bandoneon (the tango's): its reeds in octaves (8' and 16'), dry-tuned, no musette; darker and more nasal
+    # than the accordion, the bellows' slower push in and its breath on the attack, the marcato's quick let go
+    ("BANDONEON", voice("BANDONEON", 5, [
+        op(r=(66, 50, 50, 70), l=(99, 96, 96, 0), ol=95, kvs=2),
+        op(r=(58, 45, 40, 68), l=(99, 86, 82, 0), ol=76, rs=1, kvs=2),
+        op(r=(66, 50, 50, 70), l=(99, 96, 96, 0), ol=88, fc=0, det=8, kvs=2),
+        op(r=(58, 45, 40, 68), l=(99, 84, 80, 0), ol=72, fc=0, rs=1),
+        op(r=(70, 50, 50, 70), l=(99, 92, 92, 0), ol=70, fc=1, det=6, kvs=1),
+        op(r=(60, 45, 40, 68), l=(99, 80, 76, 0), ol=66, fc=3, rs=1)],
+        fb=4, lpms=0)),
 ]
 
 

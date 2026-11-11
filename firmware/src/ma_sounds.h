@@ -36,12 +36,6 @@ typedef struct {
 
 /* ---- Manta's own sounds: Felucca's preset layout (core.h preset_t): {name, E0..E7, ATK DEC SUS REL, ENV->FLT, mono,
  * FX(dist, chorus, delay, reverb)}. The ANALOG E values: WAVE DTN MIX NOIS CUT RES DRV KTR ---- */
-/* the accordion (cumbia's, the vallenato's) and the bandoneon (the tango's), as reeds, not as a synth: two narrow
- * pulses (the free reed's wave, about 37 % duty: its even harmonics, set by the envelope's SHAPE, mas_track) a few
- * cents apart (the musette's beating), a breath of air, a low-pass that follows the keys, no chorus, no filter sweep;
- * the bellows' quick swell in. The bandoneon darker and drier-tuned */
-static const preset_t MAS_ACCORDION = {"ACCORDION", {4, 9, 64, 6, 74, 18, 6, 90}, {4, 70, 118, 22}, 0, 0, FX(0, 0, 15, 28)};
-static const preset_t MAS_BANDONEON = {"BANDONEON", {4, 5, 64, 4, 62, 14, 6, 90}, {8, 80, 115, 30}, 0, 0, FX(0, 0, 12, 32)};
 /* the sampled brass (tools/ma_brass.py, VSCO 2 CE): the SAMPLE engine's set BRASS (the trombone below the trumpet)
  * and TRUMPET (its trumpet alone), looped; tongued at once, held, let go short as a section does. The SAMPLE E
  * values: SET TUNE BITS LOOP CUT MUTE DRV - (MUTE: Manta's, set by the glue every block) */
@@ -88,8 +82,8 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         S("ORGAN", MAS_WHEEL, 1, 3, -1),                 /* JAZZ PERC: the cha-cha's and the boogaloo's organ */
         SO("TRES", MAS_PHYS, 0, MAS_TRES, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 3),   /* PHYS's PLUCK: the son's tres */
         S("HARP", MAS_PHYS, 8, 2, 2),                    /* the Paraguayan and the jarocho harp */
-        SO("ACCORD", MAS_ANALOG, 0, MAS_ACCORDION, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),
-        SO("BANDO", MAS_ANALOG, 0, MAS_BANDONEON, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -1),
+        SF("ACCORD", MA_FM6_ACCORDION, MAS_KEEP, MAS_POLY, 2),   /* FM6 reeds (tools/ma_fm6.py) */
+        SF("BANDO", MA_FM6_BANDONEON, MAS_KEEP, MAS_POLY, 1),
         SO("GUITAR", MAS_PHYS, 0, MAS_GUITAR, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 2),   /* strums (ma_groove.c GUITAR_PAT) */
     },
     {   /* BASS */
@@ -109,8 +103,8 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         SO("SAX", MAS_SAMPLE, MAS_SET_SAX, MAS_SAXS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled tenor */
         SO("PANPIPE", MAS_ANALOG, 0, MAS_PANFLUTE, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, -3),
         SO("VIOLINS", MAS_SAMPLE, MAS_SET_VIOLINS, MAS_VLNS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 1),   /* the sampled section */
-        SO("ACCORD", MAS_ANALOG, 0, MAS_ACCORDION, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 0),
-        SO("BANDO", MAS_ANALOG, 0, MAS_BANDONEON, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 8),
+        SF("ACCORD", MA_FM6_ACCORDION, MAS_KEEP, MAS_POLY, 2),
+        SF("BANDO", MA_FM6_BANDONEON, MAS_KEEP, MAS_POLY, 4),
     },
 };
 #undef S
@@ -215,8 +209,6 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     t->p[P_M3SRC] = part == MA_HORNS ? MS_AT : MS_OFF;
     t->p[P_M3DST] = part == MA_HORNS ? MD_PAN : MD_OFF;
     t->p[P_M3AMT] = 64;
-    if (snd && (snd->own == &MAS_ACCORDION || snd->own == &MAS_BANDONEON))
-        t->p[P_ED_SHP] = -64;             /* (the reeds' narrow pulse: the envelope's sustain holds the width) */
     if (part == MA_HORNS) {             /* the LFO for the vibrato: 5.4 Hz, from each note, eased in */
         t->p[P_LRATE] = 86;                /* (4.6 Hz) */
         t->p[P_LWAVE] = 0;
