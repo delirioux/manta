@@ -874,6 +874,23 @@ static const uint16_t ENG_VCOST[NENGINES] = {163, FELUCCA_FM4 ? 181 : 0, 162, 67
 };
 #endif
 
+#if FELUCCA_MANTA
+/* Manta's scopes (its SCOPES and instrument pages): each part's own signal at its level, every other sample, in a
+ * ring a part (written by whichever core mixes the part; a silent part writes nothing, its count stands still) */
+#define MA_SCOPE_N 256u
+static int8_t ma_scope[NPART][MA_SCOPE_N];
+static volatile uint32_t ma_scope_w[NPART];
+static void ma_scope_take(uint32_t p, const int32_t *b, uint32_t n, int32_t lvl)
+{
+    uint32_t i, w = ma_scope_w[p];
+    for (i = 0; i < n; i += 2u) {
+        int32_t x = (((b[i] >> 2) * lvl) >> 10) >> 7;
+        ma_scope[p][w++ & (MA_SCOPE_N - 1u)] = (int8_t)(x > 127 ? 127 : x < -127 ? -127 : x);
+    }
+    ma_scope_w[p] = w;
+}
+#endif
+
 /* one synth part into the dry mix and the sends of sm (mx[0]; mx[1] on the second core); a part with no voice sounding costs
  * the LFO tick and a cleared buffer only (after the DIST tail has run out) */
 static void mix_part(track_t *t, uint32_t n SM_DECL)
@@ -912,6 +929,10 @@ static void mix_part(track_t *t, uint32_t n SM_DECL)
         if ((pf.mute >> (t - trk)) & 1u)
             perf_mute((uint32_t)(t - trk), b, n);       /* perform.c: a black key in the FX layer */
     }
+#if FELUCCA_MANTA
+    if ((uint32_t)(t - trk) < NPART)
+        ma_scope_take((uint32_t)(t - trk), b, n, LEVEL_Q12[t->p[P_LEVEL] & 127]);
+#endif
     if (!T_SPREAD(t)) {                                /* (the mix's values read after the calls: none is held over
                                                          * them, no spill in the loop: the ISR's cost as before 1.5) */
         int32_t lvl = LEVEL_Q12[t->p[P_LEVEL] & 127], pan = t->p[P_PAN];

@@ -59,6 +59,38 @@ static const char *const DR_NAMES[MA_DR_COUNT] = {
     "BELL", "BONGO BELL", "BELL M", "AGOGO H", "AGOGO L", "CLAVE", "WOOD", "GUIRO", "GUIRO L", "SHAKER", "SHAKER B",
     "CABASA", "TRIANGLE", "TRI M", "TOM H", "TOM L", "KICK", "WASHBOARD", "WASH TAP"};
 const char *ma_drum_name(int d) { return DR_NAMES[clampi(d, 0, MA_DR_COUNT - 1)]; }
+static const char *const DR_SHORT[MA_DR_COUNT] = {
+    "QUINTO", "CONGA", "CNG M", "TUMBA", "BNG H", "BNG L", "BNG M", "TMB H", "TMB L", "RIM", "PAILA", "BELL", "B BELL",
+    "BELL M", "AGO H", "AGO L", "CLAVE", "WOOD", "GUIRO", "GUI L", "SHAKE", "SHK B", "CABASA", "TRI", "TRI M", "TOM H",
+    "TOM L", "KICK", "WASH", "W TAP"};
+const char *ma_drum_short(int d) { return DR_SHORT[clampi(d, 0, MA_DR_COUNT - 1)]; }
+/* PERC's keys, low to high: the low drums at the bottom (27 keys, the 27 drums worth a key) */
+static const uint8_t KEY_DRUM[27] = {
+    MA_DR_KICK, MA_DR_TOM_LO, MA_DR_TOM_HI, MA_DR_TUMBA, MA_DR_CONGA, MA_DR_CONGA_MUTE, MA_DR_QUINTO, MA_DR_BONGO_LO,
+    MA_DR_BONGO_HI, MA_DR_BONGO_MUTE, MA_DR_TIMBAL_LO, MA_DR_TIMBAL_HI, MA_DR_TIMBAL_RIM, MA_DR_PAILA, MA_DR_CLAVE,
+    MA_DR_WOOD, MA_DR_BELL_MAMBO, MA_DR_BELL_BONGO, MA_DR_BELL_MUTE, MA_DR_AGOGO_LO, MA_DR_AGOGO_HI, MA_DR_GUIRO_SHORT,
+    MA_DR_GUIRO_LONG, MA_DR_SHAKER_FWD, MA_DR_CABASA, MA_DR_TRIANGLE, MA_DR_WASH};
+int ma_key_drum(int k) { return KEY_DRUM[clampi(k, 0, 26)]; }
+
+/* EDIT's memory: the patterns playing, the sets', the edit's copy, and what each part played over the last two bars
+ * (the instrument pages). Off the interrupts' RAM: the FM-1's pool (one groove: as the pending notes) */
+#if TUNA_FREESTANDING
+#define MA_POOL __attribute__((section(".pool")))
+#else
+#define MA_POOL
+#endif
+static ma_pats pats_now MA_POOL, pats_edit MA_POOL, pats_sets[MA_SETS] MA_POOL;
+static uint8_t cap_n[3][MA_PAT_STEPS][MA_PAT_NOTES] MA_POOL;   /* MIDI, 0 none */
+static uint8_t cap_len[3][MA_PAT_STEPS] MA_POOL;
+static uint32_t cap_dr[MA_PAT_STEPS] MA_POOL;
+ma_pats *ma_pats_now(void) { return &pats_now; }
+ma_pats *ma_pats_set(int i) { return &pats_sets[clampi(i, 0, MA_SETS - 1)]; }
+const ma_pats *ma_pats_edit(void) { return &pats_edit; }
+static void pats_clear(ma_pats *p)
+{
+    memset(p, 0, sizeof *p);
+    memset(p->n, MA_PAT_REST, sizeof p->n);
+}
 
 /* the scales, as semitones from the key */
 static const uint8_t SCALE[MA_SCALES][7] = {
@@ -197,6 +229,7 @@ void ma_style_apply(ma_settings *s, int style)
     s->plate = st->plate;
     s->warmth = st->warmth;
     s->human = 12;
+    s->mine = 0;                                   /* (a new style: its own patterns; the parts' own kept for EDIT) */
     s->bpm = st->bpm;
     s->song = 0;
 }
@@ -231,6 +264,8 @@ void ma_defaults(ma_settings *s)
     s->palette = 10;                               /* HAVANA (ui_palettes.h UI_HAVANA_INDEX) */
     s->look = 0;
     s->keysnap = 0;
+    for (int i = 0; i < 4; ++i)
+        s->bright[i] = 100;
 }
 
 void ma_settings_fix(ma_settings *s)
@@ -278,6 +313,9 @@ void ma_settings_fix(ma_settings *s)
     s->human = (uint8_t)clampi(s->human, 0, 100);
     if (s->song > 999)
         s->song = 0;
+    s->mine &= 15u;
+    for (int i = 0; i < 4; ++i)
+        s->bright[i] = (uint8_t)clampi(s->bright[i], 0, 100);
 }
 
 /* ---- the clave: (bar, step) of the pattern, the sides by CLAVE ----------------------------------------------- */
@@ -652,20 +690,21 @@ static const perc_set_t PERC[MA_STYLES] = {
     [MA_ST_SALSA] = {7, {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2, L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2,
                          L_CASCARA_0}},
     [MA_ST_MAMBO] = {8, {L_TUMBAO_0, L_TUMBAO_1, L_TUMBAO_2, L_MARTILLO_0, L_MARTILLO_1, L_CASCARA_0,
-                         {MA_DR_GUIRO_SHORT, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."},
+                         {MA_DR_GUIRO_SHORT, G_EXTRA, "......o...............o........."},   /* (a colour) */
                          {MA_DR_TIMBAL_LO, G_OTHER, "..............................x."}}},
     [MA_ST_MERENGUE] = {6, {{MA_DR_TUMBA, G_CONGA, "X.......x.......X.......x......."},
                             {MA_DR_CONGA_MUTE, G_CONGA, "..o...o.o.o...o...o...o.o.o...o."},
                             {MA_DR_QUINTO, G_CONGA, "....x.......x.x.....x.......x.x."},
-                            {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},   /* the guira's long scrapes on
-                                                                                     * the guiro, two a bar */
+                            {MA_DR_GUIRO_LONG, G_EXTRA, "x..............................."},   /* the guira's scrape on the
+                                                                                     * guiro: a colour, once in two bars */
                             {MA_DR_KICK, G_KICK, "x...x...x...x...x...x...x...x..."},
                             {MA_DR_BONGO_MUTE, G_BONGO, "......o.......o.......o.......o."}}},
     [MA_ST_CUMBIA] = {6, {{MA_DR_CONGA, G_CONGA, "....x.......x.......x.......x..."},
                           {MA_DR_CONGA_MUTE, G_CONGA, "..o.....o.o...o...o.....o.o...o."},
                           {MA_DR_QUINTO, G_CONGA, "...........x...x...........x.x.."},
-                          {MA_DR_GUIRO_LONG, G_EXTRA, "x...x...x...x...x...x...x...x..."},
-                          {MA_DR_GUIRO_SHORT, G_EXTRA, "..oo..oo..oo..oo..oo..oo..oo..oo"},
+                          /* the guacharaca's scrape: a colour, once in two bars, not the beat (the shaker keeps it) */
+                          {MA_DR_GUIRO_LONG, G_EXTRA, "................o..............."},
+                          {MA_DR_GUIRO_SHORT, G_EXTRA, "..............................o."},
                           {MA_DR_SHAKER_FWD, G_EXTRA, "x.o.x.o.x.o.x.o.x.o.x.o.x.o.x.o."}}},
     [MA_ST_SAMBA] = {7, {{MA_DR_KICK, G_KICK, "o.......o.......o.......o......."},
                          {MA_DR_TOM_LO, G_KICK, "....X.......X.......X.......X..."},
@@ -677,7 +716,7 @@ static const perc_set_t PERC[MA_STYLES] = {
     [MA_ST_SON] = {6, {L_MARTILLO_0, L_MARTILLO_1, L_MARTILLO_2, {MA_DR_TUMBA, G_CONGA, "..............x...............x."},
                        {MA_DR_SHAKER_FWD, G_EXTRA, "x...x...x...x...x...x...x...x..."},
                        {MA_DR_SHAKER_BACK, G_EXTRA, "..o...o...o...o...o...o...o...o."}}},
-    [MA_ST_CHACHA] = {7, {L_GUIRO_0, {MA_DR_GUIRO_LONG, G_EXTRA, "....x.......x.......x.......x..."},
+    [MA_ST_CHACHA] = {7, {L_GUIRO_0, {MA_DR_GUIRO_SHORT, G_EXTRA, "............o...............o..."},
                           {MA_DR_BELL_MAMBO, G_TIMBAL, "X...o...X...o...X...o...X...o..."},
                           {MA_DR_BELL_MUTE, G_TIMBAL, "....x.......x.......x.......x..."},
                           {MA_DR_CONGA_MUTE, G_CONGA, "o...X...o...o...o...X...o...o..."},
@@ -709,8 +748,8 @@ static const perc_set_t PERC[MA_STYLES] = {
      * the phrase, the guiro; no congas, no clave */
     [MA_ST_DANZON] = {4, {{MA_DR_PAILA, G_TIMBAL, "X.xx.xx.x...x.x.X.xx.xx.x...x.x."},
                           {MA_DR_TIMBAL_LO, G_TIMBAL, "..............................X."},
-                          {MA_DR_GUIRO_LONG, G_EXTRA, "x.......x.......x.......x......."},
-                          {MA_DR_GUIRO_SHORT, G_EXTRA, "....o.o.....o.o.....o.o.....o.o."}}},
+                          {MA_DR_GUIRO_LONG, G_EXTRA, "x...............x..............."},   /* (a colour: once a bar) */
+                          {MA_DR_GUIRO_SHORT, G_EXTRA, "............o...............o..."}}},
 };
 
 /* the lanes for the PERC panel: CONGA BONGO TIMBAL EXTRA CLAVE and the rest */
@@ -776,6 +815,18 @@ void ma_init(ma_groove *g, float sample_rate)
     g->solo_note = -1;
     for (int k = 0; k < 27; ++k)
         g->key_note[k] = -1;
+    g->edit = -1;
+    g->elen = 2;
+    g->egrp = -1;
+    for (int k = 0; k < 27; ++k)
+        g->ekey_note[k] = -1;
+    pats_clear(&pats_now);
+    pats_clear(&pats_edit);
+    for (int i = 0; i < MA_SETS; ++i)
+        pats_clear(&pats_sets[i]);
+    memset(cap_n, 0, sizeof cap_n);
+    memset(cap_len, 0, sizeof cap_len);
+    memset(cap_dr, 0, sizeof cap_dr);
     for (int p = 0; p < MA_PARTS; ++p)
         g->tone[p] = 127;
     g->pan_horns = 64;
@@ -885,11 +936,28 @@ static void part_off(ma_groove *g, int part)
 #define MA_PEND 48
 static struct { uint32_t at; uint8_t part, note, vel, pad; float len; } pend[MA_PEND];
 static int npend;
+static float step_frames(const ma_groove *g);
 static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, float len)
 {
     if (part == MA_PIANO || part == MA_KEYS)       /* the piano kept out of its thin top: down an octave above A5 */
         while (n > 81)
             n -= 12;
+    if (g->step >= 0 && g->bar >= 0) {             /* what it played (the instrument pages, EDIT's start) */
+        int pos = cbar(g, g->bar) * 16 + g->step;
+        if (part == MA_PERC) {
+            cap_dr[pos] |= 1u << clampi(n, 0, 31);
+        } else if (part < MA_PERC) {
+            for (int k = 0; k < MA_PAT_NOTES; ++k)
+                if (cap_n[part][pos][k] == 0 || cap_n[part][pos][k] == n) {
+                    cap_n[part][pos][k] = (uint8_t)clampi(n, 1, 127);
+                    break;
+                }
+            float sf = step_frames(g);
+            int ls = clampi((int)(len / sf + 0.5f), 1, 16);
+            if (ls > cap_len[part][pos])
+                cap_len[part][pos] = (uint8_t)ls;
+        }
+    }
     if (delay == 0 || npend >= MA_PEND) {
         note(g, part, n, vel, len);
         return;
@@ -1615,6 +1683,19 @@ static void play_run(ma_groove *g, int part, int i, uint32_t delay, float sf)
 }
 
 /* the horns: the section's riff (two horns a chord tone apart), the solo's phrase, or nothing (the keys have it) */
+/* the violins: no note cut short, each into the next (at least an eighth, longer than written), the accents eased;
+ * the second desk's bow a little after the first's */
+static void bow(ma_groove *g, float *len, int *vel, float sf)
+{
+    (void)g;
+    *len = *len * 1.6f < sf * 2.2f ? sf * 2.2f : *len * 1.6f;
+    *vel = 90 + (*vel - 90) / 2;
+}
+static uint32_t bow_late(ma_groove *g)
+{
+    return g->bowed ? (uint32_t)((float)(4 + rnd_n(&g->rnd, 14)) * g->sr * 0.001f) : 0u;
+}
+
 static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
     const ma_settings *s = &g->s;
@@ -1637,8 +1718,10 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         float heat = (float)s->heat / 100.0f;
         int vel = 104 + (g->riff_len[pos] == 1 ? 10 : 0) + (int)(hum * 6.0f) + (int)(heat * 10.0f);
         float len = sf * (float)g->riff_len[pos] * (g->riff_len[pos] == 1 ? 0.6f : 0.9f);
+        if (g->bowed)
+            bow(g, &len, &vel, sf);
         schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
-        schedule(g, delay, MA_HORNS, low, clampi(vel - 10, 1, 127), len);
+        schedule(g, delay + bow_late(g), MA_HORNS, low, clampi(vel - 10, 1, 127), len);
         return;
     }
     /* the coro, played: where a son's singers would answer the soloist (the montuno's other four bars) the section
@@ -1673,8 +1756,10 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
             low -= 12;
         float len = sf * (float)g->phr_len[cp] * 0.85f;
         int vel = 94 + (i % 4 == 0 ? 6 : 0) + (int)(hum * 6.0f) + (int)((float)s->heat / 100.0f * 8.0f);
+        if (g->bowed)
+            bow(g, &len, &vel, sf);
         schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
-        schedule(g, delay, MA_HORNS, low, clampi(vel - 10, 1, 127), len);
+        schedule(g, delay + bow_late(g), MA_HORNS, low, clampi(vel - 10, 1, 127), len);
         return;
     }
     /* the solo: the TEMA (the theme, twice, its last note the tonic high, held, with vibrato), the VERSO's melody when
@@ -1718,6 +1803,10 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
     vel += rnd_n(&g->rnd, 21) - 12;
     uint32_t late = (uint32_t)((float)rnd_n(&g->rnd, 21) * g->sr * 0.001f);
     float hold = len >= 4 ? 0.9f + 0.02f * (float)rnd_n(&g->rnd, 6) : 0.8f + 0.03f * (float)rnd_n(&g->rnd, 6);   /* (legato) */
+    if (g->bowed) {                                /* the bow: one note into the next, the dynamics gentle */
+        hold = 1.15f;
+        vel = 92 + (vel - 92) / 2;
+    }
     schedule(g, delay + late, MA_HORNS, n, clampi(vel, 1, 127), sf * (float)len * hold);
 }
 
@@ -1757,6 +1846,248 @@ static bool cierre_bar(const ma_groove *g)
 }
 
 /* one sixteenth: the parts, swung and humanized */
+/* ---- EDIT: the parts' own patterns ---------------------------------------------------------------------------- */
+/* MINE in the form: the bass's and the percussion's always; the piano's but for its solos (the verso's melody, the
+ * corte's run, its PIANO section); the horns' for the section (the riff, the coro), the solo its own */
+static bool mine_plays(const ma_groove *g, int p)
+{
+    int sc = g->s.arc ? g->sec : MA_SEC_MON;
+    if (p == MA_PIANO && g->s.arc)
+        return !((sc == MA_SEC_VRS && g->vrs_piano) || (sc == MA_SEC_CORTE && g->vrs_piano) || sc == MA_SEC_PNO);
+    if (p == MA_HORNS) {
+        if (riff_now(g))
+            return true;
+        bool mon = g->s.arc ? sc == MA_SEC_MON : true;
+        int b = g->s.arc ? g->sec_bar : (g->bar < 0 ? 0 : g->bar);
+        return mon && (b / 4) % 2 == 0 && !g->keys;
+    }
+    return true;
+}
+/* a pattern's note over chord c: kept as semitones over the root's C3; its third, fifth and seventh the chord's own */
+static int pat_note(const ma_chord *c, int off)
+{
+    int root = c->root % 12, iv = ((off % 12) + 12) % 12, oct = off - iv;
+    int third = (c->tone[1] - c->root + 24) % 12, fifth = (c->tone[2] - c->root + 24) % 12,
+        sev = (c->tone[3] - c->root + 24) % 12;
+    if (iv == 3 || iv == 4) iv = third;
+    else if (iv == 6 || iv == 7 || iv == 8) iv = fifth;
+    else if ((iv == 10 || iv == 11) && (sev == 10 || sev == 11)) iv = sev;
+    return clampi(48 + root + oct + iv, 0, 127);
+}
+static int pat_off(const ma_chord *c, int note) { return clampi(note - 48 - c->root % 12, -127, 127); }
+
+/* the step the keys write now: playing, the step playing (or the next, past its middle); stopped, the cursor */
+int ma_pos(const ma_groove *g)
+{
+    if (!g->playing || g->step < 0)
+        return -1;
+    return cbar(g, g->bar) * 16 + g->step;
+}
+int ma_edit_pos(const ma_groove *g)
+{
+    int p = ma_pos(g);
+    if (p < 0)
+        return g->ecur % MA_PAT_STEPS;
+    if (g->wait < step_frames(g) * 0.5f)
+        p = (p + 1) % MA_PAT_STEPS;
+    return p;
+}
+/* the chord over step pos of the two bars: playing, this bar's or the next's; stopped, the loop's first two */
+static const ma_chord *pos_chord(const ma_groove *g, int pos)
+{
+    if (!g->playing || g->bar < 0)
+        return chord_at(g, pos / 16);
+    int now = cbar(g, g->bar), b = g->bar + ((pos / 16) != now ? 1 : 0);
+    return chord_at(g, b);
+}
+
+int ma_pat_notes(const ma_groove *g, const ma_pats *p, int part, int k, int out[MA_PAT_NOTES], int *len)
+{
+    int n = 0;
+    if (part < 0 || part > 2)
+        return 0;
+    const ma_chord *c = pos_chord(g, k);
+    for (int j = 0; j < MA_PAT_NOTES; ++j)
+        if (p->n[part][k][j] != MA_PAT_REST)
+            out[n++] = pat_note(c, p->n[part][k][j]);
+    *len = p->len[part][k] ? p->len[part][k] : 1;
+    return n;
+}
+int ma_played(const ma_groove *g, int part, int k, int out[MA_PAT_NOTES], int *len)
+{
+    (void)g;
+    int n = 0;
+    if (part < 0 || part > 2 || k < 0 || k >= MA_PAT_STEPS)
+        return 0;
+    for (int j = 0; j < MA_PAT_NOTES; ++j)
+        if (cap_n[part][k][j])
+            out[n++] = cap_n[part][k][j];
+    *len = cap_len[part][k] ? cap_len[part][k] : 1;
+    return n;
+}
+uint32_t ma_played_dr(int k) { return cap_dr[clampi(k, 0, MA_PAT_STEPS - 1)]; }
+
+/* the pattern the part plays now, if its own: the edit's copy while it is edited, MINE's when saved so */
+static const ma_pats *mine_for(const ma_groove *g, int part)
+{
+    if (g->edit == part)
+        return &pats_edit;
+    if (part <= MA_PERC && ((g->s.mine >> part) & 1u) && ((pats_now.has >> part) & 1u))
+        return &pats_now;
+    return 0;
+}
+static void play_mine(ma_groove *g, const ma_pats *p, int part, int i, uint32_t delay, float sf, float hum)
+{
+    int pos = cbar(g, g->bar) * 16 + i;
+    float heat = (float)g->s.heat / 100.0f;
+    int vel = (part == MA_PERC ? 100 : part == MA_BASS ? 104 : 100) + (i % 4 == 0 ? 6 : 0) + (int)(hum * 8.0f);
+    vel = (int)((float)vel * (0.85f + 0.15f * heat));
+    if (part == MA_PERC) {
+        for (int d = 0; d < MA_DR_COUNT; ++d)
+            if ((p->dr[pos] >> d) & 1u)
+                schedule(g, delay, MA_PERC, d, clampi(vel, 1, 127), 0);
+        return;
+    }
+    const ma_chord *c = chord_at(g, g->bar);
+    int len = p->len[part][pos] ? p->len[part][pos] : 1;
+    for (int j = 0; j < MA_PAT_NOTES; ++j)
+        if (p->n[part][pos][j] != MA_PAT_REST)
+            schedule(g, delay, part, pat_note(c, p->n[part][pos][j]), clampi(vel - j * 3, 1, 127), sf * (float)len * 0.92f);
+}
+
+void ma_edit_begin(ma_groove *g, int part)
+{
+    if (part < 0 || part > MA_PERC)
+        return;
+    pats_edit = pats_now;                          /* (the other parts as they are: only this one is written) */
+    if (!((pats_now.has >> part) & 1u)) {          /* none of its own yet: what it played, to write over */
+        if (part == MA_PERC) {
+            memcpy(pats_edit.dr, cap_dr, sizeof cap_dr);
+        } else {
+            for (int k = 0; k < MA_PAT_STEPS; ++k) {
+                const ma_chord *c = pos_chord(g, k);
+                for (int j = 0; j < MA_PAT_NOTES; ++j)
+                    pats_edit.n[part][k][j] = cap_n[part][k][j] ? (int8_t)pat_off(c, cap_n[part][k][j]) : MA_PAT_REST;
+                pats_edit.len[part][k] = cap_len[part][k];
+            }
+        }
+    }
+    part_off(g, part);
+    g->edit = (int8_t)part;
+    g->euse = true;
+    g->egrp = -1;
+    g->ekeys = 0;
+    g->ecur = 0;
+}
+
+void ma_edit_end(ma_groove *g, bool save)
+{
+    int part = g->edit;
+    if (part < 0)
+        return;
+    for (int k = 0; k < 27; ++k)
+        if (g->ekey_note[k] >= 0) {
+            emit(g, 0, part, g->ekey_note[k], 0);
+            g->ekey_note[k] = -1;
+        }
+    if (save) {
+        if (part == MA_PERC) {
+            memcpy(pats_now.dr, pats_edit.dr, sizeof pats_now.dr);
+        } else {
+            memcpy(pats_now.n[part], pats_edit.n[part], sizeof pats_now.n[part]);
+            memcpy(pats_now.len[part], pats_edit.len[part], sizeof pats_now.len[part]);
+        }
+        pats_now.has |= (uint8_t)(1u << part);
+        if (g->euse)
+            g->s.mine |= (uint8_t)(1u << part);
+        else
+            g->s.mine &= (uint8_t)~(1u << part);
+    }
+    part_off(g, part);
+    g->edit = -1;
+    g->ekeys = 0;
+    g->egrp = -1;
+}
+
+void ma_edit_key(ma_groove *g, int k, int note, bool down)
+{
+    int part = g->edit;
+    if (part < 0 || k < 0 || k >= 27)
+        return;
+    int pos = ma_edit_pos(g);
+    if (part == MA_PERC) {                         /* a drum: heard; written at its own step */
+        int d = ma_key_drum(k);
+        if (!down)
+            return;
+        emit(g, 1, MA_PERC, d, 104);
+        feed(g, MA_PERC, d, 104);
+        if (g->playing) {
+            pats_edit.dr[pos] |= 1u << d;
+        } else {
+            pats_edit.dr[pos] ^= 1u << d;          /* (stopped: the cursor's step, on or off) */
+            if (g->ekeys == 0)
+                g->ecur = (uint8_t)((pos + g->elen) % MA_PAT_STEPS);
+        }
+        return;
+    }
+    if (down) {
+        if (g->ekey_note[k] >= 0)
+            emit(g, 0, part, g->ekey_note[k], 0);
+        g->ekey_note[k] = (int8_t)clampi(note, 0, 127);
+        emit(g, 1, part, note, 104);
+        feed(g, part, note, 104);
+        if (g->ekeys == 0 || g->egrp < 0) {        /* the first key: its step written over */
+            g->egrp = (int8_t)pos;
+            g->egrp_clock = g->clock;
+            for (int j = 0; j < MA_PAT_NOTES; ++j)
+                pats_edit.n[part][pos][j] = MA_PAT_REST;
+            pats_edit.len[part][pos] = (uint8_t)(g->playing ? 1 : g->elen);
+        }
+        int8_t *n = pats_edit.n[part][g->egrp];
+        const ma_chord *c = pos_chord(g, g->egrp);
+        for (int j = 0; j < MA_PAT_NOTES; ++j)     /* the others held with it: one chord */
+            if (n[j] == MA_PAT_REST) {
+                n[j] = (int8_t)pat_off(c, note);
+                break;
+            }
+        g->ekeys++;
+        return;
+    }
+    if (g->ekey_note[k] >= 0)
+        emit(g, 0, part, g->ekey_note[k], 0);
+    g->ekey_note[k] = -1;
+    if (g->ekeys > 0)
+        g->ekeys--;
+    if (g->ekeys == 0 && g->egrp >= 0) {           /* all let go: the length held (playing), on to the next (stopped) */
+        if (g->playing) {
+            int ls = (int)((float)(g->clock - g->egrp_clock) / step_frames(g) + 0.5f);
+            pats_edit.len[part][g->egrp] = (uint8_t)clampi(ls, 1, 16);
+        } else {
+            g->ecur = (uint8_t)((g->egrp + g->elen) % MA_PAT_STEPS);
+        }
+        g->egrp = -1;
+    }
+}
+
+void ma_edit_erase(ma_groove *g, int dir)
+{
+    int part = g->edit;
+    if (part < 0)
+        return;
+    if (!g->playing && dir < 0)                    /* back a step, then cleared (a backspace) */
+        g->ecur = (uint8_t)((g->ecur + MA_PAT_STEPS - 1) % MA_PAT_STEPS);
+    int pos = g->playing ? (ma_pos(g) < 0 ? 0 : ma_pos(g)) : g->ecur;
+    if (part == MA_PERC) {
+        pats_edit.dr[pos] = 0;
+    } else {
+        for (int j = 0; j < MA_PAT_NOTES; ++j)
+            pats_edit.n[part][pos][j] = MA_PAT_REST;
+        pats_edit.len[part][pos] = 0;
+    }
+    if (!g->playing && dir > 0)
+        g->ecur = (uint8_t)((g->ecur + 1) % MA_PAT_STEPS);
+}
+
 static void do_step(ma_groove *g)
 {
     if (++g->step >= 16) {
@@ -1767,6 +2098,15 @@ static void do_step(ma_groove *g)
     int i = g->step;
     if (i == 0)
         g->rnd = (uint32_t)g->bar * 2654435761u + (uint32_t)g->s.song * 97u + 1u;
+    {   /* this step's place in what was played: written afresh */
+        int pos = cbar(g, g->bar) * 16 + i;
+        for (int p = 0; p < 3; ++p) {
+            for (int j = 0; j < MA_PAT_NOTES; ++j)
+                cap_n[p][pos][j] = 0;
+            cap_len[p][pos] = 0;
+        }
+        cap_dr[pos] = 0;
+    }
     float sf = step_frames(g);
     uint32_t delay = 0;
     if (i % 2 && g->s.swing)                        /* swing: the off sixteenths late */
@@ -1804,6 +2144,19 @@ static void do_step(ma_groove *g)
             d += (uint32_t)((float)lay * g->sr * 0.001f);
         else if (p == MA_BASS)
             d += (uint32_t)((float)lay * g->sr * 0.0003f);
+        {   /* a part's own pattern (EDIT): the piano's and the horns' solos still theirs, but while edited */
+            const ma_pats *mp = mine_for(g, p == MA_KEYS ? MA_PIANO : p);
+            if (mp && p == MA_KEYS && (g->edit == MA_PIANO || mine_plays(g, MA_PIANO)))
+                continue;                          /* (the upright beside the guitar makes way for the piano's own) */
+            if (p == MA_KEYS)
+                mp = 0;
+            if (mp && (g->edit == p || mine_plays(g, p))) {
+                if (p == MA_HORNS)
+                    g->soloing = false;
+                play_mine(g, mp, p, i, d, sf, hum);
+                continue;
+            }
+        }
         switch (p) {
         case MA_PIANO: play_piano(g, i, d, sf, hum); break;
         case MA_KEYS: play_piano_on(g, MA_KEYS, i, d, sf, hum); break;

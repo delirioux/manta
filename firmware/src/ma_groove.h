@@ -89,7 +89,23 @@ typedef struct {
     uint8_t palette, look, keysnap;                /* MENU: COLOR, LOOK (FLAT, LINE), SNAP (the keys onto the scale) */
     uint8_t human;                                 /* (no card) */
     uint16_t song;                                 /* ALGORITHM: the song number in the style, 0..999 */
+    uint8_t mine;                                  /* a bit a part (PIANO BASS HORNS PERC): its own pattern plays (EDIT) */
+    uint8_t bright[4];                             /* the instrument pages' BRIGHT, 0..100 (100: the sound as it is) */
 } ma_settings;
+
+/* the parts' own patterns (EDIT, on the instrument pages): two bars (a clave) of sixteenths. The notes are kept over
+ * the chord they were played on (semitones over its root's C3), so they follow the loop: a third, a fifth or a
+ * seventh becomes the chord's own */
+#define MA_PAT_STEPS 32
+#define MA_PAT_NOTES 4
+#define MA_PAT_REST (-128)
+typedef struct {
+    int8_t n[3][MA_PAT_STEPS][MA_PAT_NOTES];       /* PIANO BASS HORNS: MA_PAT_REST none */
+    uint8_t len[3][MA_PAT_STEPS];                  /* the step's notes' length, in steps */
+    uint32_t dr[MA_PAT_STEPS];                     /* PERC: a bit a drum (MA_DR_*) */
+    uint8_t has;                                   /* a bit a part: one recorded */
+    uint8_t pad[3];
+} ma_pats;
 
 typedef struct {
     uint8_t on, part, note, vel;                   /* PERC: note is MA_DR_*; vel 1..127 (on) */
@@ -163,6 +179,7 @@ typedef struct {
     /* in, from the glue: the HORNS sound is the sampled trumpet (its mutes are its own filters, the TONE only the bell
      * and PAN 3D), and has the trombone too (the section's second horn an octave down, on it) */
     bool brass, trombone;
+    bool bowed;                                    /* in: the HORNS sound is the violins (legato, bows not together) */
     bool guitar;                                   /* in: the PIANO part is the GUITAR (strums, its own patterns) */
     bool tres;                                     /* in: the PIANO part is the TRES (its guajeo; the upright beside it) */
     /* what each part played, a bit per sixteenth: the bar playing and the bar before (the screen) */
@@ -177,6 +194,15 @@ typedef struct {
     uint8_t feed_w, feed_r;
     char msg[24];                                  /* a word for the screen ("NEXT MAMBO", "BAND HIT"); the UI clears it */
     uint8_t msg_new;
+    /* EDIT: the part being edited (-1 none) plays the edit's copy; the keys write into it */
+    int8_t edit;
+    uint8_t ecur;                                  /* stopped: the step the keys write (0..31) */
+    uint8_t elen;                                  /* stopped: the length they write (steps) */
+    bool euse;                                     /* saved: the part plays its own pattern (else the style's) */
+    int8_t egrp;                                   /* the step the keys held write together (-1 none) */
+    uint8_t ekeys;                                 /* edit keys held */
+    uint32_t egrp_clock;
+    int8_t ekey_note[27];                          /* each held key's note (preview's note-off) */
     uint8_t sound_sig;                             /* bumped when every part's sound must load again (a style, a set) */
     void (*sound)(void *ctx, const ma_event *e);
     void *sound_ctx;
@@ -233,5 +259,24 @@ bool ma_clave_hit(const ma_groove *g, int bar, int step);   /* the clave strikes
 int ma_clave_side(const ma_groove *g, int bar);    /* 3 or 2: the side of the clave bar b plays */
 uint32_t ma_row_played(const ma_groove *g, int row);   /* PERC row 0..5: what sounded, a bit a step */
 uint32_t ma_lane_bits(const ma_groove *g, int lane, int bar);   /* the PERC panel: lane 0..5's steps in bar b */
+
+/* EDIT (the instrument pages) */
+ma_pats *ma_pats_now(void);                        /* the patterns playing (saved with the settings) */
+ma_pats *ma_pats_set(int i);                       /* set i's (SETS) */
+const ma_pats *ma_pats_edit(void);                 /* the edit's copy */
+void ma_edit_begin(ma_groove *g, int part);        /* from the part's own pattern, or what it played (two bars) */
+void ma_edit_end(ma_groove *g, bool save);         /* saved: plays at once (USE MINE); else as it was */
+void ma_edit_key(ma_groove *g, int k, int note, bool down);   /* a key: heard, and written (playing: where the bar is;
+                                                    * stopped: at the cursor, then on); PERC: note is the key (0..26) */
+void ma_edit_erase(ma_groove *g, int dir);         /* the step at the cursor (playing: the step playing) cleared */
+int ma_edit_pos(const ma_groove *g);               /* the step the keys write now (0..31) */
+int ma_pos(const ma_groove *g);                    /* the step playing in the two bars (0..31; -1 stopped) */
+int ma_key_drum(int k);                            /* PERC: the drum on key k */
+const char *ma_drum_short(int d);                  /* a drum's name, short (the PERC grid) */
+/* what each part played over the last two bars (the instrument pages): its notes at step k (MIDI, 0 none) */
+int ma_played(const ma_groove *g, int part, int k, int out[MA_PAT_NOTES], int *len);
+uint32_t ma_played_dr(int k);                      /* PERC: the drums at step k */
+int ma_pat_notes(const ma_groove *g, const ma_pats *p, int part, int k, int out[MA_PAT_NOTES], int *len);   /* a
+                                                    * pattern's notes at step k over the chord of its bar, MIDI */
 
 #endif

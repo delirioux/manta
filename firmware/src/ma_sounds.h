@@ -49,9 +49,9 @@ enum { MAS_SET_BRASS = 2, MAS_SET_TRUMPET = 3, MAS_SET_SAX = 5, MAS_SET_VIOLINS 
 static const preset_t MAS_BRASS = {"BRASS", {2, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 20}, 0, 0, FX(0, 0, 0, 30)};
 static const preset_t MAS_TPT = {"TRUMPET", {3, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 24}, 0, 0, FX(0, 0, 0, 34)};
 /* the tenor sax (VCSL, tools/ma_horns.py): set SAX, the reed's buzz; the violin section (VSCO 2 CE): set VIOLINS,
- * bowed in a little softer, let go longer */
+ * the bow drawn in (a slow swell, no bite), let go into the room (a long release), never cut off */
 static const preset_t MAS_SAXS = {"SAX", {5, 0, 0, 1, 118, 0, 0, 0}, {0, 70, 127, 22}, 0, 0, FX(0, 0, 0, 30)};
-static const preset_t MAS_VLNS = {"VIOLINS", {6, 0, 0, 1, 112, 0, 0, 0}, {6, 70, 127, 40}, 0, 0, FX(0, 0, 0, 40)};
+static const preset_t MAS_VLNS = {"VIOLINS", {6, 0, 0, 1, 104, 0, 0, 0}, {22, 70, 127, 66}, 0, 0, FX(0, 0, 0, 52)};
 /* the pan flute (the Andes' zampona, the cumbia's flutes): a triangle through a low-pass that keeps little but the
  * fundamental, a lot of breath through the same resonant filter (the noise sings at the pipe's pitch), a chiff of the
  * filter's envelope on each note */
@@ -272,7 +272,7 @@ static inline void mas_song(const ma_settings *s)
 static inline void mas_block(const ma_groove *g)
 {
     for (int p = 0; p < MA_TRACKS; ++p) {
-        trk[p].mw = (uint8_t)(127 - g->tone[p]);
+        trk[p].mw = (uint8_t)(127 - g->tone[p] * g->s.bright[p < 4 ? p : MA_PIANO] / 100);   /* (BRIGHT: darker) */
         trk[p].ex_off = g->gain[p];
     }
     trk[MA_HORNS].at = g->pan_horns;
@@ -298,6 +298,7 @@ static inline void mas_flags(ma_groove *g)
     int set = h->engine == MAS_SAMPLE && h->own ? h->own->e[0] : -1;
     g->brass = set == MAS_SET_BRASS || set == MAS_SET_TRUMPET;
     g->trombone = set == MAS_SET_BRASS;
+    g->bowed = set == MAS_SET_VIOLINS;
 }
 
 #endif
