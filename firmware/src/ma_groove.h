@@ -197,6 +197,7 @@ typedef struct {
     char msg[24];                                  /* a word for the screen ("NEXT MAMBO", "BAND HIT"); the UI clears it */
     uint8_t msg_new;
     /* EDIT: the part being edited (-1 none) plays the edit's copy; the keys write into it */
+    bool sim;                                      /* a dry run (ma_preview's copy): notes written down, not played */
     int8_t edit;
     uint8_t ecur;                                  /* stopped: the step the keys write (0..31) */
     uint8_t elen;                                  /* stopped: the length they write (steps) */
@@ -275,9 +276,11 @@ int ma_edit_pos(const ma_groove *g);               /* the step the keys write no
 int ma_pos(const ma_groove *g);                    /* the step playing in the two bars (0..31; -1 stopped) */
 int ma_key_drum(int k);                            /* PERC: the drum on key k */
 const char *ma_drum_short(int d);                  /* a drum's name, short (the PERC grid) */
-/* what each part played over the last two bars (the instrument pages): its notes at step k (MIDI, 0 none) */
+/* what each part plays over the two bars of the clave (the instrument pages): this bar's steps played so far as they
+ * sounded, the rest as they will (ma_preview ran the groove ahead, dry); its notes at step k (MIDI) */
+void ma_preview(const ma_groove *g);               /* the main loop: a new bar, a change (not the audio's) */
 int ma_played(const ma_groove *g, int part, int k, int out[MA_PAT_NOTES], int *len);
-uint32_t ma_played_dr(int k);                      /* PERC: the drums at step k */
+uint32_t ma_played_dr(const ma_groove *g, int k);  /* PERC: the drums at step k */
 int ma_pat_notes(const ma_groove *g, const ma_pats *p, int part, int k, int out[MA_PAT_NOTES], int *len);   /* a
                                                     * pattern's notes at step k over the chord of its bar, MIDI */
 

@@ -758,7 +758,7 @@ static void mu_panel_inst(ma_ui *u, int part)
     }
     mu_steps_grid(g, x0, y0, w, h);
     if (!nn) {
-        mu_label(18, y0 + 22, editing ? "THE KEYS WRITE ITS NOTES" : "PLAY: ITS NOTES SHOW HERE", T_DIM);
+        mu_label(18, y0 + 22, editing ? "THE KEYS WRITE ITS NOTES" : "IT RESTS THESE TWO BARS", T_DIM);
         return;
     }
     if (hi - lo < 12) {
@@ -789,13 +789,13 @@ static void mu_panel_perc(ma_ui *u)
     mu_scope(u, MA_PERC, 10, 16, 220, 18, g->playing ? T_ACCENT : T_DIM);
     uint32_t used = 0, bits[MA_PAT_STEPS];
     for (int k = 0; k < MA_PAT_STEPS; ++k) {
-        bits[k] = editing ? ma_pats_edit()->dr[k] : ma_played_dr(k);
+        bits[k] = editing ? ma_pats_edit()->dr[k] : ma_played_dr(g, k);
         used |= bits[k];
     }
     int32_t x0 = 58, w = 172, y0 = 38, rows = 0;
     mu_steps_grid(g, x0, y0, w, 74);
     if (!used) {
-        mu_label(18, y0 + 30, editing ? "KEYS: THE DRUMS, LOW TO HIGH" : "PLAY: ITS DRUMS SHOW HERE", T_DIM);
+        mu_label(18, y0 + 30, editing ? "KEYS: THE DRUMS, LOW TO HIGH" : "IT RESTS THESE TWO BARS", T_DIM);
         return;
     }
     int pos = ma_pos(g);
@@ -1054,6 +1054,8 @@ void mu_init(ma_ui *u, ma_groove *g)
     memset(u, 0, sizeof *u);
     u->g = g;
     u->page = MU_PG_SCOPES;
+    u->pv_bar = -9;
+    u->pv_page = -1;
     u->inst_page = MU_PG_IPIANO;
     u->hot = -1;
     u->batt = 3;
@@ -1375,6 +1377,17 @@ void mu_tick(ma_ui *u, int ms)
         u->force = true;
     }
     if (u->msg_ms > 0) u->msg_ms -= ms;
+    /* the instrument pages: what the parts will play, run ahead each bar (stopped: now and then, the settings may
+     * have changed) */
+    if (mu_page_part(u->page) >= 0) {
+        u->pv_ms -= ms;
+        if ((g->playing && g->bar != u->pv_bar) || u->pv_ms <= 0 || u->pv_page != u->page) {
+            ma_preview(g);
+            u->pv_bar = g->bar;
+            u->pv_page = u->page;
+            u->pv_ms = g->playing ? 2000 : 400;
+        }
+    }
     if (u->play_down && !u->play_held && (u->play_ms += ms) >= MU_FADE_HOLD_MS) {
         u->play_held = true;                       /* held: the fade (held again during one: nothing more) */
         if (u->g->playing && u->fade_ms <= 0) {

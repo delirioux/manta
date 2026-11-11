@@ -74,6 +74,7 @@ typedef struct {
     bool changed;                         /* a setting changed: the glue applies it (sound, mix) and saves it later */
     bool pats_changed;                    /* a pattern saved (EDIT) or a set's stored: the glue saves them, stopped */
     int inst_page;                        /* EDIT elsewhere: the instrument page last seen */
+    int pv_bar, pv_ms, pv_page;           /* the parts' notes ahead (ma_preview): last run at that bar, that page */
     int8_t scope[4][MU_SCOPE_W];          /* each part's scope (the glue's; zeros: silent) */
     bool scope_live[4];
     uint32_t sig_head, sig_card[4], sig_foot;

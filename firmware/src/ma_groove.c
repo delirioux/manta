@@ -83,6 +83,10 @@ static ma_pats pats_now MA_POOL, pats_edit MA_POOL, pats_sets[MA_SETS] MA_POOL;
 static uint8_t cap_n[3][MA_PAT_STEPS][MA_PAT_NOTES] MA_POOL;   /* MIDI, 0 none */
 static uint8_t cap_len[3][MA_PAT_STEPS] MA_POOL;
 static uint32_t cap_dr[MA_PAT_STEPS] MA_POOL;
+static uint8_t fut_n[3][MA_PAT_STEPS][MA_PAT_NOTES] MA_POOL;   /* the same, ahead (ma_preview) */
+static uint8_t fut_len[3][MA_PAT_STEPS] MA_POOL;
+static uint32_t fut_dr[MA_PAT_STEPS] MA_POOL;
+static ma_groove sim_g MA_POOL;
 ma_pats *ma_pats_now(void) { return &pats_now; }
 ma_pats *ma_pats_set(int i) { return &pats_sets[clampi(i, 0, MA_SETS - 1)]; }
 const ma_pats *ma_pats_edit(void) { return &pats_edit; }
@@ -827,6 +831,9 @@ void ma_init(ma_groove *g, float sample_rate)
     memset(cap_n, 0, sizeof cap_n);
     memset(cap_len, 0, sizeof cap_len);
     memset(cap_dr, 0, sizeof cap_dr);
+    memset(fut_n, 0, sizeof fut_n);
+    memset(fut_len, 0, sizeof fut_len);
+    memset(fut_dr, 0, sizeof fut_dr);
     for (int p = 0; p < MA_PARTS; ++p)
         g->tone[p] = 127;
     g->pan_horns = 64;
@@ -942,22 +949,26 @@ static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, flo
     if (part == MA_PIANO || part == MA_KEYS)       /* the piano kept out of its thin top: down an octave above A5 */
         while (n > 81)
             n -= 12;
-    if (g->step >= 0 && g->bar >= 0) {             /* what it played (the instrument pages, EDIT's start) */
+    if (g->step >= 0 && g->bar >= 0) {             /* what it played (the instrument pages, EDIT's start), or will */
         int pos = cbar(g, g->bar) * 16 + g->step;
+        uint8_t (*cn)[MA_PAT_STEPS][MA_PAT_NOTES] = g->sim ? fut_n : cap_n;
+        uint8_t (*cl)[MA_PAT_STEPS] = g->sim ? fut_len : cap_len;
         if (part == MA_PERC) {
-            cap_dr[pos] |= 1u << clampi(n, 0, 31);
+            (g->sim ? fut_dr : cap_dr)[pos] |= 1u << clampi(n, 0, 31);
         } else if (part < MA_PERC) {
             for (int k = 0; k < MA_PAT_NOTES; ++k)
-                if (cap_n[part][pos][k] == 0 || cap_n[part][pos][k] == n) {
-                    cap_n[part][pos][k] = (uint8_t)clampi(n, 1, 127);
+                if (cn[part][pos][k] == 0 || cn[part][pos][k] == n) {
+                    cn[part][pos][k] = (uint8_t)clampi(n, 1, 127);
                     break;
                 }
             float sf = step_frames(g);
             int ls = clampi((int)(len / sf + 0.5f), 1, 16);
-            if (ls > cap_len[part][pos])
-                cap_len[part][pos] = (uint8_t)ls;
+            if (ls > cl[part][pos])
+                cl[part][pos] = (uint8_t)ls;
         }
     }
+    if (g->sim)                                    /* (a dry run: written down only) */
+        return;
     if (delay == 0 || npend >= MA_PEND) {
         note(g, part, n, vel, len);
         return;
@@ -1967,19 +1978,50 @@ int ma_pat_notes(const ma_groove *g, const ma_pats *p, int part, int k, int out[
     *len = p->len[part][k] ? p->len[part][k] : 1;
     return n;
 }
+/* step k sounded already (this bar's, up to the step playing): as it was; else as the dry run has it */
+static bool past(const ma_groove *g, int k)
+{
+    return g->playing && g->step >= 0 && k / 16 == cbar(g, g->bar) && k % 16 <= g->step;
+}
 int ma_played(const ma_groove *g, int part, int k, int out[MA_PAT_NOTES], int *len)
 {
-    (void)g;
     int n = 0;
     if (part < 0 || part > 2 || k < 0 || k >= MA_PAT_STEPS)
         return 0;
+    const uint8_t *src = past(g, k) ? cap_n[part][k] : fut_n[part][k];
     for (int j = 0; j < MA_PAT_NOTES; ++j)
-        if (cap_n[part][k][j])
-            out[n++] = cap_n[part][k][j];
-    *len = cap_len[part][k] ? cap_len[part][k] : 1;
+        if (src[j])
+            out[n++] = src[j];
+    int l = past(g, k) ? cap_len[part][k] : fut_len[part][k];
+    *len = l ? l : 1;
     return n;
 }
-uint32_t ma_played_dr(int k) { return cap_dr[clampi(k, 0, MA_PAT_STEPS - 1)]; }
+uint32_t ma_played_dr(const ma_groove *g, int k)
+{
+    k = clampi(k, 0, MA_PAT_STEPS - 1);
+    return past(g, k) ? cap_dr[k] : fut_dr[k];
+}
+
+/* the groove run ahead on a copy, dry: playing, the rest of this bar and the next; stopped, the first two bars PLAY
+ * would play. The notes land in fut_*; nothing sounds, the copy's clock and randomness are its own (the same seeds:
+ * the same notes, but for the keys and what is turned meanwhile) */
+static void do_step(ma_groove *g);
+void ma_preview(const ma_groove *g)
+{
+    sim_g = *g;
+    sim_g.sim = true;
+    sim_g.sound = 0;
+    memset(fut_n, 0, sizeof fut_n);
+    memset(fut_len, 0, sizeof fut_len);
+    memset(fut_dr, 0, sizeof fut_dr);
+    int steps = 32;
+    if (!sim_g.playing)
+        ma_play(&sim_g, true);
+    else
+        steps = 31 - (sim_g.step < 0 ? 0 : sim_g.step);
+    for (int k = 0; k < steps; ++k)
+        do_step(&sim_g);
+}
 
 /* the pattern the part plays now, if its own: the edit's copy while it is edited, MINE's when saved so */
 static const ma_pats *mine_for(const ma_groove *g, int part)
@@ -2015,14 +2057,17 @@ void ma_edit_begin(ma_groove *g, int part)
         return;
     pats_edit = pats_now;                          /* (the other parts as they are: only this one is written) */
     if (!((pats_now.has >> part) & 1u)) {          /* none of its own yet: what it played, to write over */
+        ma_preview(g);                             /* (what it plays over the two bars, ahead where not yet played) */
         if (part == MA_PERC) {
-            memcpy(pats_edit.dr, cap_dr, sizeof cap_dr);
+            for (int k = 0; k < MA_PAT_STEPS; ++k)
+                pats_edit.dr[k] = ma_played_dr(g, k);
         } else {
             for (int k = 0; k < MA_PAT_STEPS; ++k) {
                 const ma_chord *c = pos_chord(g, k);
+                int out[MA_PAT_NOTES], len, n = ma_played(g, part, k, out, &len);
                 for (int j = 0; j < MA_PAT_NOTES; ++j)
-                    pats_edit.n[part][k][j] = cap_n[part][k][j] ? (int8_t)pat_off(c, cap_n[part][k][j]) : MA_PAT_REST;
-                pats_edit.len[part][k] = cap_len[part][k];
+                    pats_edit.n[part][k][j] = j < n ? (int8_t)pat_off(c, out[j]) : MA_PAT_REST;
+                pats_edit.len[part][k] = (uint8_t)(n ? len : 0);
             }
         }
     }
@@ -2152,7 +2197,7 @@ static void do_step(ma_groove *g)
     int i = g->step;
     if (i == 0)
         g->rnd = (uint32_t)g->bar * 2654435761u + (uint32_t)g->s.song * 97u + 1u;
-    {   /* this step's place in what was played: written afresh */
+    if (!g->sim) {   /* this step's place in what was played: written afresh */
         int pos = cbar(g, g->bar) * 16 + i;
         for (int p = 0; p < 3; ++p) {
             for (int j = 0; j < MA_PAT_NOTES; ++j)
@@ -2227,7 +2272,8 @@ void ma_play(ma_groove *g, bool on)
     if (on == g->playing)
         return;
     ma_all_off(g);
-    npend = 0;
+    if (!g->sim)
+        npend = 0;
     g->playing = on;
     g->clock = 0;
     g->wait = 0;
