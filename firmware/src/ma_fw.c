@@ -363,31 +363,40 @@ static void ma_leds(void)
     led_put(nl, panel.btn[B_SEQ], ma_g.mambo_next || ma_g.mambo_live || (ma_g.s.arc && ma_g.sec == MA_SEC_MBO));
     for (k = 0; k < NB; k++)
         led_put(nd, panel.btn[k], 1);
-    uint32_t lit = 0;
-    if (ma_g.playing && ma_g.nloop > 0) {
+    /* the keys: the key's scale at half glow (follows KEY and SCALE), the chord playing's tones lit, the keys held lit
+     * (EDIT on PERC: the keys are drums, no scale) */
+    uint32_t lit = 0, scale = 0;
+    bool drums = ma_g.edit == MA_PERC;
+    if (ma_g.playing && ma_g.nloop > 0 && !drums) {
         const ma_chord *chd = &ma_g.loop[ma_chord_now(&ma_g)];
         for (k = 0; k < 27u; k++)
             for (int t = 0; t < 4; ++t)
                 if ((MU_KEY_LO + k) % 12u == (uint32_t)chd->tone[t] % 12u) lit |= 1u << k;
     }
-    for (k = 0; k < 27u; k++) {
-        led_put(nl, 14u + k, (int)((fm1_in.notes >> k) & 1u));
-        led_put(nd, 14u + k, (int)((lit >> k) & 1u) || !((fm1_in.notes >> k) & 1u));
-    }
+    if (!drums)
+        for (k = 0; k < 27u; k++)
+            if (ma_snap(&ma_g.s, (int)(MU_KEY_LO + k)) == (int)(MU_KEY_LO + k)) scale |= 1u << k;
+    for (k = 0; k < 27u; k++)
+        led_put(nl, 14u + k, (int)((((fm1_in.notes | lit) >> k) & 1u)));
     if (ma_g.playing)
         led_clear(nd, panel.btn[B_PLAY]);
     for (c = 0; c < FM1_NCOL; c++)
         nd[c] = settings_leds == LEDS_DIM || settings_leds == LEDS_DIM_LO ? (uint8_t)(nd[c] & ~nl[c]) : 0u;
-    /* the chord's keys glow dim even with the dim LEDs off: they are music, not decoration */
+    for (k = 0; k < 27u; k++)                      /* (the keys' own dim: none, the scale's half glow instead) */
+        led_clear(nd, 14u + k);
+    uint8_t md[FM1_NCOL] = {0};
     for (k = 0; k < 27u; k++)
-        if ((lit >> k) & 1u && !((fm1_in.notes >> k) & 1u))
-            led_put(nd, 14u + k, 1);
+        if (((scale & ~lit & ~fm1_in.notes) >> k) & 1u) {
+            led_put(md, 14u + k, 1);
+            led_put(nd, 14u + k, 1);               /* (the mid level over the glow, as Felucca's DRUM grid) */
+        }
     if (ma_g.playing)
         nl[LED_PLAY_GREEN >> 3] |= (uint8_t)(1u << (LED_PLAY_GREEN & 7u));
     fm1_led_dim_level(settings_leds == LEDS_DIM_LO);
     for (c = 0; c < FM1_NCOL; c++) {
         fm1_led_dim[c] = nd[c];
         fm1_led_breath[c] = 0;
+        fm1_led_mid[c] = md[c];
         fm1_led[c] = nl[c];
     }
 }

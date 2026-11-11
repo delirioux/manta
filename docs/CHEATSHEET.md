@@ -19,6 +19,7 @@ and PERC; from any other page it takes you to SCOPES. The keys play music, or in
 | Band hit | **REC** tapped: the whole band hits together on the next bar (a cierre), a new offbeat figure each tap |
 | Descarga | **REC** held: the percussion alone until you let go, then a timbal roll and the band back on the bar line |
 | Mambo | **SEQ**: the horn section into its riff from the next bar; again to take it out |
+| The key on the keys | The scale's keys half glow, the chord playing's lit; they follow **KEY** and **SCALE** |
 | Play the solo | **Keys**: the solo trumpet as you press them; hold **HOME**, KNOB 3: **SNAP** onto the scale. **OCT-** / **OCT+**: their octave |
 
 ## Each instrument (HOME, HOME, HOME...)
