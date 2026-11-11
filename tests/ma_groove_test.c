@@ -276,11 +276,21 @@ int main(void)
         run_to_bar(b + 2);
         watch_bar = -1;
         CHECK(g.hit_bar == b + 1, "BAND HIT: its cierre the next bar");
-        /* the cierre bar: piano 3 notes on each clave stroke (3 on the three side, 2 on the two side) */
-        int strokes = ma_clave_side(&g, b + 1);
-        CHECK(watch_piano == 3 * strokes, "the cierre: the piano on the clave's %d strokes only (%d notes)", strokes, watch_piano);
+        /* the cierre bar: a figure of the band's hits, the piano's chords on them only */
+        CHECK(watch_piano >= 3 * 2 && watch_piano <= 3 * 6, "the cierre: the piano on the hits only (%d notes)", watch_piano);
+        {   /* tapped again: another figure each time, never the same twice running */
+            int f0 = g.hit_fig, same = 0;
+            for (int t = 0; t < 8; ++t) {
+                ma_band_hit(&g, true);
+                ma_band_hit(&g, false);
+                run_to_bar(g.bar + 2);
+                same += g.hit_fig == f0;
+                f0 = g.hit_fig;
+            }
+            CHECK(!same && f0 != 0, "BAND HIT again: a new figure each tap");
+        }
         reset_counts();
-        run_to_bar(b + 3);
+        run_to_bar(g.bar + 1);
         CHECK(on[MA_PIANO] > 3 * 3, "after the cierre the groove again (%d piano notes)", on[MA_PIANO]);
         ma_play(&g, false);
     }

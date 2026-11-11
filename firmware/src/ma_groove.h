@@ -153,6 +153,8 @@ typedef struct {
     bool mambo_live;                               /* ARC off: the horns' riff on (SEQ toggles it) */
     /* performance */
     int hit_bar;                                   /* BAND HIT: the bar its cierre plays (-1 none) */
+    uint8_t hit_fig;                               /* its figure (ma_groove.c HIT_FIG; 0 the clave's) */
+    uint8_t hit_count;                             /* the taps so far: each the next figure, never the same twice */
     bool hit_wait;                                 /* tapped: on the next bar line */
     bool desc;                                     /* the descarga: the percussion alone */
     bool desc_held;

@@ -1022,6 +1022,22 @@ static bool vrs_piano_of(const ma_groove *g)
     return (xs(&r) >> 7) & 1u;
 }
 
+/* the band's hits, a bar each: the clave's own figure (0, the song's last cierre), and the cierres and moñas a salsa
+ * band throws in, off the beat, pushed onto the 'and's and the anticipations. X a hard stab, x a lighter one, L the
+ * last hit held */
+#define HIT_FIGS 10
+static const char HIT_FIG[HIT_FIGS][17] = {
+    "................",                            /* (0: the clave's, ma_clave_hit) */
+    "..X..X..X...L...",                            /* three on the 'and's, the fourth held */
+    "X..X..X.....L...",                            /* the tresillo, the last on four */
+    "...X...X...X..L.",                            /* pushed: every 'and' of two, the last anticipating the one */
+    "......X.X..X..L.",                            /* the bar's second half, anticipated */
+    "X.x..X.x..X...L.",                            /* stab and pickup, three times */
+    "..X.X...X.X.L...",                            /* the mambo's hemiola */
+    "X..X..X..X..L...",                            /* three over four (the dotted eighths) */
+    "...X..X.x.X...L.",                            /* the 'and' of one, the bombo's place, then into four */
+    "X.........X.X.L.",                            /* one, then a run of three into the next bar */
+};
 /* a new bar: what waited for the bar line comes in, the form moves on */
 static void bar_line(ma_groove *g)
 {
@@ -1070,9 +1086,12 @@ static void bar_line(ma_groove *g)
         g->next_song = -1;
         ma_rebuild(g);
     }
-    if (g->hit_wait) {                             /* BAND HIT tapped: its cierre this bar */
+    if (g->hit_wait) {                             /* BAND HIT tapped: its cierre this bar, the next figure (by the song,
+                                                    * so each song goes through them its own way) */
         g->hit_wait = false;
         g->hit_bar = g->bar;
+        g->hit_fig = (uint8_t)(1 + (g->hit_count * 3u + g->s.song) % (HIT_FIGS - 1));
+        g->hit_count++;
     }
     if (g->desc && !g->desc_held && g->desc_end >= 0 && g->bar >= g->desc_end) {
         g->desc = false;                           /* the descarga over: the band back on the bar line */
@@ -1676,7 +1695,7 @@ static void play_run(ma_groove *g, int part, int i, uint32_t delay, float sf)
     if (i == 15)
         n = base + 12;                             /* (it lands home, an octave up) */
     int vel = (i < 8 ? 108 : 92 + i) + (i % 4 == 0 ? 6 : 0);
-    float len = i < 8 ? sf * 2.5f : sf * 0.9f;
+    float len = i < 8 ? sf * 2.5f : sf * (part == MA_HORNS ? 1.08f : 0.9f);   /* (the trumpet's run slurred) */
     schedule(g, delay, part, n, clampi(vel, 1, 127), i == 15 ? sf * 3.0f : len);
     if (part != MA_HORNS)
         schedule(g, delay, part, n - 12, clampi(vel - 10, 1, 127), i == 15 ? sf * 3.0f : len);
@@ -1718,6 +1737,8 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         float heat = (float)s->heat / 100.0f;
         int vel = 104 + (g->riff_len[pos] == 1 ? 10 : 0) + (int)(hum * 6.0f) + (int)(heat * 10.0f);
         float len = sf * (float)g->riff_len[pos] * (g->riff_len[pos] == 1 ? 0.6f : 0.9f);
+        if (g->riff_len[pos] == 1 && sf < 0.12f * g->sr && pos + 1 < MA_RIFF_LEN && g->riff[pos + 1] != -128)
+            len = sf * 1.05f;                      /* (a quick run of the section's: slurred into the next, not chopped) */
         if (g->bowed)
             bow(g, &len, &vel, sf);
         schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
@@ -1803,6 +1824,12 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
     vel += rnd_n(&g->rnd, 21) - 12;
     uint32_t late = (uint32_t)((float)rnd_n(&g->rnd, 21) * g->sr * 0.001f);
     float hold = len >= 4 ? 0.9f + 0.02f * (float)rnd_n(&g->rnd, 6) : 0.8f + 0.03f * (float)rnd_n(&g->rnd, 6);   /* (legato) */
+    /* fast notes (under a fifth of a second) as a player slurs them: each into the next (the solo's mono voice and
+     * its glide join them), the tongue only on the strong ones, the dynamics evened out */
+    if (sf * (float)len < 0.2f * g->sr) {
+        hold = 1.1f;
+        vel = 98 + (vel - 98) / 2 + (i % 4 == 0 ? 4 : 0);
+    }
     if (g->bowed) {                                /* the bow: one note into the next, the dynamics gentle */
         hold = 1.15f;
         vel = 92 + (vel - 92) / 2;
@@ -1811,11 +1838,38 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 }
 
 /* the cierre: the whole band hits the clave's figure of the bar together, nothing between (a band hit, the FIN) */
+/* the figure of this cierre bar: a tap's own; the song's last cierre the clave's; HITS's by the bar */
+static int cierre_fig(const ma_groove *g)
+{
+    if (g->bar == g->hit_bar)
+        return g->hit_fig;
+    if (g->s.arc && g->sec == MA_SEC_FIN)
+        return 0;
+    uint32_t r = (uint32_t)(g->bar < 0 ? 0 : g->bar) * 2654435761u + (uint32_t)g->s.song * 97u + 11u;
+    return rnd_n(&r, HIT_FIGS);
+}
+
 static void play_cierre(ma_groove *g, int i, uint32_t delay, float sf)
 {
-    if (!ma_clave_hit(g, g->bar, i))
-        return;
-    bool last = cbar(g, g->bar) == 0 ? i == 12 : i == 8;
+    int fig = cierre_fig(g);
+    bool last;
+    if (fig == 0) {
+        if (!ma_clave_hit(g, g->bar, i))
+            return;
+        last = cbar(g, g->bar) == 0 ? i == 12 : i == 8;
+    } else {
+        char ch = HIT_FIG[fig][i & 15];
+        if (ch == '.')
+            return;
+        last = ch == 'L';
+        if (ch == 'x') {                           /* a light stab: the horns and a bell, the piano's top */
+            const ma_chord *c = chord_at(g, g->bar);
+            schedule(g, delay, MA_HORNS, tone_at(c, 2, 72), 100, sf * 0.9f);
+            schedule(g, delay, MA_PIANO, tone_at(c, 0, 72), 96, sf * 0.9f);
+            schedule(g, delay, MA_PERC, MA_DR_BELL_MAMBO, 96, 0);
+            return;
+        }
+    }
     const ma_chord *c = chord_at(g, g->bar);
     int t[3];
     triad_at(c, 62, t);

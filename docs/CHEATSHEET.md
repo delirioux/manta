@@ -16,7 +16,7 @@ and PERC; from any other page it takes you to SCOPES. The keys play music, or in
 | Tempo / volume | **SELECT** / **MASTER** |
 | Another style | **PRESETS**: one of twelve, on the next bar line (CALIENTE: SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA, GUARACHA; NOCHE: SON, CHA-CHA, BOLERO, BOSSA, TANGO, DANZON) |
 | Another song | **ALGORITHM**: a new chord loop, riff, melody and sounds in the same style, on the next bar |
-| Band hit | **REC** tapped: the whole band hits the clave's figure on the next bar (a cierre) |
+| Band hit | **REC** tapped: the whole band hits together on the next bar (a cierre), a new offbeat figure each tap |
 | Descarga | **REC** held: the percussion alone until you let go, then a timbal roll and the band back on the bar line |
 | Mambo | **SEQ**: the horn section into its riff from the next bar; again to take it out |
 | Play the solo | **Keys**: the solo trumpet as you press them; hold **HOME**, KNOB 3: **SNAP** onto the scale. **OCT-** / **OCT+**: their octave |

@@ -19,8 +19,10 @@ The header shows the section playing (INTRO, TEMA, VERSO, CORTE, FRASE, PIANO, M
 (3/2 or 2/3, as the bar playing falls) or HELD while a descarga is held. The footer's sixteen dashes are the way
 through the section; under them the style and the song's number, on every page.
 
-**REC is BAND HIT.** Tap it: on the next bar the whole band hits the clave's figure together, a cierre, and drops
-back into the groove. Hold it: a descarga, the percussion alone (the screen says so, and HELD) until you let go,
+**REC is BAND HIT.** Tap it: on the next bar the whole band hits together, a cierre, and drops back into the groove.
+Each tap brings the next of nine figures, off the beat as a salsa band throws them (pushed onto the 'and's, the
+tresillo, three over four, a run into the next bar), never the same twice running; the song's last cierre hits the
+clave's own figure, and HITS picks one by the bar. Hold it: a descarga, the percussion alone (the screen says so, and HELD) until you let go,
 then a timbal roll over the last beat and the band back on the bar line. REC lights while a hit or a descarga is on.
 
 **SEQ is MAMBO.** The horn section goes into the mambo's riff from the next bar line, over the montuno; again to take

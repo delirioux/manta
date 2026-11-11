@@ -45,7 +45,8 @@ anything you made in Felucca first. Installing firmware is at your own risk.
    the trombone an octave under the trumpets.
 5. **A Havana song's form**: the groove, the trumpet's theme, a solo where a singer would sing, the corte, the
    piano's montuno solo, the montuno's call and response, the mambo, the moña and the cierre.
-6. **BAND HIT** (REC): the whole band hits the clave's figure together on the next bar. Hold it for a descarga: the
+6. **BAND HIT** (REC): the whole band hits together on the next bar, a new offbeat figure each tap (cierres pushed
+   onto the 'and's, the tresillo, three over four). Hold it for a descarga: the
    percussion alone, then a timbal roll and the band back on the bar line.
 7. **MAMBO** (SEQ): the horn section into its riff from the next bar.
 8. **The solo is yours**: the keys play the solo trumpet as you press them, with mutes (cone, cup, harmon, wah: filters over
