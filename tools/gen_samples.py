@@ -113,7 +113,7 @@ ENV = {"wave":(5, 80, 100, 50), "kit": (0, 127, 127, 60), "multi": (0, 85, 0, 75
 # shakers (a file name ending in _air) at AIR_RATE: their air lives above 11 kHz, which 22,050 Hz would cut away (the
 # engine plays each zone at its own rate)
 SET_DIR = {}
-SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55, "SAX": 0.46, "VIOLINS": 0.52, "UPBASS": 0.75}  # (the piano: tools/ma_piano.py cut and faded it already)
+SET_KEEP = {"DRUMS": 1.0, "PIANO": 1.2, "BRASS": 0.55, "SAX": 0.40, "VIOLINS": 0.42, "UPBASS": 0.75}  # (the piano: tools/ma_piano.py cut and faded it already)
 SET_KEEP_BY_ROOT = {}
 SET_FADE = {}
 SET_RATE = {"SAX": 16000, "VIOLINS": 16000, "UPBASS": 11025}      # (Manta: the reed and the bows, at 16 kHz to fit the flash)
