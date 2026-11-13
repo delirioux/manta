@@ -7,5 +7,6 @@
   "play": "https://delirioux.github.io/manta/try/",
   "cheat": "https://github.com/delirioux/manta/blob/main/docs/CHEATSHEET.md",
   "image": "docs/card.png",
-  "color": "#FF8A1F"
+  "color": "#FF8A1F",
+  "sounds": "CC0: Versilian Studios' VCSL and VSCO-2 CE (hand percussion, Yamaha upright, trumpet, trombone, tenor sax, violins, double bass); kick, washboard and timbale shells synthesized by tools/ma_perc.py; drums synthesized by Felucca's tools/gen_waves.py (Hügelton Sample Pack, GPL-3.0-only)"
 }
