@@ -53,9 +53,9 @@ PATCHES = [
     # a fretless bass: round, a 'mwah' on velocity, glides (Tuna's)
     ("FRETLESS", voice("FRETLESS", 5, [
         op(r=(80, 40, 25, 62), l=(99, 90, 76, 0), ol=99, kvs=2),
-        op(r=(80, 48, 30, 62), l=(99, 70, 50, 0), ol=80, kvs=5),
+        op(r=(80, 48, 30, 62), l=(99, 70, 50, 0), ol=88, kvs=5),
         op(r=(80, 40, 25, 62), l=(99, 88, 72, 0), ol=82, fc=2, kvs=2),
-        op(r=(80, 50, 30, 62), l=(99, 60, 40, 0), ol=55, fc=2, kvs=4),
+        op(r=(80, 50, 30, 62), l=(99, 60, 40, 0), ol=70, fc=2, kvs=4),
         OFF, OFF],
         fb=0, lpms=0)),
     # the accordion (the cumbia's and the vallenato's): three steel reeds a key, buzzing, not a synth's pad. Each

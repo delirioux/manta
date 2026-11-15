@@ -87,14 +87,14 @@ static const mas_sound MAS_SOUND[3][MA_SOUNDS] = {
         SO("GUITAR", MAS_PHYS, 0, MAS_GUITAR, MAS_KEEP, MAS_KEEP, MAS_POLY, 2, 2),   /* strums (ma_groove.c GUITAR_PAT) */
     },
     {   /* BASS */
-        SF("BABY", MA_FM6_FRETLESS, MAS_KEEP, MAS_MONO, -6),   /* the baby bass: round, a soft attack */
-        SO("UPRIGHT", MAS_SAMPLE, 0, MAS_UPBASS, MAS_KEEP, MAS_KEEP, MAS_MONO, 4, -9),   /* the double bass, plucked */
-        S("FM BASS", MAS_FM6, 2, 2, -4),
-        S("SUB", MAS_ANALOG, 7, 4, -13),
-        SF("SLAP", MA_FM6_SLAPBASS, MAS_KEEP, MAS_POLY, 0),
-        SF("SLIDE", MA_FM6_FRETLESS, 22, MAS_LEGATO, -6),
-        SO("ROUND", MAS_ANALOG, 0, MAS_ROUND, MAS_KEEP, MAS_KEEP, MAS_MONO, -1, -14),
-        SX("TUBA", MAS_PHASE, 0, 4, MAS_KEEP, MAS_MONO, 2, -9),   /* PHASE's BRASS in the low end */
+        SF("BABY", MA_FM6_FRETLESS, MAS_KEEP, MAS_MONO, 4),   /* the baby bass: round, a soft attack */
+        SO("UPRIGHT", MAS_SAMPLE, 0, MAS_UPBASS, MAS_KEEP, MAS_KEEP, MAS_MONO, 4, -1),   /* the double bass, plucked */
+        S("FM BASS", MAS_FM6, 2, 2, 16),
+        S("SUB", MAS_ANALOG, 7, 4, -5),
+        SF("SLAP", MA_FM6_SLAPBASS, MAS_KEEP, MAS_POLY, 22),
+        SF("SLIDE", MA_FM6_FRETLESS, 22, MAS_LEGATO, 4),
+        SO("ROUND", MAS_ANALOG, 0, MAS_ROUND, MAS_KEEP, MAS_KEEP, MAS_MONO, -1, -8),
+        SX("TUBA", MAS_PHASE, 0, 4, MAS_KEEP, MAS_MONO, 2, -7),   /* PHASE's BRASS in the low end */
     },
     {   /* HORNS: the section and the solo (the solo's mute, bell and place on the TONE, GAIN and PAN slots) */
         SO("TPT+TBN", MAS_SAMPLE, 2, MAS_BRASS, MAS_KEEP, MAS_KEEP, MAS_POLY, 4, 2),   /* the sampled brass: set BRASS */

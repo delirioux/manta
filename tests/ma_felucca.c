@@ -5,7 +5,7 @@
  *
  *   tests/ma_felucca.sh OUTDIR [SECONDS]
  *   env STYLE=0..9, SONG, ARC=0/1, BREAK=bar (a BREAK tapped at that bar), KEYUP=bar (SEQ at that bar),
- *       KEYS=bar (a key held over that bar, the hook live), KIT=0..2, LIFT, PUMP, VOX, ENERGY, NAME (the file:
+ *       KEYS=bar (a key held over that bar, the hook live), KIT=0..2, PIANO/BASS/HORNS=0..7 (a part's sound), LIFT, PUMP, VOX, ENERGY, NAME (the file:
  *       OUTDIR/sill_NAME.wav); with STEMS=1 each part to its own WAV as well (the others' levels at 0) */
 #define main hostsim_main
 #include "hostsim.c"
@@ -94,6 +94,7 @@ int main(int argc, char **argv)
     if (getenv("MUTE")) G.s.mute = (uint8_t)env_int("MUTE", 0);
     if (getenv("HORNS")) G.s.snd[MA_HORNS] = (uint8_t)env_int("HORNS", 0);
     if (getenv("PIANO")) G.s.snd[MA_PIANO] = (uint8_t)env_int("PIANO", 0);
+    if (getenv("BASS")) G.s.snd[MA_BASS] = (uint8_t)env_int("BASS", 0);
     only_events = env_int("EVENTS", -1);
     if (getenv("P3")) G.s.p3mode = (uint8_t)env_int("P3", 0);
     only_part = env_int("PART", -1);
