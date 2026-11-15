@@ -1,6 +1,17 @@
-# Manta 1.0
+# Manta 1.1
 
 A Latin band on the FM-1: generative grooves on the clave, the player leading it and taking the solo.
+
+New in 1.1:
+
+- Fuller sound: the bass louder and heard on the FM-1's own speaker, every bass sound evened out; TPT+TBN a section of
+  three, two trumpets and the trombone under them doubling the lead, its body back, spread across the stereo with WIDTH.
+- Play along: a part you take over on the keys (the solo, or an instrument's page) rests while you play and for two
+  bars after you let go, back on a bar line; the percussion plays on.
+- HARMONY (ENV again): VAMP, the montuno, mambo and moña on a vamp of their own; MOD, the key changing (OFF, LIFT,
+  ROUND).
+
+From 1.0:
 
 - Twelve styles on two sides: CALIENTE (SALSA, MAMBO, MERENGUE, CUMBIA, SAMBA, GUARACHA) and NOCHE (SON, CHA-CHA,
   BOLERO, BOSSA, TANGO, DANZON), every pattern on the clave, 3-2 or 2-3, each with its tempo, sounds and percussion.

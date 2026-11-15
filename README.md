@@ -14,8 +14,8 @@ sampled trumpet and trombone section, from salsa and mambo to bolero and tango. 
 take the solo trumpet on the keys. Built on [Sill](https://github.com/delirioux/sill),
 [Tuna](https://github.com/delirioux/tuna) and [Felucca](docs/FELUCCA.md).
 
-> **Version 1.0.** The groove, the percussion kit, the sampled upright, brass, sax, violins and double bass, the
-> Havana song form, SCOPES and the instrument pages with EDIT. The old songs' phrases and the full PAN 3D are next.
+> **Version 1.1.** The groove, the percussion kit, the sampled upright, brass, sax, violins and double bass, the
+> Havana song form, SCOPES and the instrument pages with EDIT, HARMONY's vamp and key changes, play-along. The old songs' phrases and the full PAN 3D are next.
 > Built with no warranty. [Felucca](https://github.com/hugelton/Felucca)'s installer, or the official V15, takes the
 > FM-1 back.
 
