@@ -357,6 +357,41 @@ int main(void)
         ma_play(&g, false);
     }
 
+    /* the player takes a part over: it rests while played and two bars after (to the nearest bar line), then the band
+     * plays it again; the other parts play on */
+    {
+        ma_defaults(&g.s);
+        g.s.arc = 0;
+        ma_rebuild(&g);
+        ma_play(&g, true);
+        run_to_bar(4);
+        ma_key(&g, 3, 56, true);
+        reset_counts();
+        run_bars(1);
+        int played = on[MA_HORNS];
+        CHECK(played == 0, "the keys held: the horns the player's alone (%d of the band's)", played);
+        ma_key(&g, 3, 56, false);                  /* let go at the start of bar 5: back on bar 7 */
+        reset_counts();
+        run_to_bar(7);
+        CHECK(on[MA_HORNS] == 0 && on[MA_BASS] > 0 && on[MA_PIANO] > 0,
+              "let go: the horns rest two bars, the others play on (%d horns notes)", on[MA_HORNS]);
+        reset_counts();
+        run_bars(8);
+        CHECK(on[MA_HORNS] > 0, "then the horns back");
+        ma_part_key(&g, MA_BASS, 0, 40, true);     /* a part's page: the bass the player's */
+        reset_counts();
+        run_bars(1);
+        int bass_held = on[MA_BASS];
+        ma_part_key(&g, MA_BASS, 0, 40, false);
+        CHECK(bass_held == 0, "the bass's keys held: the band's bass silent (%d)", bass_held);
+        int back = g.rest_until[MA_BASS];
+        CHECK(back >= g.bar + 2 && back <= g.bar + 3, "let go: the bass back two bars on (bar %d, now %d)", back, g.bar);
+        ma_play(&g, false);
+        ma_play(&g, true);
+        CHECK(g.rest_until[MA_BASS] == 0, "PLAY again: no part resting");
+        ma_play(&g, false);
+    }
+
     /* no room left empty: in the montuno the solo's four bars and the coro's, played by the section, take turns */
     {
         ma_defaults(&g.s);

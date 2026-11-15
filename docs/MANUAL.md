@@ -30,7 +30,8 @@ it out. SEQ lights while the mambo plays. With ARC on the form brings the mambo 
 
 **The keys** play the solo, on the HORNS sound with the SOLO page's mute and bell, an octave over the keys as printed,
 live, as you press them: an off note is yours to play. MENU's **SNAP** (hold HOME, KNOB 3) snaps them to the scale
-instead. While you hold one, the written solo makes way. OCT- and OCT+ move the keys' octave. The keys' LEDs show the key:
+instead. While you play, the band's horns make way, and they stay out for two bars after you let go (back on a bar
+line), so your phrase has room to end. OCT- and OCT+ move the keys' octave. The keys' LEDs show the key:
 its scale's keys at half glow (they follow KEY and SCALE), the chord playing's tones lit. The keys never change a setting.
 
 <p align="center">
@@ -101,7 +102,7 @@ ARC and MENU stay yours.
 
 On an instrument page the keys play that instrument, live: the PIANO as printed, the BASS two octaves down, the HORNS
 the solo trumpet (an octave up), PERC a drum a key (the kick lowest; the header names the drum). While you hold keys on
-the PIANO or the BASS, the band's part makes way. On PERC's page the keys glow for the drums its two bars play, lit as
+the PIANO or the BASS, the band's part makes way, and it stays out for two bars after you let go. On PERC's page the keys glow for the drums its two bars play, lit as
 they strike; on the others they show the key's scale. Elsewhere the keys play the solo.
 
 ## EDIT: the parts' own notes

@@ -945,6 +945,26 @@ void ma_all_off(ma_groove *g)
         note_off_now(g, g->nheld - 1);
 }
 
+/* the player takes a part over: it stays silent while the keys are held, and after the last is let go until the bar
+ * line nearest MA_REST_BARS later (the band comes back on a bar line, the player's phrase left room to end). The
+ * piano's page holds the upright beside the guitar as well; the percussion never rests (a drum played adds to it) */
+#define MA_REST_BARS 2
+static bool player_has(const ma_groove *g, int p)
+{
+    int q = p == MA_KEYS ? MA_PIANO : p;
+    if (q == MA_HORNS && g->keys)
+        return true;
+    if (g->pkeys && g->pkey_part == q)
+        return true;
+    return g->playing && g->bar < g->rest_until[q];
+}
+static void player_let_go(ma_groove *g, int p)
+{
+    if (!g->playing || p < 0 || p >= MA_PERC)
+        return;
+    g->rest_until[p] = g->bar + MA_REST_BARS + (g->step >= 8 ? 1 : 0);
+}
+
 static void part_off(ma_groove *g, int part)
 {
     for (int i = g->nheld - 1; i >= 0; --i)
@@ -984,6 +1004,8 @@ static void schedule(ma_groove *g, uint32_t delay, int part, int n, int vel, flo
         }
     }
     if (g->sim)                                    /* (a dry run: written down only) */
+        return;
+    if (player_has(g, part))                       /* (the player has it: the hits and the fills too) */
         return;
     if (delay == 0 || npend >= MA_PEND) {
         note(g, part, n, vel, len);
@@ -1839,7 +1861,7 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
     bool mon = s->arc ? sc == MA_SEC_MON : true;
     if (mon && (sec_bar(g) / 4) % 2 == 0) {
         g->soloing = false;
-        if (g->keys)                               /* (a key held: the player's, not the coro's) */
+        if (player_has(g, MA_HORNS))               /* (the player's, not the coro's) */
             return;
         int cp = (sec_bar(g) % 2) * 16 + i;
         if (g->phr[cp] == -128)
@@ -1875,7 +1897,7 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
      * the horns have it, the CORTE's bar alone, the FRASE (an improvised phrase), every other four bars of the
      * montuno an improvised answer, in the moña over the riff's rests; the keys take it over */
     g->soloing = true;
-    if (g->keys || s->solo != MA_SOLO_PHRASE)
+    if (player_has(g, MA_HORNS) || s->solo != MA_SOLO_PHRASE)
         return;
     bool plays = false, improv = false;
     if (!s->arc) {
@@ -2320,8 +2342,11 @@ static void do_step(ma_groove *g)
             d += (uint32_t)((float)lay * g->sr * 0.001f);
         else if (p == MA_BASS)
             d += (uint32_t)((float)lay * g->sr * 0.0003f);
-        if (g->pkeys && (g->pkey_part == p || (g->pkey_part == MA_PIANO && p == MA_KEYS)))
-            continue;                              /* (the player has it: the keys held on its page) */
+        if (player_has(g, p)) {                    /* the player has it: its keys, held or just let go */
+            if (p == MA_HORNS && g->keys)
+                g->soloing = true;                 /* (the keys' solo: one voice, its slur and its hall) */
+            continue;
+        }
         {   /* a part's own pattern (EDIT): the piano's and the horns' solos still theirs, but while edited */
             const ma_pats *mp = mine_for(g, p == MA_KEYS ? MA_PIANO : p);
             if (mp && p == MA_KEYS && (g->edit == MA_PIANO || mine_plays(g, MA_PIANO)))
@@ -2376,6 +2401,8 @@ void ma_play(ma_groove *g, bool on)
     g->riff_var = 0;
     g->soloing = false;
     g->solo_note = -1;
+    for (int p = 0; p < MA_PARTS; ++p)
+        g->rest_until[p] = 0;
     if (on) {
         if (g->next_style >= 0 || g->next_song >= 0) {   /* (queued while stopped: at once) */
             g->bar = -1;
@@ -2477,6 +2504,8 @@ void ma_part_key(ma_groove *g, int part, int k, int note, bool down)
         if (g->pkey_note[k] >= 0)
             emit(g, 0, g->pkey_part, g->pkey_note[k], 0);
         g->pkey_note[k] = -1;
+        if (!g->pkeys)
+            player_let_go(g, g->pkey_part);
     }
 }
 
@@ -2502,6 +2531,8 @@ void ma_key(ma_groove *g, int k, int note, bool down)
         if (g->key_note[k] >= 0)
             emit(g, 0, MA_HORNS, g->key_note[k], 0);
         g->key_note[k] = -1;
+        if (!g->keys)
+            player_let_go(g, MA_HORNS);
     }
 }
 
@@ -2542,8 +2573,7 @@ void ma_process(ma_groove *g, int frames)
             left -= chunk;
             for (int k = 0; k < npend;) {
                 if ((int32_t)(g->clock - pend[k].at) >= 0) {
-                    if (!g->muted[pend[k].part] && !(g->pkeys && (pend[k].part == g->pkey_part ||
-                                                                (g->pkey_part == MA_PIANO && pend[k].part == MA_KEYS))))
+                    if (!g->muted[pend[k].part] && !player_has(g, pend[k].part))
                         note(g, pend[k].part, pend[k].note, pend[k].vel, pend[k].len);
                     pend[k] = pend[--npend];
                 } else {

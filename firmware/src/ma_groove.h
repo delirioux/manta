@@ -208,6 +208,7 @@ typedef struct {
     uint32_t pkeys;                                /* the keys held playing a part (its instrument page) */
     int8_t pkey_part;                              /* that part (it makes way while they are held) */
     int8_t pkey_note[27];
+    int rest_until[MA_PARTS];                      /* a part the player took over rests until this bar (the keys let go) */
     bool sim;                                      /* a dry run (ma_preview's copy): notes written down, not played */
     int8_t edit;
     uint8_t ecur;                                  /* stopped: the step the keys write (0..31) */
