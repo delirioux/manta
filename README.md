@@ -44,7 +44,7 @@ anything you made in Felucca first. Installing firmware is at your own risk.
 3. **A real percussion section**: thirty one-shots, congas, bongos, timbales, bells, agogô, claves, woodblock, güiro,
    shakers, cabasa, triangle, toms and a washboard, from CC0 recordings.
 4. **Real piano and brass**: a sampled Yamaha upright playing the montuno, and a sampled trumpet and trombone section,
-   the trombone an octave under the trumpets.
+   two trumpets with the trombone under them doubling the lead, the section spread across the stereo.
 5. **A Havana song's form**: the groove, the trumpet's theme, a solo where a singer would sing, the corte, the
    piano's montuno solo, the montuno's call and response, the mambo, the moña and the cierre.
 6. **BAND HIT** (REC): the whole band hits together on the next bar, a new offbeat figure each tap (cierres pushed

@@ -170,6 +170,7 @@ static inline int16_t mas_clamp(int v, int lo, int hi) { return (int16_t)(v < lo
 
 static int16_t mas_rev_base[MA_TRACKS];
 static int16_t mas_horns_voice = V_POLY;
+static int16_t mas_horns_sprd;
 static bool mas_horns_sung = true;               /* the HORNS sound is blown or bowed (vibrato, slurs), not plucked */          /* the HORNS sound's own voice mode (the section's) */
 #define MAS_SOLO_GLIDE 14                         /* the solo's portamento: a short slide into each note */          /* each track's reverb send from the cards (mas_block adds the solo's) */
 
@@ -191,6 +192,8 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     int w = s->width;
     t->p[P_PAN] = (int16_t)(part == MA_PIANO ? -w * 16 / 100 : part == MA_HORNS ? -64 : 0);
     t->p[P_SPRD] = mas_clamp(part == MA_PERC ? w * 70 / 100 : part == MA_PIANO ? w * 40 / 100 : 0, 0, 127);
+    if (part == MA_HORNS)                  /* the section's horns side by side (the solo one, in its place: mas_block) */
+        mas_horns_sprd = mas_clamp(w * 50 / 100, 0, 127);
     /* the sends: ROOM on everything, PLATE more on the piano and the horns */
     static const uint8_t ROOM[MA_PARTS] = {64, 10, 60, 30, 42};   /* (a long hall: the band a little in it) */
     int rev = s->room * 127 / 100 * ROOM[part] / 100 + (part == MA_PIANO || part == MA_HORNS ? s->plate * 50 / 100 : 0);
@@ -277,6 +280,7 @@ static inline void mas_block(const ma_groove *g)
      * section's chords back to their voices */
     bool solo = (g->soloing || g->keys) && mas_horns_sung;   /* (a plucked lead neither slurs nor sings) */
     trk[MA_HORNS].p[P_VOICE] = (int16_t)(solo ? V_MONO : mas_horns_voice);
+    trk[MA_HORNS].p[P_SPRD] = (int16_t)(g->soloing || g->keys ? 0 : mas_horns_sprd);
     trk[MA_HORNS].p[P_GLIDE] = (int16_t)(solo ? MAS_SOLO_GLIDE : 0);  /* the tema's held note: vibrato (about +-35 cents, the LFO's) */
 }
 

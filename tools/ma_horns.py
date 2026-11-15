@@ -117,7 +117,7 @@ def make(src, keep, hp, accent_db, voice):
         x = ma_piano.shelf_high(x, 7000, 1.0)
     elif voice == "tbn":
         x = ma_piano.peak_eq(x, 1400, 0.9, 2.5)     # the trombone's blare, so it speaks under the trumpets
-        x = ma_piano.peak_eq(x, 250, 1.0, -1.5)     # less of its woolly body
+        x = ma_piano.peak_eq(x, 220, 0.9, 2.0)      # its body: the section's floor under the trumpets
     elif voice == "sax":
         x = ma_piano.peak_eq(x, 1800, 0.8, 3.0)     # the reed's edge: the merengue's sax cuts
         x = ma_piano.peak_eq(x, 300, 1.0, -1.0)

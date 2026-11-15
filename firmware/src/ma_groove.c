@@ -1825,6 +1825,24 @@ static uint32_t bow_late(ma_groove *g)
     return g->bowed ? (uint32_t)((float)(4 + rnd_n(&g->rnd, 14)) * g->sr * 0.001f) : 0u;
 }
 
+/* the section's chord: the lead and the second horn a chord tone under it; the sampled brass's the salsa section's
+ * three, two trumpets and the trombone under them doubling the lead an octave or two down, where the set's trombone
+ * plays (the body a pair of trumpets alone has not) */
+#define MA_TBN_TOP 61                      /* the sampled BRASS set's highest trombone key (tools/gen_samples.py) */
+static void section(ma_groove *g, uint32_t delay, int top, int low, int vel, float len)
+{
+    schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
+    if (!g->trombone) {
+        schedule(g, delay + bow_late(g), MA_HORNS, low, clampi(vel - 10, 1, 127), len);
+        return;
+    }
+    int tb = top - 12;                             /* (down into the set's trombone, the trumpet above it) */
+    while (tb > MA_TBN_TOP)
+        tb -= 12;
+    schedule(g, delay, MA_HORNS, low, clampi(vel - 8, 1, 127), len);
+    schedule(g, delay, MA_HORNS, tb, clampi(vel - 4, 1, 127), len);
+}
+
 static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
 {
     const ma_settings *s = &g->s;
@@ -1842,8 +1860,6 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         int low = top - 1;                         /* the second horn: the chord tone below the first */
         while (low % 12 != c->tone[0] && low % 12 != c->tone[1] && low % 12 != c->tone[2])
             --low;
-        if (g->trombone)                           /* the sampled brass: the trombone, an octave under the trumpet's */
-            low -= 12;
         float heat = (float)s->heat / 100.0f;
         int vel = 104 + (g->riff_len[pos] == 1 ? 10 : 0) + (int)(hum * 6.0f) + (int)(heat * 10.0f);
         float len = sf * (float)g->riff_len[pos] * (g->riff_len[pos] == 1 ? 0.6f : 0.9f);
@@ -1851,8 +1867,7 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
             len = sf * 1.05f;                      /* (a quick run of the section's: slurred into the next, not chopped) */
         if (g->bowed)
             bow(g, &len, &vel, sf);
-        schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
-        schedule(g, delay + bow_late(g), MA_HORNS, low, clampi(vel - 10, 1, 127), len);
+        section(g, delay, top, low, vel, len);
         return;
     }
     /* the coro, played: where a son's singers would answer the soloist (the montuno's other four bars) the section
@@ -1883,14 +1898,11 @@ static void play_horns(ma_groove *g, int i, uint32_t delay, float sf, float hum)
         int low = top - 1;                         /* the second voice: the chord tone below */
         while (low % 12 != c->tone[0] && low % 12 != c->tone[1] && low % 12 != c->tone[2])
             --low;
-        if (g->trombone)
-            low -= 12;
         float len = sf * (float)g->phr_len[cp] * 0.85f;
         int vel = 94 + (i % 4 == 0 ? 6 : 0) + (int)(hum * 6.0f) + (int)((float)s->heat / 100.0f * 8.0f);
         if (g->bowed)
             bow(g, &len, &vel, sf);
-        schedule(g, delay, MA_HORNS, top, clampi(vel, 1, 127), len);
-        schedule(g, delay + bow_late(g), MA_HORNS, low, clampi(vel - 10, 1, 127), len);
+        section(g, delay, top, low, vel, len);
         return;
     }
     /* the solo: the TEMA (the theme, twice, its last note the tonic high, held, with vibrato), the VERSO's melody when
