@@ -69,6 +69,8 @@ _Static_assert(sizeof rev_comb / 2u >= SP_LEN && sizeof rev_u.sp / 4u >= 4u * (S
 #define HL_KD(d) (32767 - (d) * 180)     /* its coefficient (Q15) for DAMP d: none at 0 .. ~1 kHz at 127 */
 #define HL_LOUD 32                       /* a line this loud (two samples' sum) rounds its gain to the nearest */
 #define HL_OUT 4                         /* the outputs' gain: the level of ROOM's tail */
+static uint8_t hl_lowcut = 5;            /* the send's low cut, one pole: 1 / 2^hl_lowcut a step (5: ~110 Hz, 3: ~440 Hz;
+                                          * a firmware on Felucca may set it: Manta's ma_sounds.h) */
 static const uint16_t HL_LEN[HL_NL] = {467, 509, 547, 593, 631, 673, 709, 743};   /* (+1 each: the mirror) */
 static const uint16_t HL_AP[HL_NAP] = {131, 307};
 static const int16_t HL_APG[HL_NAP] = {11469, 10240};               /* Q14: 0.7, 0.625 */
@@ -407,7 +409,7 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
     int16_t *b = rev_comb, *a = rev_ap;
     uint32_t i, k, s, m, d;
     int32_t kd = HL_KD(song.g[G_RDAMP]);
-    int32_t xp = hl.x, hp = hl.hp, he = hl.he, mp = hl.m, sp = hl.s;
+    int32_t xp = hl.x, hp = hl.hp, he = hl.he, mp = hl.m, sp = hl.s, lc = hl_lowcut;
     (void)n;
     if (hl.sz != song.g[G_RSIZE] + 1)
         hall_gains(song.g[G_RSIZE]);
@@ -416,8 +418,8 @@ static __attribute__((noinline)) void rev_hall(const int32_t *rev_in, int32_t *o
         xp = rev_in[2u * i + 1u];
         x = mulq15(clamp(x, -262143, 262143), 2580);    /* (ROOM's level) */
         v = x - hp + he;                                /* the low cut, its step's remainder kept */
-        he = v & 31;
-        hp += v >> 5;
+        he = v & ((1 << lc) - 1);
+        hp += v >> lc;
         hl.bx[i] = x - hp;
     }
     hl.x = xp, hl.hp = hp, hl.he = he;

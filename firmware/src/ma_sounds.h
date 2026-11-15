@@ -195,7 +195,7 @@ static inline void mas_track(track_t *t, const ma_groove *g, int part)
     if (part == MA_HORNS)                  /* the section's horns side by side (the solo one, in its place: mas_block) */
         mas_horns_sprd = mas_clamp(w * 50 / 100, 0, 127);
     /* the sends: ROOM on everything, PLATE more on the piano and the horns */
-    static const uint8_t ROOM[MA_PARTS] = {64, 10, 60, 30, 42};   /* (a long hall: the band a little in it) */
+    static const uint8_t ROOM[MA_PARTS] = {72, 10, 70, 34, 48};   /* (a long hall: the band a little in it) */
     int rev = s->room * 127 / 100 * ROOM[part] / 100 + (part == MA_PIANO || part == MA_HORNS ? s->plate * 50 / 100 : 0);
     if (snd && snd->engine == MAS_PHYS)    /* (the plucked strings: more of the hall, they ring out in it) */
         rev += 28;
@@ -259,8 +259,9 @@ static inline void mas_song(const ma_settings *s)
     song.g[G_DFDBK] = 15;
     song.g[G_DMIX] = 100;
     song.g[G_RSIZE] = (int16_t)(72 + s->room * 40 / 100);   /* a long hall, for the solo above all */
-    song.g[G_RDAMP] = 66;                 /* (warm: the reverb's top damped) */
+    song.g[G_RDAMP] = 40;                 /* (its top a little damped: air left in it, not a tiled room's dull wash) */
     song.g[G_RTYPE] = 2;                  /* (Felucca's HALL model: long and wide) */
+    hl_lowcut = 3;                        /* (the send's low-mids cut, ~440 Hz: no boxy boom in the tail, open) */
 }
 
 /* the block's controls into the tracks (the audio ISR, before the mix): the tone, the gain, the horns' place */
